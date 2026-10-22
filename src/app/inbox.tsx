@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
-import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 
@@ -28,8 +28,9 @@ export default function Inbox() {
   return (
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page}>
-        <Pressable onPress={() => router.back()}><Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>← Back</Text></Pressable>
-        <Text style={ui.h1}>Inbox</Text>
+        <TopBar />
+        <Text style={ui.h1}>Messages</Text>
+        <Text style={ui.muted}>Notes customers sent about your services.</Text>
         {!rows && <ActivityIndicator color={colors.blue} />}
         {rows?.length === 0 && <Text style={ui.muted}>No notes yet. When a customer writes to you about a service, it shows up here.</Text>}
         {rows?.map((n) => (

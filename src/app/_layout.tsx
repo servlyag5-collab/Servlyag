@@ -23,6 +23,11 @@ export default function RootLayout() {
           <Stack.Screen name="offer" />
           <Stack.Screen name="inbox" />
           <Stack.Screen name="plan" />
+          <Stack.Screen name="messages" />
+          <Stack.Screen name="bookings" />
+          <Stack.Screen name="account" />
+          <Stack.Screen name="edit/[id]" />
+          <Stack.Screen name="checkout" />
         </Stack.Protected>
       </Stack>
     </>

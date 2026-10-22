@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Cover, photoUrl } from '../../components/Cover';
+import { TopBar } from '../../components/Menu';
+import { useMode } from '../../lib/mode';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
@@ -57,6 +60,7 @@ function Listing({ s }: { s: S }) {
 export default function ServiceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const session = useSession();
+  const merchant = useMode() === 'merchant';
   const [s, setS] = useState<S | null>(null);
   const [body, setBody] = useState('');
   const [contact, setContact] = useState('');
@@ -86,36 +90,52 @@ export default function ServiceDetail() {
     if (error) setMsg(error.message); else setSent(true);
   }
 
+  // The owner, in merchant view, sees a preview: same page as customers, but nothing can be pressed or typed.
+  const preview = !!s && merchant && session?.user.id === s.merchant_id;
+
   return (
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={() => router.back()}><Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>← Back</Text></Pressable>
+        <TopBar />
         {!s ? <ActivityIndicator color={colors.blue} /> : (
           <>
+            {preview && (
+              <View style={[ui.card, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderColor: colors.blue, borderWidth: 2 }]}>
+                <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: colors.ink }}>This is how customers see your listing</Text>
+                <Pressable style={[ui.btn, ui.primary, { height: 44 }]} onPress={() => router.push({ pathname: '/edit/[id]', params: { id } })}>
+                  <Text style={[ui.btnText, { color: '#fff' }]}>Edit listing</Text>
+                </Pressable>
+              </View>
+            )}
+            {/* Photo 1 is the cover (logo or best photo); photos 2-5 show the merchant's work. */}
+            {s.photos?.length > 0 && <Cover photos={s.photos} title={s.title} width="100%" height={220} />}
             <Listing s={s} />
-            {s.photos?.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-                {s.photos.map((p) => <Image key={p} source={{ uri: supabase.storage.from('service-photos').getPublicUrl(p).data.publicUrl }} style={{ width: 280, height: 200, borderRadius: 14 }} />)}
-              </ScrollView>
+            {s.photos?.length > 1 && (
+              <>
+                <Text style={[ui.h2, { marginTop: 8 }]}>Our work</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+                  {s.photos.slice(1).map((p) => <Image key={p} source={{ uri: photoUrl(p) }} style={{ width: 280, height: 200, borderRadius: 14 }} />)}
+                </ScrollView>
+              </>
             )}
             <View style={ui.row}>
               {!!s.profiles?.phone && (
-                <Pressable style={[ui.btn, ui.outline, { flex: 1 }]} onPress={() => Linking.openURL(`tel:${s.profiles!.phone}`)}>
+                <Pressable style={[ui.btn, ui.outline, { flex: 1 }]} disabled={preview} onPress={() => Linking.openURL(`tel:${s.profiles!.phone}`)}>
                   <Text style={[ui.btnText, { color: colors.ink }]}>Call</Text>
                 </Pressable>
               )}
-              <Pressable style={[ui.btn, ui.outline, { flex: 1 }]} onPress={() => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })}>
+              <Pressable style={[ui.btn, ui.outline, { flex: 1 }]} disabled={preview} onPress={() => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })}>
                 <Text style={[ui.btnText, { color: colors.ink }]}>Business profile</Text>
               </Pressable>
             </View>
             <Text style={[ui.h2, { marginTop: 12 }]}>Send a note</Text>
             {sent ? <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>Note sent. The merchant will get back to you.</Text> : (
               <>
-                <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Write your note to the merchant" multiline value={body} onChangeText={setBody} />
-                <TextInput style={ui.field} placeholder="Your phone or WhatsApp number" keyboardType="phone-pad" value={contact} onChangeText={setContact} />
+                <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Write your note to the merchant" multiline value={body} onChangeText={setBody} editable={!preview} />
+                <TextInput style={ui.field} placeholder="Your phone or WhatsApp number" keyboardType="phone-pad" value={contact} onChangeText={setContact} editable={!preview} />
                 {!!msg && <Text style={ui.error}>{msg}</Text>}
                 {!session && <Text style={ui.muted}>You'll create a free account first, then your note is sent.</Text>}
-                <Pressable style={[ui.btn, ui.primary]} onPress={send} disabled={busy}>
+                <Pressable style={[ui.btn, ui.primary]} onPress={send} disabled={busy || preview}>
                   {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>{session ? 'Send note' : 'Sign up and send note'}</Text>}
                 </Pressable>
               </>

@@ -15,9 +15,9 @@ create table public.tiers (
   booking_included boolean not null default false
 );
 insert into public.tiers (id, name, monthly_price, max_services, priority_rank, booking_included) values
-  ('basic',   'Tier 1',  50, 1,    0, false),
-  ('plus',    'Tier 2', 100, 2,    1, false),
-  ('premium', 'Tier 3', 150, null, 1, true);
+  ('basic',   'Starter', 50, 1,    0, false),
+  ('plus',    'Growth', 100, 2,    1, false),
+  ('premium', 'Business', 150, null, 1, true);
 
 create table public.profiles (               -- the public business profile
   id uuid primary key references auth.users on delete cascade,

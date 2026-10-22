@@ -4,16 +4,21 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CoverTag } from '../components/Cover';
+import { TopBar } from '../components/Menu';
+import { setMode } from '../lib/mode';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 
 type Plan = { name: string; max_services: number | null; booking_included: boolean };
+// plan = the paid tier (the database counts listings against it); chosen = the tier picked on the Plan screen.
+type Gate = { active: boolean; plan: Plan | null; chosen: Plan | null; used: number };
+const toPlanFirst = () => router.replace({ pathname: '/plan', params: { next: 'offer' } });
 
 export default function Offer() {
   const [b, setB] = useState({ name: '', bio: '', phone: '' });
   const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '' });
-  const [plan, setPlan] = useState<Plan | null>(null);
-  const [booking, setBooking] = useState(false);
+  const [gate, setGate] = useState<Gate | null>(null);
   const [photos, setPhotos] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [addonPrice, setAddonPrice] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -24,12 +29,24 @@ export default function Offer() {
   useEffect(() => {
     supabase.from('addons').select('monthly_price').eq('id', 'booking').single().then(({ data }) => setAddonPrice(data?.monthly_price ?? null));
     supabase.auth.getUser().then(async ({ data }) => {
-      const { data: p } = await supabase.from('profiles').select('display_name,bio,phone,tiers(name,max_services,booking_included)').eq('id', data.user!.id).single();
+      const uid = data.user!.id;
+      const [{ data: p }, c] = await Promise.all([
+        supabase.from('profiles')
+          .select('display_name,bio,phone,plan_expires_at,requested_tier,plan:tiers!tier_id(name,max_services,booking_included),chosen:tiers!requested_tier(name,max_services,booking_included)')
+          .eq('id', uid).single(),
+        supabase.from('services').select('id', { count: 'exact', head: true }).eq('merchant_id', uid).eq('active', true),
+      ]);
       if (!p) return;
+      const active = !!p.plan_expires_at && new Date(p.plan_expires_at) > new Date();
+      // Plans come first: with no active plan and none chosen yet, pick one before creating a listing.
+      if (!active && !p.requested_tier) return toPlanFirst();
       setB({ name: p.display_name, bio: p.bio, phone: p.phone ?? '' });
-      setPlan(p.tiers as unknown as Plan);
+      setGate({ active, plan: p.plan as unknown as Plan, chosen: p.chosen as unknown as Plan | null, used: c.count ?? 0 });
     });
   }, []);
+
+  const limit = gate?.plan?.max_services ?? null; // null = unlimited
+  const full = !!gate && limit !== null && gate.used >= limit;
 
   async function pick() {
     const left = 5 - photos.length;
@@ -55,7 +72,6 @@ export default function Offer() {
       price: f.price.trim() ? Number(f.price) : null,
       city: f.city.trim(),
       village: f.village.trim() || null,
-      booking_requested: !plan?.booking_included && booking,
     }).select('id').single();
     if (error) { setBusy(false); return setErr(error.message); }
     if (photos.length) {
@@ -70,16 +86,42 @@ export default function Offer() {
       if (paths.length) await supabase.from('services').update({ photos: paths }).eq('id', svc.id);
     }
     setBusy(false);
-    router.replace('/');
+    // Having a listing unlocks merchant view; show it in Account.
+    setMode('merchant');
+    router.replace('/account');
   }
 
   return (
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={() => router.back()}><Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>← Back</Text></Pressable>
+        <TopBar />
         <Text style={ui.h1}>Offer a service</Text>
-        {plan && <Text style={ui.muted}>Your plan: {plan.name} · {plan.max_services ?? 'unlimited'} service listing{plan.max_services === 1 ? '' : 's'}. Listings go live once your plan is active.</Text>}
+        {!gate ? <ActivityIndicator color={colors.blue} /> : (
+          <>
+        <View style={ui.card}>
+          <Text style={ui.h2}>{gate.active ? `Your plan: ${gate.plan?.name}` : `Your chosen plan: ${(gate.chosen ?? gate.plan)?.name}`}</Text>
+          <Text style={ui.muted}>{limit === null ? `${gate.used} listings published (unlimited).` : `${gate.used} of ${limit} listing${limit === 1 ? '' : 's'} used.`}</Text>
+          {!gate.active && (
+            <Text style={ui.muted}>
+              Waiting for payment. Your listings go live once payment is confirmed
+              {gate.chosen && gate.chosen.max_services !== limit ? `, and you can then publish up to ${gate.chosen.max_services ?? 'unlimited'} listings.` : '.'}
+            </Text>
+          )}
+          <Pressable onPress={() => router.push({ pathname: '/plan', params: { next: 'offer' } })}>
+            <Text style={{ color: colors.blue, fontWeight: '700' }}>Change plan</Text>
+          </Pressable>
+        </View>
 
+        {full ? (
+          <View style={ui.card}>
+            <Text style={ui.h2}>You've used all your listings</Text>
+            <Text style={ui.muted}>Upgrade your plan to publish more services. If you already chose a bigger plan, you can add more once payment is confirmed.</Text>
+            <Pressable style={[ui.btn, ui.primary]} onPress={() => router.push({ pathname: '/plan', params: { next: 'offer' } })}>
+              <Text style={[ui.btnText, { color: '#fff' }]}>Upgrade your plan</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <>
         <Text style={ui.h2}>Your business</Text>
         <TextInput style={ui.field} placeholder="Business name" value={b.name} onChangeText={setBiz('name')} />
         <TextInput style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="About your business (optional)" multiline value={b.bio} onChangeText={setBiz('bio')} />
@@ -94,11 +136,13 @@ export default function Offer() {
         <TextInput style={ui.field} placeholder="Village (optional)" value={f.village} onChangeText={set('village')} />
 
         <Text style={[ui.h2, { marginTop: 8 }]}>Photos (optional, up to 5)</Text>
+        <Text style={ui.muted}>Your first photo is the cover: use your logo or your best photo. It shows in search results. The other 4 show your work on the listing page.</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {photos.map((a, i) => (
             <Pressable key={a.uri} onPress={() => setPhotos(photos.filter((_, j) => j !== i))}>
               <Image source={{ uri: a.uri }} style={{ width: 96, height: 96, borderRadius: 10 }} />
               <Ionicons name="close-circle" size={22} color={colors.red} style={{ position: 'absolute', top: 2, right: 2 }} />
+              {i === 0 && <CoverTag />}
             </Pressable>
           ))}
           {photos.length < 5 && (
@@ -108,19 +152,18 @@ export default function Offer() {
           )}
         </View>
 
-        {plan?.booking_included ? (
-          <Text style={{ color: colors.blue, fontWeight: '700' }}>The booking app is included with your plan.</Text>
-        ) : (
-          <Pressable style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }} onPress={() => setBooking(!booking)}>
-            <Ionicons name={booking ? 'checkbox' : 'square-outline'} size={26} color={colors.blue} />
-            <Text style={{ flex: 1, fontSize: 16, color: colors.ink }}>{`Add the booking app to this listing (add-on, ${addonPrice ?? 25} XCD / month)`}</Text>
-          </Pressable>
-        )}
+        <Text style={gate.plan?.booking_included ? { color: colors.blue, fontWeight: '700' } : ui.muted}>
+          {gate.plan?.booking_included ? 'The booking app is included with your plan.' : `Want the booking app (${addonPrice ?? 25} XCD / month)? Tick it on your Plan screen.`}
+        </Text>
 
         {!!err && <Text style={ui.error}>{err}</Text>}
         <Pressable style={[ui.btn, ui.primary]} onPress={save} disabled={busy}>
           {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>Publish service</Text>}
         </Pressable>
+          </>
+        )}
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
