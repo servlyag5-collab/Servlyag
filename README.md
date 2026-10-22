@@ -16,7 +16,7 @@ Copy `src/`, `assets/`, `supabase/`, `app.json` and `.env.example` from this fol
 
 ## 3. Supabase
 1. supabase.com > New project `servly`.
-2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run.
+2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account).
 3. Authentication > Providers > Email: turn OFF "Confirm email" while testing.
 4. Settings > API: copy the Project URL and anon key into a new file `.env` (see `.env.example`). Add `.env` to `.gitignore`.
 

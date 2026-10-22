@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
@@ -55,24 +56,32 @@ function Listing({ s }: { s: S }) {
 
 export default function ServiceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const session = useSession();
   const [s, setS] = useState<S | null>(null);
   const [body, setBody] = useState('');
   const [contact, setContact] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [sent, setSent] = useState(false);
+  const sendAfterLogin = useRef(false);
 
   useEffect(() => {
     supabase.from('services').select('photos,merchant_id,title,description,tags,price,city,village,profiles(display_name,tier_id,phone)').eq('id', id).single()
       .then(({ data }) => setS(data as unknown as S));
   }, [id]);
 
+  // A guest who tapped Send has now logged in: send the note they typed.
+  useEffect(() => {
+    if (session && sendAfterLogin.current) { sendAfterLogin.current = false; send(); }
+  }, [session]);
+
   async function send() {
     if (!body.trim()) return setMsg('Please write a note for the merchant.');
     if (!contact.trim()) return setMsg('Add a phone or WhatsApp number so the merchant can reply.');
+    // Guests sign up first; the note stays on this page and is sent when they come back.
+    if (!session) { sendAfterLogin.current = true; return router.push({ pathname: '/login', params: { mode: 'up' } }); }
     setBusy(true); setMsg('');
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('notes').insert({ service_id: id, customer_id: user!.id, body: body.trim(), contact: contact.trim() });
+    const { error } = await supabase.from('notes').insert({ service_id: id, customer_id: session.user.id, body: body.trim(), contact: contact.trim() });
     setBusy(false);
     if (error) setMsg(error.message); else setSent(true);
   }
@@ -105,8 +114,9 @@ export default function ServiceDetail() {
                 <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Write your note to the merchant" multiline value={body} onChangeText={setBody} />
                 <TextInput style={ui.field} placeholder="Your phone or WhatsApp number" keyboardType="phone-pad" value={contact} onChangeText={setContact} />
                 {!!msg && <Text style={ui.error}>{msg}</Text>}
+                {!session && <Text style={ui.muted}>You'll create a free account first, then your note is sent.</Text>}
                 <Pressable style={[ui.btn, ui.primary]} onPress={send} disabled={busy}>
-                  {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>Send note</Text>}
+                  {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>{session ? 'Send note' : 'Sign up and send note'}</Text>}
                 </Pressable>
               </>
             )}

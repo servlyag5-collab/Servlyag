@@ -3,6 +3,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View,
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 
@@ -10,6 +11,8 @@ type Row = { id: string; title: string; tags: string[]; price: number | null; ci
 const EMPTY = { q: '', city: '', village: '', min: '', max: '' };
 
 export default function Home() {
+  const session = useSession();
+  const uid = session?.user.id;
   const [name, setName] = useState('');
   const [f, setF] = useState(EMPTY);
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -21,22 +24,20 @@ export default function Home() {
   const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
 
   useFocusEffect(useCallback(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) return;
-      const c = await supabase.from('notes').select('id, services!inner(merchant_id)', { count: 'exact', head: true })
-        .eq('services.merchant_id', data.user.id).is('read_at', null);
-      setUnread(c.count ?? 0);
-    });
-  }, []));
+    if (!uid) { setUnread(0); return; }
+    supabase.from('notes').select('id, services!inner(merchant_id)', { count: 'exact', head: true })
+      .eq('services.merchant_id', uid).is('read_at', null)
+      .then((c) => setUnread(c.count ?? 0));
+  }, [uid]));
 
+  useEffect(() => { run(EMPTY, false); }, []);
+
+  // Re-runs when someone logs in or out, so the header always matches.
   useEffect(() => {
-    run(EMPTY, false);
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) return;
-      const { data: p } = await supabase.from('profiles').select('display_name').eq('id', data.user.id).single();
-      setName(p?.display_name || data.user.email || '');
-    });
-  }, []);
+    if (!session) { setName(''); return; }
+    supabase.from('profiles').select('display_name').eq('id', session.user.id).single()
+      .then(({ data: p }) => setName(p?.display_name || session.user.email || ''));
+  }, [uid]);
 
   async function run(x: typeof EMPTY, scroll: boolean) {
     setErr('');
@@ -68,20 +69,29 @@ export default function Home() {
       <ScrollView ref={sc} contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <Image source={require('../../assets/logo.png')} style={{ height: 52, width: 196 }} resizeMode="contain" />
         <View style={[ui.row, { alignItems: 'center' }]}>
-          <Text style={{ flex: 1, color: colors.muted, fontSize: 16 }} numberOfLines={1}>{name}</Text>
-          <Pressable onPress={() => router.push('/inbox')}><Text style={{ fontWeight: '700', fontSize: 16, color: colors.blue }}>Inbox{unread > 0 ? ` (${unread})` : ''}</Text></Pressable>
-          <Pressable onPress={() => router.push('/plan')}><Text style={{ fontWeight: '700', fontSize: 16, color: colors.blue }}>Plan</Text></Pressable>
-          <Pressable onPress={() => supabase.auth.signOut()} style={[ui.row, { alignItems: 'center', gap: 6 }]}>
-            <Ionicons name="log-out-outline" size={20} color={colors.ink} />
-            <Text style={{ fontWeight: '700', fontSize: 16, color: colors.ink }}>Log out</Text>
-          </Pressable>
+          <Text style={{ flex: 1, color: colors.muted, fontSize: 16 }} numberOfLines={1}>{session ? name : 'Browsing as a guest'}</Text>
+          {session ? (
+            <>
+              <Pressable onPress={() => router.push('/inbox')}><Text style={{ fontWeight: '700', fontSize: 16, color: colors.blue }}>Inbox{unread > 0 ? ` (${unread})` : ''}</Text></Pressable>
+              <Pressable onPress={() => router.push('/plan')}><Text style={{ fontWeight: '700', fontSize: 16, color: colors.blue }}>Plan</Text></Pressable>
+              <Pressable onPress={() => supabase.auth.signOut()} style={[ui.row, { alignItems: 'center', gap: 6 }]}>
+                <Ionicons name="log-out-outline" size={20} color={colors.ink} />
+                <Text style={{ fontWeight: '700', fontSize: 16, color: colors.ink }}>Log out</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Pressable onPress={() => router.push('/login')} style={[ui.row, { alignItems: 'center', gap: 6 }]}>
+              <Ionicons name="log-in-outline" size={20} color={colors.blue} />
+              <Text style={{ fontWeight: '700', fontSize: 16, color: colors.blue }}>Log in</Text>
+            </Pressable>
+          )}
         </View>
 
         <View style={ui.card}>
           <Text style={{ color: colors.blue, fontWeight: '800', letterSpacing: 2, fontSize: 13 }}>SERVLY AG / MARKETPLACE</Text>
           <Text style={ui.h1}>Find someone good for the job.</Text>
           <Text style={ui.muted}>Search local services by name or tag, set a city and budget, and send the merchant a note.</Text>
-          <Pressable style={[ui.btn, ui.outline, { alignSelf: 'flex-start', flexDirection: 'row', gap: 8 }]} onPress={() => router.push('/offer')}>
+          <Pressable style={[ui.btn, ui.outline, { alignSelf: 'flex-start', flexDirection: 'row', gap: 8 }]} onPress={() => (session ? router.push('/offer') : router.push({ pathname: '/login', params: { mode: 'up' } }))}>
             <Ionicons name="storefront-outline" size={20} color={colors.blue} />
             <Text style={[ui.btnText, { color: colors.ink }]}>Offer a service</Text>
             <Ionicons name="arrow-forward" size={18} color={colors.ink} />

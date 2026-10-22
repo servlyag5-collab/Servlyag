@@ -30,7 +30,7 @@ Three subscription tiers, set only by the owner in Supabase (merchants can never
 - Village is an optional field on services and in search. City/Village/price/text search ignores empty fields.
 
 ## What exists
-Login/signup; home screen (logo header, display name, Inbox with unread count, Plan, Log out, hero card, search card with Clear filter and a blue Search button, results); Offer a service (business profile fields, service fields, photos, booking checkbox); service page (tier layout, photo gallery, Call, Business profile, Send a note); public business profile; merchant Inbox (Call and WhatsApp buttons; 7-digit numbers get the 1-268 code); Plan screen; Supabase schema in `supabase/schema.sql` then `supabase/upgrade-v4.sql`.
+Guest browsing (no account needed to search, view listings and business profiles, or call; an account is needed to send a note, offer a service, or open Inbox/Plan; login returns the user to where they were, and a guest's typed note is sent after sign-up); login/signup; home screen (logo header, display name, Inbox with unread count, Plan, Log out, hero card, search card with Clear filter and a blue Search button, results); Offer a service (business profile fields, service fields, photos, booking checkbox); service page (tier layout, photo gallery, Call, Business profile, Send a note); public business profile; merchant Inbox (Call and WhatsApp buttons; 7-digit numbers get the 1-268 code); Plan screen; Supabase schema in `supabase/schema.sql`, then `supabase/upgrade-v4.sql`, then `supabase/upgrade-v5-guest-browse.sql`.
 
 ## Not built yet (owner's priorities)
 1. Edit/manage my listings (including editing photos after publishing).
