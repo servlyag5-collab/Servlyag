@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover, photoUrl } from '../../components/Cover';
 import { TopBar } from '../../components/Menu';
+import { findConversation, sendFromListing } from '../../lib/chat';
 import { useMode } from '../../lib/mode';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
-type S = { photos: string[]; merchant_id: string; title: string; description: string; price: number | null; city: string; village: string | null; profiles: { display_name: string; tier_id: string; phone: string | null } | null };
+type S = { photos: string[]; merchant_id: string; title: string; description: string; price: number | null; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null } | null };
 
 // The page structure comes ONLY from the merchant's subscription tier (basic | plus | premium).
 // Merchants cannot choose or change it. Edit the three layouts here.
@@ -60,28 +62,39 @@ export default function ServiceDetail() {
   const [contact, setContact] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const [sent, setSent] = useState(false);
+  const [loadErr, setLoadErr] = useState('');
+  const [convId, setConvId] = useState<string | null>(null); // my existing conversation about this listing
   const sendAfterLogin = useRef(false);
 
   useEffect(() => {
-    supabase.from('services').select('photos,merchant_id,title,description,price,city,village,profiles(display_name,tier_id,phone)').eq('id', id).single()
-      .then(({ data }) => setS(data as unknown as S));
+    supabase.from('services').select('photos,merchant_id,title,description,price,city,village,profiles(display_name,tier_id,public_phone)').eq('id', id).single()
+      .then(({ data, error }) => { if (!data) setLoadErr(error?.message ?? 'This listing could not be found.'); setS(data as unknown as S); });
   }, [id]);
+
+  useFocusEffect(useCallback(() => {
+    if (session) findConversation(id, session.user.id).then(setConvId);
+  }, [id, session?.user.id]));
 
   // A guest who tapped Send has now logged in: send the note they typed.
   useEffect(() => {
     if (session && sendAfterLogin.current) { sendAfterLogin.current = false; send(); }
   }, [session]);
 
+  // Starts my conversation about this listing (or adds to it), then opens the chat.
   async function send() {
     if (!body.trim()) return setMsg('Please write a note for the merchant.');
-    if (!contact.trim()) return setMsg('Add a phone or WhatsApp number so the merchant can reply.');
     // Guests sign up first; the note stays on this page and is sent when they come back.
     if (!session) { sendAfterLogin.current = true; return router.push({ pathname: '/login', params: { mode: 'up' } }); }
+    if (s && session.user.id === s.merchant_id) return setMsg('This is your own listing.');
     setBusy(true); setMsg('');
-    const { error } = await supabase.from('notes').insert({ service_id: id, customer_id: session.user.id, body: body.trim(), contact: contact.trim() });
+    try {
+      const conv = await sendFromListing(id, session.user.id, body.trim(), contact.trim());
+      setBody(''); setConvId(conv);
+      router.push({ pathname: '/chat/[id]', params: { id: conv } });
+    } catch (e) {
+      setMsg((e as Error).message);
+    }
     setBusy(false);
-    if (error) setMsg(error.message); else setSent(true);
   }
 
   // The owner, in merchant view, sees a preview: same page as customers, but nothing can be pressed or typed.
@@ -91,7 +104,7 @@ export default function ServiceDetail() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
-        {!s ? <ActivityIndicator color={colors.blue} /> : (
+        {!s ? (loadErr ? <Text style={ui.error}>{loadErr}</Text> : <ActivityIndicator color={colors.blue} />) : (
           <>
             {preview && (
               <View style={[ui.card, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderColor: colors.blue, borderWidth: 2 }]}>
@@ -112,28 +125,34 @@ export default function ServiceDetail() {
                 </ScrollView>
               </>
             )}
+            <Text style={[ui.h2, { marginTop: 4 }]}>Send a note</Text>
+            {!!convId && !preview && (
+              <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: convId } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="chatbubbles-outline" size={18} color={colors.blue} />
+                <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>Continue your conversation</Text>
+              </Pressable>
+            )}
+            <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Write your note to the merchant" multiline value={body} onChangeText={setBody} editable={!preview} />
+            <TextInput style={ui.field} placeholder="Your phone or WhatsApp number (optional)" keyboardType="phone-pad" value={contact} onChangeText={setContact} editable={!preview} />
+            {!!msg && <Text style={ui.error}>{msg}</Text>}
+            {!session && <Text style={ui.muted}>You'll create a free account first, then your note is sent.</Text>}
+            {/* Call and Send note side by side at the bottom. */}
             <View style={ui.row}>
-              {!!s.profiles?.phone && (
-                <Pressable style={[ui.btn, ui.outline, { flex: 1 }]} disabled={preview} onPress={() => Linking.openURL(`tel:${s.profiles!.phone}`)}>
+              {!!s.profiles?.public_phone && (
+                <Pressable style={[ui.btn, ui.outline, { flex: 1, flexDirection: 'row', gap: 8 }]} disabled={preview} onPress={() => Linking.openURL(`tel:${s.profiles!.public_phone}`)}>
+                  <Ionicons name="call-outline" size={20} color={colors.blue} />
                   <Text style={[ui.btnText, { color: colors.ink }]}>Call</Text>
                 </Pressable>
               )}
-              <Pressable style={[ui.btn, ui.outline, { flex: 1 }]} disabled={preview} onPress={() => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })}>
-                <Text style={[ui.btnText, { color: colors.ink }]}>Business profile</Text>
+              <Pressable style={[ui.btn, ui.primary, { flex: 1, flexDirection: 'row', gap: 8 }]} onPress={send} disabled={busy || preview}>
+                {busy ? <ActivityIndicator color="#fff" /> : (
+                  <>
+                    <Ionicons name="send-outline" size={18} color="#fff" />
+                    <Text style={[ui.btnText, { color: '#fff' }]}>{session ? 'Send note' : 'Sign up & send'}</Text>
+                  </>
+                )}
               </Pressable>
             </View>
-            <Text style={[ui.h2, { marginTop: 12 }]}>Send a note</Text>
-            {sent ? <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>Note sent. The merchant will get back to you.</Text> : (
-              <>
-                <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Write your note to the merchant" multiline value={body} onChangeText={setBody} editable={!preview} />
-                <TextInput style={ui.field} placeholder="Your phone or WhatsApp number" keyboardType="phone-pad" value={contact} onChangeText={setContact} editable={!preview} />
-                {!!msg && <Text style={ui.error}>{msg}</Text>}
-                {!session && <Text style={ui.muted}>You'll create a free account first, then your note is sent.</Text>}
-                <Pressable style={[ui.btn, ui.primary]} onPress={send} disabled={busy || preview}>
-                  {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>{session ? 'Send note' : 'Sign up and send note'}</Text>}
-                </Pressable>
-              </>
-            )}
           </>
         )}
       </ScrollView>

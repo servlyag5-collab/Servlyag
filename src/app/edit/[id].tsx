@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverTag, photoUrl } from '../../components/Cover';
 import { TopBar } from '../../components/Menu';
+import { PhoneToggle } from '../../components/PhoneToggle';
 import { useMode } from '../../lib/mode';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
@@ -22,6 +23,7 @@ export default function EditListing() {
   const uid = session?.user.id;
   const merchant = useMode() === 'merchant';
   const [b, setB] = useState({ name: '', bio: '', phone: '' });
+  const [showPhone, setShowPhone] = useState(true);
   const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '' });
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [removed, setRemoved] = useState<string[]>([]); // saved photos to delete on Save
@@ -35,15 +37,19 @@ export default function EditListing() {
     if (!uid) return;
     Promise.all([
       supabase.from('services').select('title,description,tags,price,city,village,photos').eq('id', id).eq('merchant_id', uid).single(),
-      supabase.from('profiles').select('display_name,bio,phone').eq('id', uid).single(),
-    ]).then(([s, p]) => {
+      supabase.from('profiles').select('display_name,bio,show_phone').eq('id', uid).single(),
+      supabase.rpc('my_phone'), // the real number is private; only its owner can read it
+    ]).then(([s, p, ph]) => {
       if (!s.data) return setErr('This listing could not be found, or it is not yours.');
       setF({
         title: s.data.title, description: s.data.description, tags: (s.data.tags as string[]).join(', '),
         price: s.data.price != null ? String(s.data.price) : '', city: s.data.city, village: s.data.village ?? '',
       });
       setPhotos(((s.data.photos ?? []) as string[]).map((path) => ({ path })));
-      if (p.data) setB({ name: p.data.display_name, bio: p.data.bio, phone: p.data.phone ?? '' });
+      if (p.data) {
+        setB({ name: p.data.display_name, bio: p.data.bio, phone: (ph.data as string | null) ?? '' });
+        setShowPhone(p.data.show_phone);
+      }
       setLoaded(true);
     });
   }, [id, uid]);
@@ -64,12 +70,12 @@ export default function EditListing() {
 
   async function save() {
     if (!b.name.trim()) return setErr('Add your business name.');
-    if (!b.phone.trim()) return setErr('Add a phone or WhatsApp number so customers can call you.');
+    if (showPhone && !b.phone.trim()) return setErr('Add a phone or WhatsApp number so customers can call you, or turn off "Show my phone number".');
     if (!f.title.trim() || !f.city.trim()) return setErr('Please add a service name and a city.');
     if (f.price.trim() && isNaN(Number(f.price))) return setErr('Price must be a number.');
     setBusy(true); setErr('');
 
-    const up = await supabase.from('profiles').update({ display_name: b.name.trim(), bio: b.bio.trim(), phone: b.phone.trim() }).eq('id', uid!);
+    const up = await supabase.from('profiles').update({ display_name: b.name.trim(), bio: b.bio.trim(), phone: b.phone.trim() || null, show_phone: showPhone }).eq('id', uid!);
     if (up.error) { setBusy(false); return setErr(up.error.message); }
 
     // Keep the order shown (first = cover). New photos get a unique name so they never clash.
@@ -113,6 +119,7 @@ export default function EditListing() {
             <TextInput style={ui.field} placeholder="Business name" value={b.name} onChangeText={setBiz('name')} />
             <TextInput style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="About your business (optional)" multiline value={b.bio} onChangeText={setBiz('bio')} />
             <TextInput style={ui.field} placeholder="Phone or WhatsApp number" keyboardType="phone-pad" value={b.phone} onChangeText={setBiz('phone')} />
+            <PhoneToggle value={showPhone} onChange={setShowPhone} />
 
             <Text style={[ui.h2, { marginTop: 8 }]}>The service</Text>
             <TextInput style={ui.field} placeholder="Service name" value={f.title} onChangeText={set('title')} />

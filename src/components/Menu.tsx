@@ -3,6 +3,7 @@ import { Image, Modal, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, usePathname, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { isUnread, type Conversation } from '../lib/chat';
 import { setMode, useMode } from '../lib/mode';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
@@ -31,9 +32,10 @@ export function MenuButton() {
         setHasListings(has);
         if (!has) setMode('customer');
       });
-    supabase.from('notes').select('id, services!inner(merchant_id)', { count: 'exact', head: true })
-      .eq('services.merchant_id', uid).is('read_at', null)
-      .then((c) => setUnread(c.count ?? 0));
+    // Unread conversations in the current view (as a customer, or as a merchant).
+    supabase.from('conversations').select('id,customer_id,merchant_id,last_message,last_message_at,customer_read_at,merchant_read_at')
+      .eq(mode === 'merchant' ? 'merchant_id' : 'customer_id', uid).limit(500)
+      .then(({ data }) => setUnread(((data as Conversation[]) ?? []).filter((c) => isUnread(c, uid)).length));
     // Bookings shows when the tier includes it (Business) or the owner switched the add-on on.
     Promise.all([
       supabase.from('profiles').select('tiers!tier_id(booking_included)').eq('id', uid).single(),
@@ -42,7 +44,7 @@ export function MenuButton() {
       const tier = p.data?.tiers as unknown as { booking_included: boolean } | null;
       setHasBooking(!!tier?.booking_included || (s.data?.length ?? 0) > 0);
     });
-  }, [uid]));
+  }, [uid, mode]));
 
   if (!session) return null;
   const merchant = mode === 'merchant';
@@ -51,8 +53,8 @@ export function MenuButton() {
   function toggle() {
     setOpen(false);
     setMode(merchant ? 'customer' : 'merchant');
-    // Messages means something different in each view, so move to the matching screen.
-    if (['/inbox', '/messages', '/bookings'].includes(path)) router.replace(merchant ? '/messages' : '/inbox');
+    // Bookings is merchant-only; Messages simply switches to the other view's conversations.
+    if (merchant && path === '/bookings') router.replace('/messages');
   }
 
   async function logOut() {
@@ -64,9 +66,7 @@ export function MenuButton() {
 
   const items: Item[] = [
     { label: 'Browse', path: '/', onPress: () => go('/') },
-    merchant
-      ? { label: 'Messages', path: '/inbox', badge: unread, onPress: () => go('/inbox') }
-      : { label: 'Messages', path: '/messages', onPress: () => go('/messages') },
+    { label: 'Messages', path: '/messages', badge: unread, onPress: () => go('/messages') },
     ...(merchant && hasBooking ? [{ label: 'Bookings', path: '/bookings', onPress: () => go('/bookings') }] : []),
     ...(hasListings ? [{ label: merchant ? 'Customer' : 'Merchant', hint: merchant ? 'Switch to customer view' : 'Switch to merchant view', onPress: toggle }] : []),
     { label: 'Account', path: '/account', onPress: () => go('/account') },
@@ -76,7 +76,7 @@ export function MenuButton() {
     <>
       <Pressable onPress={() => setOpen(true)} hitSlop={10} accessibilityLabel="Open menu">
         <Ionicons name="menu" size={30} color={colors.ink} />
-        {merchant && unread > 0 && (
+        {unread > 0 && (
           <View style={{ position: 'absolute', top: -4, right: -8, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, backgroundColor: colors.red, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{unread}</Text>
           </View>

@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverTag } from '../components/Cover';
 import { TopBar } from '../components/Menu';
+import { PhoneToggle } from '../components/PhoneToggle';
 import { setMode } from '../lib/mode';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
@@ -17,6 +18,7 @@ const toPlanFirst = () => router.replace({ pathname: '/plan', params: { next: 'o
 
 export default function Offer() {
   const [b, setB] = useState({ name: '', bio: '', phone: '' });
+  const [showPhone, setShowPhone] = useState(true);
   const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '' });
   const [gate, setGate] = useState<Gate | null>(null);
   const [photos, setPhotos] = useState<ImagePicker.ImagePickerAsset[]>([]);
@@ -30,17 +32,19 @@ export default function Offer() {
     supabase.from('addons').select('monthly_price').eq('id', 'booking').single().then(({ data }) => setAddonPrice(data?.monthly_price ?? null));
     supabase.auth.getUser().then(async ({ data }) => {
       const uid = data.user!.id;
-      const [{ data: p }, c] = await Promise.all([
+      const [{ data: p }, c, ph] = await Promise.all([
         supabase.from('profiles')
-          .select('display_name,bio,phone,plan_expires_at,requested_tier,plan:tiers!tier_id(name,max_services,booking_included),chosen:tiers!requested_tier(name,max_services,booking_included)')
+          .select('display_name,bio,show_phone,plan_expires_at,requested_tier,plan:tiers!tier_id(name,max_services,booking_included),chosen:tiers!requested_tier(name,max_services,booking_included)')
           .eq('id', uid).single(),
         supabase.from('services').select('id', { count: 'exact', head: true }).eq('merchant_id', uid).eq('active', true),
+        supabase.rpc('my_phone'), // the real number is private; only its owner can read it
       ]);
       if (!p) return;
       const active = !!p.plan_expires_at && new Date(p.plan_expires_at) > new Date();
       // Plans come first: with no active plan and none chosen yet, pick one before creating a listing.
       if (!active && !p.requested_tier) return toPlanFirst();
-      setB({ name: p.display_name, bio: p.bio, phone: p.phone ?? '' });
+      setB({ name: p.display_name, bio: p.bio, phone: (ph.data as string | null) ?? '' });
+      setShowPhone(p.show_phone);
       setGate({ active, plan: p.plan as unknown as Plan, chosen: p.chosen as unknown as Plan | null, used: c.count ?? 0 });
     });
   }, []);
@@ -57,12 +61,12 @@ export default function Offer() {
 
   async function save() {
     if (!b.name.trim()) return setErr('Add your business name.');
-    if (!b.phone.trim()) return setErr('Add a phone or WhatsApp number so customers can call you.');
+    if (showPhone && !b.phone.trim()) return setErr('Add a phone or WhatsApp number so customers can call you, or turn off "Show my phone number".');
     if (!f.title.trim() || !f.city.trim()) return setErr('Please add a service name and a city.');
     if (f.price.trim() && isNaN(Number(f.price))) return setErr('Price must be a number.');
     setBusy(true); setErr('');
     const { data: { user } } = await supabase.auth.getUser();
-    const up = await supabase.from('profiles').update({ display_name: b.name.trim(), bio: b.bio.trim(), phone: b.phone.trim() }).eq('id', user!.id);
+    const up = await supabase.from('profiles').update({ display_name: b.name.trim(), bio: b.bio.trim(), phone: b.phone.trim() || null, show_phone: showPhone }).eq('id', user!.id);
     if (up.error) { setBusy(false); return setErr(up.error.message); }
     const { data: svc, error } = await supabase.from('services').insert({
       merchant_id: user!.id,
@@ -126,6 +130,7 @@ export default function Offer() {
         <TextInput style={ui.field} placeholder="Business name" value={b.name} onChangeText={setBiz('name')} />
         <TextInput style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="About your business (optional)" multiline value={b.bio} onChangeText={setBiz('bio')} />
         <TextInput style={ui.field} placeholder="Phone or WhatsApp number" keyboardType="phone-pad" value={b.phone} onChangeText={setBiz('phone')} />
+        <PhoneToggle value={showPhone} onChange={setShowPhone} />
 
         <Text style={[ui.h2, { marginTop: 8 }]}>The service</Text>
         <TextInput style={ui.field} placeholder="Service name (e.g. Wedding photography)" value={f.title} onChangeText={set('title')} />

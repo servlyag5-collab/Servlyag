@@ -34,6 +34,7 @@ export default function RootLayout() {
             <Stack.Screen name="account" />
             <Stack.Screen name="edit/[id]" />
             <Stack.Screen name="checkout" />
+            <Stack.Screen name="chat/[id]" />
           </Stack.Protected>
         </Stack>
       )}

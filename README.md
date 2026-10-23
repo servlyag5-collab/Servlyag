@@ -16,7 +16,7 @@ Copy `src/`, `assets/`, `supabase/`, `app.json` and `.env.example` from this fol
 
 ## 3. Supabase
 1. supabase.com > New project `servly`.
-2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen). Then paste `supabase/upgrade-v7-tier-order.sql` > Run (Business listings show first, then Growth, then Starter).
+2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen). Then paste `supabase/upgrade-v7-tier-order.sql` > Run (Business listings show first, then Growth, then Starter). Then paste `supabase/upgrade-v8-messages.sql` > Run (two-way messages between customers and merchants; existing notes are copied in). Then paste `supabase/upgrade-v9-phone-privacy.sql` > Run (merchants can hide their phone number from customers).
 3. Authentication > Providers > Email: turn OFF "Confirm email" while testing.
 4. Settings > API: copy the Project URL and anon key into a new file `.env` (see `.env.example`). Add `.env` to `.gitignore`.
 
@@ -44,7 +44,7 @@ Press `w` for the web version.
 Merchants cannot pick their tier or page layout. Only you can, in Supabase: Table Editor > `profiles` > `tier_id` (`basic` = Starter, `plus` = Growth, `premium` = Business). Prices, limits and priority live in the `tiers` table. Layouts are in `src/app/service/[id].tsx` (`Listing`). Priority and the free booking flag are set by database triggers, not by the app. When a Starter/Growth merchant ticks the booking box on the Plan screen, it is saved as `profiles.booking_requested`; when you run `activate_plan` after they pay, the add-on is charged and booking is switched on for all their listings. Payments are manual for now.
 
 ## Notes inbox, photos, plans
-- **Inbox:** merchants see notes about their services (unread ones highlighted), with Call and WhatsApp buttons for the customer's number.
+- **Messages:** customers and merchants chat in the app, one conversation per customer per listing, updating live. Unread conversations are highlighted and counted on the ☰ menu. Merchants get Call and WhatsApp buttons when the customer left a number.
 - **Photos:** up to 5 per service, optional, chosen when the service is published and changeable later on the Edit listing screen (JPEG/PNG/WebP, max 5 MB each).
 - **Plan screen:** the merchant chooses a tier (saved as a request). Listings are hidden from customers until the plan is active. You activate a plan after payment: `select public.activate_plan('MERCHANT-USER-ID', 'plus');` (the booking add-on is included automatically if they ticked it). It adds one month and logs the payment in `payments`.
 - **Online payment:** not connected yet. When you pick a provider, put its payment page in `.env` as `EXPO_PUBLIC_PAY_URL`; the Pay button then opens it with `merchant`, `tier`, `booking` and `amount` in the link. A webhook that calls `activate_plan` comes next.

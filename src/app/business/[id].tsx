@@ -7,7 +7,7 @@ import { TopBar } from '../../components/Menu';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
-type P = { display_name: string; bio: string; phone: string | null };
+type P = { display_name: string; bio: string; public_phone: string | null };
 type Svc = { id: string; title: string; photos: string[]; price: number | null; city: string; village: string | null };
 
 export default function Business() {
@@ -16,7 +16,7 @@ export default function Business() {
   const [rows, setRows] = useState<Svc[]>([]);
 
   useEffect(() => {
-    supabase.from('profiles').select('display_name,bio,phone').eq('id', id).single().then(({ data }) => setP(data as P));
+    supabase.from('profiles').select('display_name,bio,public_phone').eq('id', id).single().then(({ data }) => setP(data as P));
     supabase.from('services').select('id,title,photos,price,city,village').eq('merchant_id', id).eq('active', true)
       .order('created_at', { ascending: false }).then(({ data }) => setRows((data as Svc[]) ?? []));
   }, [id]);
@@ -29,9 +29,9 @@ export default function Business() {
           <>
             <Text style={ui.h1}>{p.display_name || 'Servly merchant'}</Text>
             {!!p.bio && <Text style={ui.muted}>{p.bio}</Text>}
-            {!!p.phone && (
-              <Pressable style={[ui.btn, ui.primary]} onPress={() => Linking.openURL(`tel:${p.phone}`)}>
-                <Text style={[ui.btnText, { color: '#fff' }]}>Call {p.phone}</Text>
+            {!!p.public_phone && (
+              <Pressable style={[ui.btn, ui.primary]} onPress={() => Linking.openURL(`tel:${p.public_phone}`)}>
+                <Text style={[ui.btnText, { color: '#fff' }]}>Call {p.public_phone}</Text>
               </Pressable>
             )}
             <Text style={[ui.h2, { marginTop: 12 }]}>Services</Text>
