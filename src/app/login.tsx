@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 
@@ -31,7 +32,7 @@ export default function Login() {
   return (
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
-        <Image source={require('../../assets/logo.png')} style={{ height: 52, width: 196 }} resizeMode="contain" />
+        <TopBar />
         <View style={ui.card}>
           <Text style={ui.h2}>{mode === 'in' ? 'Log in' : 'Create your account'}</Text>
           {mode === 'up' && <TextInput style={ui.field} placeholder="Your name or business name" value={name} onChangeText={setName} />}

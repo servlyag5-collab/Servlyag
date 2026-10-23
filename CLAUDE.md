@@ -12,15 +12,15 @@ Tagline: "Whatever you need, someone's ready."
 - Test on Android with Expo Go (no custom native code yet).
 
 ## Brand
-Flag-inspired colours: blue `#0072C6` (main, trust), red `#CE1126`, black `#111111`, gold `#FCD116`; text `#14212B`; background `#FAFAF7`. Logo: blue map pin with an S; header logo is `assets/logo.png`. Shared styles are in `src/lib/theme.ts`.
+Flag-inspired colours: blue `#0072C6` (main, trust), red `#CE1126`, black `#111111`, gold `#FCD116`; text `#14212B`; background `#FAFAF7`. Logo: blue map pin with an S; header logo is `assets/logo.png`. Shared styles are in `src/lib/theme.ts`. Flag ribbon (`flag` in theme.ts, used around the Home hero card): 3px, mostly blue (sides and long runs), with a centred flag motif: white, red, black, gold sun in the middle, mirrored. Reasons are in theme.ts. Whenever the flag colours are used, include all five, gold too.
 
 ## Business rules (do not change without asking)
 Three subscription tiers, set only by the owner in Supabase (merchants can never choose or change their tier, page layout, priority or free booking):
 | Tier (id) | Price | Listings | Priority in search | Booking app |
 |---|---|---|---|---|
 | Starter (`basic`) | 50 XCD/month | 1 | no | add-on |
-| Growth (`plus`) | 100 XCD/month | 2 | yes | add-on |
-| Business (`premium`) | 150 XCD/month | unlimited | yes | included |
+| Growth (`plus`) | 100 XCD/month | 2 | yes (after Business) | add-on |
+| Business (`premium`) | 150 XCD/month | unlimited | top (first) | included |
 - All tiers: public business profile, direct customer messaging (notes) and call.
 - Booking add-on: 25 XCD/month, per merchant. Starter/Growth merchants tick a checkbox on the Plan screen (`profiles.booking_requested`); `activate_plan` then charges the add-on and switches on `booking_enabled` for all their listings. (`services.booking_requested` is no longer used.)
 - Merchant view: only users with at least one listing can switch between Customer and Merchant view (menu and Account). Publishing a first listing switches them to Merchant view.
@@ -32,12 +32,16 @@ Three subscription tiers, set only by the owner in Supabase (merchants can never
 - Choosing a plan goes straight to `checkout.tsx` (order summary + Pay). Pay opens `EXPO_PUBLIC_PAY_URL`; until a provider is set it shows "Online payment is not connected yet".
 - The owner viewing their own listing in merchant view sees a preview: banner "This is how customers see your listing" + Edit listing; Call, Business profile and the note form are disabled.
 - Every inner screen uses `TopBar` (`src/components/Menu.tsx`): ← Back left, small Servly logo centred (tap = Home via `router.dismissTo('/')`), ☰ right.
+- Search order (Home): Business listings first, then Growth, then Starter; newest first within each tier. This comes from `tiers.priority_rank` (premium 2, plus 1, basic 0), copied to `services.priority`.
+- Opening animation (`src/components/Splash.tsx`, wired in `_layout.tsx`): about 3s, once per launch. The pin drops and bounces, the name slides in, a flag ribbon sweeps, then it fades to the app; it waits for the login check. Reduce-motion users get a still logo.
+- Tags are search-only: merchants set them on Offer/Edit, search matches the whole phrase and each word against tags, and tags are never shown to customers.
+- The login/sign-up screen uses TopBar (Back + logo). The "No services found" card has a red border and no button (Clear filter is next to Search).
 - Customers send a **note** (plus a phone/WhatsApp number) to a listing. They do NOT book times yet.
 - Photos: optional, max 5 per service, chosen when the service is published.
 - Village is an optional field on services and in search. City/Village/text search ignores empty fields (there is no price filter).
 
 ## What exists
-Guest browsing (no account needed to search, view listings and business profiles, or call; an account is needed to send a note, offer a service, or open Inbox/Plan; login returns the user to where they were, and a guest's typed note is sent after sign-up); login/signup; home screen (logo header, display name, ☰ menu for logged-in users or Log in for guests, hero card, search card with Clear filter and a blue Search button, results); Offer a service (business profile fields, service fields, photos); service page (tier layout, photo gallery, Call, Business profile, Send a note); public business profile; ☰ menu (`src/components/Menu.tsx`, light style: Browse, Messages, Bookings only when booking is on (Business tier or add-on), Merchant/Customer view toggle remembered on the device (`src/lib/mode.ts`), Account, Log out; red unread badge in merchant view); Account screen (edit name, bio, phone; merchant view adds plan status and own listings with visible/hidden status); customer Messages (`messages.tsx`, notes I sent); Bookings placeholder (`bookings.tsx`, coming soon); merchant Messages (`inbox.tsx`, Call and WhatsApp buttons; 7-digit numbers get the 1-268 code); Plan screen (booking checkbox on Starter/Growth); Edit listing; Supabase schema in `supabase/schema.sql`, then `supabase/upgrade-v4.sql`, then `supabase/upgrade-v5-guest-browse.sql`, then `supabase/upgrade-v6-tiers-booking.sql`.
+Guest browsing (no account needed to search, view listings and business profiles, or call; an account is needed to send a note, offer a service, or open Inbox/Plan; login returns the user to where they were, and a guest's typed note is sent after sign-up); login/signup; home screen (logo header, display name, ☰ menu for logged-in users or Log in for guests, hero card, search card with Clear filter and a blue Search button, results); Offer a service (business profile fields, service fields, photos); service page (tier layout, photo gallery, Call, Business profile, Send a note); public business profile; ☰ menu (`src/components/Menu.tsx`, light style: Browse, Messages, Bookings only when booking is on (Business tier or add-on), Merchant/Customer view toggle remembered on the device (`src/lib/mode.ts`), Account, Log out; red unread badge in merchant view); Account screen (edit name, bio, phone; merchant view adds plan status and own listings with visible/hidden status); customer Messages (`messages.tsx`, notes I sent); Bookings placeholder (`bookings.tsx`, coming soon); merchant Messages (`inbox.tsx`, Call and WhatsApp buttons; 7-digit numbers get the 1-268 code); Plan screen (booking checkbox on Starter/Growth); Edit listing; Supabase schema in `supabase/schema.sql`, then `supabase/upgrade-v4.sql`, then `supabase/upgrade-v5-guest-browse.sql`, then `supabase/upgrade-v6-tiers-booking.sql`, then `supabase/upgrade-v7-tier-order.sql`.
 
 ## Not built yet (owner's priorities)
 1. Deleting a listing.

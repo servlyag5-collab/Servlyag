@@ -16,7 +16,7 @@ Copy `src/`, `assets/`, `supabase/`, `app.json` and `.env.example` from this fol
 
 ## 3. Supabase
 1. supabase.com > New project `servly`.
-2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen).
+2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen). Then paste `supabase/upgrade-v7-tier-order.sql` > Run (Business listings show first, then Growth, then Starter).
 3. Authentication > Providers > Email: turn OFF "Confirm email" while testing.
 4. Settings > API: copy the Project URL and anon key into a new file `.env` (see `.env.example`). Add `.env` to `.gitignore`.
 
@@ -38,7 +38,7 @@ Press `w` for the web version.
 | Price | 50 XCD/mo | 100 XCD/mo | 150 XCD/mo |
 | Business profile, messaging and call | yes | yes | yes |
 | Service listings | 1 | 2 | unlimited |
-| Priority placement in search | no | yes | yes |
+| Placement in search | after Growth and Business | after Business | first (top) |
 | Booking app | paid add-on (checkbox on Plan screen) | paid add-on (checkbox on Plan screen) | included |
 
 Merchants cannot pick their tier or page layout. Only you can, in Supabase: Table Editor > `profiles` > `tier_id` (`basic` = Starter, `plus` = Growth, `premium` = Business). Prices, limits and priority live in the `tiers` table. Layouts are in `src/app/service/[id].tsx` (`Listing`). Priority and the free booking flag are set by database triggers, not by the app. When a Starter/Growth merchant ticks the booking box on the Plan screen, it is saved as `profiles.booking_requested`; when you run `activate_plan` after they pay, the add-on is charged and booking is switched on for all their listings. Payments are manual for now.

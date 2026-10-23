@@ -9,7 +9,7 @@ import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
-type S = { photos: string[]; merchant_id: string; title: string; description: string; tags: string[]; price: number | null; city: string; village: string | null; profiles: { display_name: string; tier_id: string; phone: string | null } | null };
+type S = { photos: string[]; merchant_id: string; title: string; description: string; price: number | null; city: string; village: string | null; profiles: { display_name: string; tier_id: string; phone: string | null } | null };
 
 // The page structure comes ONLY from the merchant's subscription tier (basic | plus | premium).
 // Merchants cannot choose or change it. Edit the three layouts here.
@@ -18,11 +18,6 @@ function Listing({ s }: { s: S }) {
   const who = s.profiles?.display_name || 'Servly merchant';
   const place = `${s.village ? s.village + ', ' : ''}${s.city}`;
   const price = s.price != null ? `EC$${s.price}` : 'Ask for price';
-  const tags = s.tags.length > 0 && (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      {s.tags.map((t) => <Text key={t} style={{ backgroundColor: colors.field, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, color: colors.ink }}>#{t}</Text>)}
-    </View>
-  );
 
   if (tier === 'basic') return (
     <>
@@ -46,7 +41,6 @@ function Listing({ s }: { s: S }) {
         <Text style={{ color: '#fff', fontSize: 20, fontWeight: '800' }}>{price}</Text>
       </View>
       {!!s.description && <Text style={ui.muted}>{s.description}</Text>}
-      {tags}
       {tier === 'premium' && (
         <View style={ui.card}>
           <Text style={{ fontWeight: '800', fontSize: 18, color: colors.ink }}>About {who}</Text>
@@ -70,7 +64,7 @@ export default function ServiceDetail() {
   const sendAfterLogin = useRef(false);
 
   useEffect(() => {
-    supabase.from('services').select('photos,merchant_id,title,description,tags,price,city,village,profiles(display_name,tier_id,phone)').eq('id', id).single()
+    supabase.from('services').select('photos,merchant_id,title,description,price,city,village,profiles(display_name,tier_id,phone)').eq('id', id).single()
       .then(({ data }) => setS(data as unknown as S));
   }, [id]);
 

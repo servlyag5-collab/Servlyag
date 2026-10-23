@@ -7,9 +7,9 @@ import { Cover } from '../components/Cover';
 import { MenuButton } from '../components/Menu';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
-import { colors, ui } from '../lib/theme';
+import { colors, flag, ui } from '../lib/theme';
 
-type Row = { id: string; title: string; photos: string[]; tags: string[]; price: number | null; city: string; village: string | null; profiles: { display_name: string } | null };
+type Row = { id: string; title: string; photos: string[]; price: number | null; city: string; village: string | null; profiles: { display_name: string } | null };
 const EMPTY = { q: '', city: '', village: '' };
 
 export default function Home() {
@@ -37,12 +37,17 @@ export default function Home() {
     setErr('');
     setBusy(true);
     let q = supabase.from('services')
-      .select('id,title,photos,tags,price,city,village,profiles(display_name)')
+      .select('id,title,photos,price,city,village,profiles(display_name)')
       .eq('active', true).order('priority', { ascending: false }).order('created_at', { ascending: false }).limit(50);
     if (x.city.trim()) q = q.ilike('city', x.city.trim());
     if (x.village.trim()) q = q.ilike('village', x.village.trim());
-    const t = x.q.replace(/[,()%*]/g, ' ').trim();
-    if (t) q = q.or(`title.ilike.%${t}%,description.ilike.%${t}%,tags.cs.{${t.toLowerCase()}}`);
+    // Match the name or description, or any tag equal to the whole search or to one of its words.
+    // Tags are never shown to customers; they only help listings come up here.
+    const t = x.q.replace(/[,()%*{}"\\]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (t) {
+      const words = [...new Set([t, ...t.split(' ')].map((w) => w.toLowerCase()).filter((w) => w.length > 1))];
+      q = q.or([`title.ilike.%${t}%`, `description.ilike.%${t}%`, ...words.map((w) => `tags.cs.{"${w}"}`)].join(','));
+    }
     const { data, error } = await q;
     setBusy(false);
     if (error) return setErr('Something went wrong. Please try again.');
@@ -66,7 +71,13 @@ export default function Home() {
           )}
         </View>
 
-        <View style={ui.card}>
+        {/* Hero card in a flag ribbon (mostly blue, with red, black, gold and white; see `flag` in theme.ts) and a soft blue glow. */}
+        <View style={{ borderRadius: 26, boxShadow: '0px 8px 24px rgba(0, 114, 198, 0.18)' }}>
+          <View style={{ borderRadius: 26, padding: 3, overflow: 'hidden' }}>
+            <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' }}>
+              {flag.map((s, i) => <View key={i} style={{ flex: s.flex, backgroundColor: s.color }} />)}
+            </View>
+        <View style={[ui.card, { borderWidth: 0, borderRadius: 23 }]}>
           <Text style={{ color: colors.blue, fontWeight: '800', letterSpacing: 2, fontSize: 13 }}>SERVLY AG / MARKETPLACE</Text>
           <Text style={ui.h1}>Find someone good for the job.</Text>
           <Text style={ui.muted}>Search local services by name or tag, pick a city or village, and send the merchant a note.</Text>
@@ -76,12 +87,18 @@ export default function Home() {
             <Ionicons name="arrow-forward" size={18} color={colors.ink} />
           </Pressable>
         </View>
+          </View>
+        </View>
 
         <Text style={[ui.h2, { marginTop: 8 }]}>Services near you</Text>
         <View style={ui.card}>
-          <View style={[ui.field, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
-            <Ionicons name="search" size={20} color={colors.muted} />
-            <TextInput style={{ flex: 1, fontSize: 16, color: colors.ink }} placeholder="Try ‘home cleaning’ or ‘barber’" value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" />
+          {/* The whole box is the text field (so any tap starts typing); the icon sits on top and ignores taps. */}
+          <View>
+            <TextInput style={[ui.field, { paddingLeft: 44 }]} placeholder="Try ‘home cleaning’ or ‘barber’" placeholderTextColor={colors.muted}
+              value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false} />
+            <View pointerEvents="none" style={{ position: 'absolute', left: 14, top: 0, bottom: 0, justifyContent: 'center' }}>
+              <Ionicons name="search" size={20} color={colors.muted} />
+            </View>
           </View>
           <View style={ui.row}>
             <TextInput style={[ui.field, { flex: 1 }]} placeholder="City" value={f.city} onChangeText={set('city')} onSubmitEditing={search} />
@@ -99,9 +116,8 @@ export default function Home() {
         <View onLayout={(e) => { resultsY.current = e.nativeEvent.layout.y; }} style={{ gap: 12 }}>
           {rows && <Text style={ui.muted}>{rows.length} {rows.length === 1 ? 'service' : 'services'} found</Text>}
           {rows?.length === 0 && (
-            <View style={ui.card}>
+            <View style={[ui.card, { borderColor: colors.red, borderWidth: 2 }]}>
               <Text style={ui.muted}>No services found. Try different words or clear the filters.</Text>
-              <Pressable style={[ui.btn, ui.outline]} onPress={clear}><Text style={[ui.btnText, { color: colors.ink }]}>Clear filter</Text></Pressable>
             </View>
           )}
           {rows?.map((s) => (
@@ -111,7 +127,6 @@ export default function Home() {
                 <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink }}>{s.title}</Text>
                 <Text style={ui.muted}>{s.profiles?.display_name || 'Servly merchant'} · {s.village ? `${s.village}, ` : ''}{s.city}</Text>
                 <Text style={{ fontSize: 16, fontWeight: '700', color: colors.blue }}>{s.price != null ? `EC$${s.price}` : 'Ask for price'}</Text>
-                {s.tags.length > 0 && <Text style={{ color: colors.muted }} numberOfLines={1}>{s.tags.map((t) => `#${t}`).join('  ')}</Text>}
               </View>
             </Pressable>
           ))}

@@ -67,7 +67,7 @@ export default function Plan() {
                   <Text style={ui.h2}>{t.name} · {t.monthly_price} XCD / month</Text>
                   <Text style={ui.muted}>Business profile, customer messaging and call</Text>
                   <Text style={ui.muted}>{t.max_services ?? 'Unlimited'} service listing{t.max_services === 1 ? '' : 's'}</Text>
-                  {t.priority_rank > 0 && <Text style={ui.muted}>Priority placement in search</Text>}
+                  {t.priority_rank > 0 && <Text style={ui.muted}>{t.priority_rank > 1 ? 'Top placement in search' : 'Priority placement in search'}</Text>}
                   {t.booking_included ? <Text style={ui.muted}>Booking app included</Text> : (
                     <Pressable style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }} onPress={() => setBookingFor(bookingFor === t.id ? null : t.id)}>
                       <Ionicons name={withBooking(t) ? 'checkbox' : 'square-outline'} size={26} color={colors.blue} />

@@ -130,7 +130,8 @@ export default function Offer() {
         <Text style={[ui.h2, { marginTop: 8 }]}>The service</Text>
         <TextInput style={ui.field} placeholder="Service name (e.g. Wedding photography)" value={f.title} onChangeText={set('title')} />
         <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Describe what you offer" multiline value={f.description} onChangeText={set('description')} />
-        <TextInput style={ui.field} placeholder="Tags, separated by commas (photographer, events)" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
+        <TextInput style={ui.field} placeholder="Search tags, separated by commas (photographer, events)" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
+        <Text style={[ui.muted, { fontSize: 14, marginTop: -6 }]}>Tags help customers find you in search. They are not shown on your listing.</Text>
         <TextInput style={ui.field} placeholder="Price in EC$ (optional)" keyboardType="decimal-pad" value={f.price} onChangeText={set('price')} />
         <TextInput style={ui.field} placeholder="City" value={f.city} onChangeText={set('city')} />
         <TextInput style={ui.field} placeholder="Village (optional)" value={f.village} onChangeText={set('village')} />
