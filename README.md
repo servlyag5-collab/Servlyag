@@ -53,6 +53,9 @@ Merchants cannot pick their tier or page layout. Only you can, in Supabase: Tabl
 - **Receipts:** every payment logged by `activate_plan` appears under Account > Receipts with a Download button. Put your business details in `SELLER` in `src/lib/receipt.ts`.
 - **Reviews:** customers who have messaged a merchant can leave one review (1-5 stars) and edit it later. Merchants can tap "Ask for a review" in a chat.
 
+## Demo businesses (for testing)
+To see the app with real-looking merchants, run `supabase/demo-accounts.sql` in the SQL Editor: 10 made-up businesses (5 Starter, 3 Growth, 2 Business) with listings and active plans. Their emails end in `@demo.servly.test`, they have no password, and their phone numbers are fake 555 numbers. Remove them all with `supabase/demo-accounts-remove.sql`.
+
 ## Next: the booking app
 Customer picks a date and time; the merchant confirms, declines, or proposes another time.
 
