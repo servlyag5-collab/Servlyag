@@ -4,7 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { colors, flag } from './theme';
 
 // Your business details, printed at the top of every receipt. Fill in what you'd like merchants to see.
-export const SELLER = { name: 'Servly AG', address: 'Antigua and Barbuda', email: '', website: 'servly.ag' };
+export const SELLER = { name: 'Servly AG', address: 'St. Mary\'s, Antigua and Barbuda', email: 'servlyag5@gmail.com', website: '' };
 
 export type Payment = {
   id: string; tier_id: string; amount: number; currency: string; booking_addon: boolean;
