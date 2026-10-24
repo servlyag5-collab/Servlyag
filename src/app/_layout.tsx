@@ -37,7 +37,7 @@ export default function RootLayout() {
             <Stack.Screen name="checkout" />
             <Stack.Screen name="chat/[id]" />
             <Stack.Screen name="support" />
-            <Stack.Screen name="review/[merchantId]" />
+            <Stack.Screen name="review/[serviceId]" />
           </Stack.Protected>
         </Stack>
       )}

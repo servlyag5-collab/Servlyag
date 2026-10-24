@@ -120,7 +120,7 @@ export default function Chat() {
                 <Text style={{ color: colors.ink, fontSize: 16, lineHeight: 22 }}>{m.body}</Text>
                 {!mine && (
                   <Pressable style={[ui.btn, { height: 44, backgroundColor: colors.gold }]}
-                    onPress={() => router.push({ pathname: '/review/[merchantId]', params: { merchantId: c.merchant_id } })}>
+                    onPress={() => router.push({ pathname: '/review/[serviceId]', params: { serviceId: c.service_id } })}>
                     <Text style={[ui.btnText, { color: colors.ink }]}>Leave a review</Text>
                   </Pressable>
                 )}

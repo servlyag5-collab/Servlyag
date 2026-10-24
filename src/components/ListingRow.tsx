@@ -6,6 +6,7 @@ import { formatPrice } from '../lib/price';
 import type { Rating } from '../lib/reviews';
 import { colors } from '../lib/theme';
 import { Cover } from './Cover';
+import { RatingSummary } from './Stars';
 
 export type CardListing = {
   id: string; merchant_id: string; title: string; photos: string[]; price: number | null; price_from: boolean;
@@ -15,7 +16,7 @@ export type CardListing = {
 const CARD_W = 240;
 const GAP = 12;
 
-// One listing card: cover on top, rating, two-line title, business name, price bottom right.
+// One listing card: cover on top, five-star rating, two-line title, business name, price bottom right.
 function ListingCard({ s, rating }: { s: CardListing; rating?: Rating }) {
   const price = formatPrice(s.price, s.price_from);
   return (
@@ -23,12 +24,8 @@ function ListingCard({ s, rating }: { s: CardListing; rating?: Rating }) {
       style={{ width: CARD_W, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
       <Cover photos={s.photos} title={s.title} width={CARD_W} height={150} radius={0} />
       <View style={{ padding: 12, gap: 6, flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Ionicons name={rating?.total ? 'star' : 'star-outline'} size={15} color={rating?.total ? colors.gold : '#C99A00'} />
-          {rating?.total
-            ? <Text style={{ fontSize: 15, color: colors.muted }}><Text style={{ fontWeight: '800', color: colors.ink }}>{rating.average.toFixed(1)}</Text> ({rating.total})</Text>
-            : <Text style={{ fontSize: 14, color: colors.muted }}>New</Text>}
-        </View>
+        {/* Five stars and "4.0/5 · 12 reviews", shown only once the merchant has a review. */}
+        <RatingSummary rating={rating} size={13} />
         <Text style={{ fontSize: 17, fontWeight: '700', color: colors.ink, lineHeight: 22, minHeight: 44 }} numberOfLines={2}>{s.title}</Text>
         <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
           {s.profiles?.display_name || 'Servly merchant'} · {s.village || s.city}
@@ -77,7 +74,7 @@ export function ListingRow({ title, rows, ratings }: { title: string; rows: Card
       <ScrollView ref={sc} horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast"
         snapToInterval={CARD_W + GAP} snapToAlignment="start" contentContainerStyle={{ gap: GAP, paddingRight: 16 }}
         onScroll={(e) => { x.current = e.nativeEvent.contentOffset.x; }} scrollEventThrottle={32}>
-        {rows.map((s) => <ListingCard key={s.id} s={s} rating={ratings[s.merchant_id]} />)}
+        {rows.map((s) => <ListingCard key={s.id} s={s} rating={ratings[s.id]} />)}
       </ScrollView>
     </View>
   );

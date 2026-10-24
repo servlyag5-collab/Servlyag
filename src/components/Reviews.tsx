@@ -7,9 +7,12 @@ import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 import { RatingSummary, Stars } from './Stars';
 
-// A merchant's reviews: average, count, the latest few, and a Write/Edit button for real customers.
-// `limit` shows only the newest few with a "See all" link; `allowWrite` is off in the owner's preview.
-export function Reviews({ merchantId, limit, allowWrite = true }: { merchantId: string; limit?: number; allowWrite?: boolean }) {
+// Reviews for ONE listing (pass serviceId, e.g. on the listing page) or for a whole business
+// (pass only merchantId, e.g. the business profile; each review then says which listing it's about).
+// `limit` shows the newest few with a "See all" link; `allowWrite` is off in the owner's preview.
+export function Reviews({ merchantId, serviceId, limit, allowWrite = true }: {
+  merchantId: string; serviceId?: string; limit?: number; allowWrite?: boolean;
+}) {
   const session = useSession();
   const uid = session?.user.id;
   const [rating, setRating] = useState<Rating | undefined>();
@@ -18,19 +21,22 @@ export function Reviews({ merchantId, limit, allowWrite = true }: { merchantId: 
   const [mine, setMine] = useState<boolean | null>(null); // null = can't review, false = can write, true = can edit
 
   useFocusEffect(useCallback(() => {
-    let q = supabase.from('reviews').select('*,customer:profiles!customer_id(display_name)')
-      .eq('merchant_id', merchantId).order('created_at', { ascending: false });
+    let q = supabase.from('reviews').select('*,customer:profiles!customer_id(display_name),services(title)').order('created_at', { ascending: false });
+    q = serviceId ? q.eq('service_id', serviceId) : q.eq('merchant_id', merchantId);
     if (limit) q = q.limit(limit);
     q.then(({ data, error }) => { setErr(error?.message ?? ''); setRows((data as unknown as Review[]) ?? []); });
-    supabase.from('merchant_ratings').select('average,total').eq('merchant_id', merchantId).maybeSingle()
-      .then(({ data }) => setRating(data ? { average: Number(data.average), total: data.total } : undefined));
-    if (uid && allowWrite) {
+    (serviceId
+      ? supabase.from('service_ratings').select('average,total').eq('service_id', serviceId).maybeSingle()
+      : supabase.from('merchant_ratings').select('average,total').eq('merchant_id', merchantId).maybeSingle()
+    ).then(({ data }) => setRating(data ? { average: Number(data.average), total: data.total } : undefined));
+    // Writing is per listing, so the button only appears on a listing's own reviews.
+    if (uid && serviceId && allowWrite && uid !== merchantId) {
       Promise.all([
-        canReview(merchantId, uid),
-        supabase.from('reviews').select('id').eq('merchant_id', merchantId).eq('customer_id', uid).maybeSingle(),
+        canReview(serviceId, uid),
+        supabase.from('reviews').select('id').eq('service_id', serviceId).eq('customer_id', uid).maybeSingle(),
       ]).then(([ok, r]) => setMine(r.data ? true : ok ? false : null));
     } else setMine(null);
-  }, [merchantId, uid, limit, allowWrite]));
+  }, [merchantId, serviceId, uid, limit, allowWrite]));
 
   const total = rating?.total ?? 0;
   return (
@@ -48,16 +54,17 @@ export function Reviews({ merchantId, limit, allowWrite = true }: { merchantId: 
             <Text style={{ fontSize: 12, color: colors.muted }}>{new Date(r.updated_at).toLocaleDateString()}</Text>
           </View>
           <Stars value={r.rating} size={16} />
+          {!serviceId && !!r.services?.title && <Text style={{ fontSize: 13, fontWeight: '700', color: colors.blue }}>About: {r.services.title}</Text>}
           {!!r.comment && <Text style={[ui.muted, { color: colors.ink }]}>{r.comment}</Text>}
         </View>
       ))}
       {!!limit && total > limit && (
-        <Pressable onPress={() => router.push({ pathname: '/reviews/[merchantId]', params: { merchantId } })}>
+        <Pressable onPress={() => router.push({ pathname: '/reviews/[merchantId]', params: serviceId ? { merchantId, service: serviceId } : { merchantId } })}>
           <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>See all {total} reviews</Text>
         </Pressable>
       )}
-      {mine !== null && (
-        <Pressable style={[ui.btn, ui.outline]} onPress={() => router.push({ pathname: '/review/[merchantId]', params: { merchantId } })}>
+      {mine !== null && serviceId && (
+        <Pressable style={[ui.btn, ui.outline]} onPress={() => router.push({ pathname: '/review/[serviceId]', params: { serviceId } })}>
           <Text style={[ui.btnText, { color: colors.ink }]}>{mine ? 'Edit your review' : 'Write a review'}</Text>
         </Pressable>
       )}

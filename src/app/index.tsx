@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ListingRow, type CardListing } from '../components/ListingRow';
 import { FlagFrame } from '../components/FlagFrame';
 import { MenuButton } from '../components/Menu';
-import { fetchRatings, type Rating } from '../lib/reviews';
+import { fetchListingRatings, type Rating } from '../lib/reviews';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
@@ -62,7 +62,7 @@ export default function Home() {
     if (error) return setErr('Something went wrong. Please try again.');
     const list = data as unknown as Row[];
     setRows(list);
-    fetchRatings(list.map((r) => r.merchant_id)).then(setRatings);
+    fetchListingRatings(list.map((r) => r.id)).then(setRatings);
     if (scroll) setTimeout(() => sc.current?.scrollTo({ y: resultsY.current, animated: true }), 60);
   }
   const search = () => run(f, true);

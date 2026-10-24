@@ -127,7 +127,7 @@ export default function ServiceDetail() {
                 </ScrollView>
               </>
             )}
-            <Reviews merchantId={s.merchant_id} limit={3} allowWrite={!preview} />
+            <Reviews merchantId={s.merchant_id} serviceId={id} limit={3} allowWrite={!preview} />
             <Text style={[ui.h2, { marginTop: 4 }]}>Send a note</Text>
             {!!convId && !preview && (
               <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: convId } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

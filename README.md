@@ -16,7 +16,7 @@ Copy `src/`, `assets/`, `supabase/`, `app.json` and `.env.example` from this fol
 
 ## 3. Supabase
 1. supabase.com > New project `servly`.
-2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen). Then paste `supabase/upgrade-v7-tier-order.sql` > Run (Business listings show first, then Growth, then Starter). Then paste `supabase/upgrade-v8-messages.sql` > Run (two-way messages between customers and merchants; existing notes are copied in). Then paste `supabase/upgrade-v9-phone-privacy.sql` > Run (merchants can hide their phone number from customers). Then paste `supabase/upgrade-v10-support-reviews.sql` > Run (contact support and reviews). Then paste `supabase/upgrade-v11-price-from.sql` > Run ("From" starting prices).
+2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen). Then paste `supabase/upgrade-v7-tier-order.sql` > Run (Business listings show first, then Growth, then Starter). Then paste `supabase/upgrade-v8-messages.sql` > Run (two-way messages between customers and merchants; existing notes are copied in). Then paste `supabase/upgrade-v9-phone-privacy.sql` > Run (merchants can hide their phone number from customers). Then paste `supabase/upgrade-v10-support-reviews.sql` > Run (contact support and reviews). Then paste `supabase/upgrade-v11-price-from.sql` > Run ("From" starting prices). Then paste `supabase/upgrade-v12-listing-reviews.sql` > Run (reviews belong to a listing, not the whole business).
 3. Authentication > Providers > Email: turn OFF "Confirm email" while testing.
 4. Settings > API: copy the Project URL and anon key into a new file `.env` (see `.env.example`). Add `.env` to `.gitignore`.
 
@@ -51,7 +51,7 @@ Merchants cannot pick their tier or page layout. Only you can, in Supabase: Tabl
 - **Booking add-on:** 25 XCD / month (table `addons`).
 - **Support:** merchants use Contact support in the ☰ menu. Read and answer in Table Editor > `support_tickets`: type your answer in `reply` and set `status` to `resolved`.
 - **Receipts:** every payment logged by `activate_plan` appears under Account > Receipts with a Download button. Put your business details in `SELLER` in `src/lib/receipt.ts`.
-- **Reviews:** customers who have messaged a merchant can leave one review (1-5 stars) and edit it later. Merchants can tap "Ask for a review" in a chat.
+- **Reviews:** each review is about one listing. Customers who have messaged about a listing can leave one review of it (1-5 stars) and edit it later. The business profile shows all of a business's reviews together. Merchants can tap "Ask for a review" in a chat.
 
 ## Demo businesses (for testing)
 To see the app with real-looking merchants, run `supabase/demo-accounts.sql` in the SQL Editor: 10 made-up businesses (5 Starter, 3 Growth, 2 Business) with listings and active plans. Their emails end in `@demo.servly.test`, they have no password, and their phone numbers are fake 555 numbers. Remove them all with `supabase/demo-accounts-remove.sql`.

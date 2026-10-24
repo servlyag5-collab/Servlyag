@@ -7,9 +7,9 @@ import { Reviews } from '../../components/Reviews';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
-// Every review of one merchant. Open to everyone, guests included.
+// Every review of one listing (?service=...) or of a whole business. Open to everyone, guests included.
 export default function AllReviews() {
-  const { merchantId } = useLocalSearchParams<{ merchantId: string }>();
+  const { merchantId, service } = useLocalSearchParams<{ merchantId: string; service?: string }>();
   const [name, setName] = useState('');
   useEffect(() => {
     supabase.from('profiles').select('display_name').eq('id', merchantId).maybeSingle().then(({ data }) => setName(data?.display_name ?? ''));
@@ -19,7 +19,7 @@ export default function AllReviews() {
       <ScrollView contentContainerStyle={ui.page}>
         <TopBar />
         {!!name && <Text style={{ fontSize: 18, fontWeight: '700', color: colors.blue }}>{name}</Text>}
-        <Reviews merchantId={merchantId} />
+        <Reviews merchantId={merchantId} serviceId={service} />
       </ScrollView>
     </SafeAreaView>
   );
