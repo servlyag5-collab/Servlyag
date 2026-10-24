@@ -3,6 +3,7 @@ import { Image, Modal, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, usePathname, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { hasBookingApp } from '../lib/bookings';
 import { isUnread, type Conversation } from '../lib/chat';
 import { setMode, useMode } from '../lib/mode';
 import { useSession } from '../lib/session';
@@ -36,14 +37,8 @@ export function MenuButton() {
     supabase.from('conversations').select('id,customer_id,merchant_id,last_message,last_message_at,customer_read_at,merchant_read_at')
       .eq(mode === 'merchant' ? 'merchant_id' : 'customer_id', uid).limit(500)
       .then(({ data }) => setUnread(((data as Conversation[]) ?? []).filter((c) => isUnread(c, uid)).length));
-    // Bookings shows when the tier includes it (Business) or the owner switched the add-on on.
-    Promise.all([
-      supabase.from('profiles').select('tiers!tier_id(booking_included)').eq('id', uid).single(),
-      supabase.from('services').select('id').eq('merchant_id', uid).eq('booking_enabled', true).limit(1),
-    ]).then(([p, s]) => {
-      const tier = p.data?.tiers as unknown as { booking_included: boolean } | null;
-      setHasBooking(!!tier?.booking_included || (s.data?.length ?? 0) > 0);
-    });
+    // Merchant Bookings shows when they have the booking app (Business tier, or the paid add-on).
+    hasBookingApp().then(setHasBooking);
   }, [uid, mode]));
 
   if (!session) return null;
@@ -53,8 +48,8 @@ export function MenuButton() {
   function toggle() {
     setOpen(false);
     setMode(merchant ? 'customer' : 'merchant');
-    // Bookings is merchant-only; Messages simply switches to the other view's conversations.
-    if (merchant && path === '/bookings') router.replace('/messages');
+    // Messages and Bookings simply switch to the other view's list; a merchant without the booking app leaves Bookings.
+    if (!merchant && path === '/bookings' && !hasBooking) router.replace('/messages');
   }
 
   async function logOut() {
@@ -67,7 +62,9 @@ export function MenuButton() {
   const items: Item[] = [
     { label: 'Browse', path: '/', onPress: () => go('/') },
     { label: 'Messages', path: '/messages', badge: unread, onPress: () => go('/messages') },
-    ...(merchant && hasBooking ? [{ label: 'Bookings', path: '/bookings', onPress: () => go('/bookings') }] : []),
+    ...(merchant
+      ? (hasBooking ? [{ label: 'Bookings', path: '/bookings', onPress: () => go('/bookings') }] : [])
+      : [{ label: 'My bookings', path: '/bookings', onPress: () => go('/bookings') }]),
     ...(hasListings ? [{ label: merchant ? 'Customer' : 'Merchant', hint: merchant ? 'Switch to customer view' : 'Switch to merchant view', onPress: toggle }] : []),
     { label: 'Account', path: '/account', onPress: () => go('/account') },
     ...(merchant ? [{ label: 'Contact support', hint: 'Billing or other problems', path: '/support', onPress: () => go('/support') }] : []),

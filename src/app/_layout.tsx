@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Splash } from '../components/Splash';
@@ -7,6 +7,13 @@ import { useSession } from '../lib/session';
 import { colors } from '../lib/theme';
 
 let splashPlayed = false; // the opening animation plays once per app launch
+
+// A password reset link that landed on another page (e.g. one sent from the Supabase dashboard goes to the
+// Site URL home page): forward it, with its one-time code, to the Set a new password screen.
+if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.pathname !== '/reset-password'
+    && /type=recovery/.test(window.location.hash)) {
+  window.location.replace(`/reset-password${window.location.hash}`);
+}
 
 export default function RootLayout() {
   const session = useSession();
@@ -25,6 +32,7 @@ export default function RootLayout() {
           <Stack.Screen name="service/[id]" />
           <Stack.Screen name="business/[id]" />
           <Stack.Screen name="login" />
+          <Stack.Screen name="reset-password" />
           <Stack.Screen name="reviews/[merchantId]" />
           <Stack.Protected guard={!!session}>
             <Stack.Screen name="offer" />
@@ -38,6 +46,7 @@ export default function RootLayout() {
             <Stack.Screen name="chat/[id]" />
             <Stack.Screen name="support" />
             <Stack.Screen name="review/[serviceId]" />
+            <Stack.Screen name="book/[conversationId]" />
           </Stack.Protected>
         </Stack>
       )}

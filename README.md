@@ -16,8 +16,10 @@ Copy `src/`, `assets/`, `supabase/`, `app.json` and `.env.example` from this fol
 
 ## 3. Supabase
 1. supabase.com > New project `servly`.
-2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen). Then paste `supabase/upgrade-v7-tier-order.sql` > Run (Business listings show first, then Growth, then Starter). Then paste `supabase/upgrade-v8-messages.sql` > Run (two-way messages between customers and merchants; existing notes are copied in). Then paste `supabase/upgrade-v9-phone-privacy.sql` > Run (merchants can hide their phone number from customers). Then paste `supabase/upgrade-v10-support-reviews.sql` > Run (contact support and reviews). Then paste `supabase/upgrade-v11-price-from.sql` > Run ("From" starting prices). Then paste `supabase/upgrade-v12-listing-reviews.sql` > Run (reviews belong to a listing, not the whole business).
+2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen). Then paste `supabase/upgrade-v7-tier-order.sql` > Run (Business listings show first, then Growth, then Starter). Then paste `supabase/upgrade-v8-messages.sql` > Run (two-way messages between customers and merchants; existing notes are copied in). Then paste `supabase/upgrade-v9-phone-privacy.sql` > Run (merchants can hide their phone number from customers). Then paste `supabase/upgrade-v10-support-reviews.sql` > Run (contact support and reviews). Then paste `supabase/upgrade-v11-price-from.sql` > Run ("From" starting prices). Then paste `supabase/upgrade-v12-listing-reviews.sql` > Run (reviews belong to a listing, not the whole business). Then paste `supabase/upgrade-v13-bookings.sql` > Run (the booking app and its reminders; Supabase warns about a "destructive" line, which only widens the allowed message types).
 3. Authentication > Providers > Email: turn OFF "Confirm email" while testing.
+   Authentication > URL Configuration > Redirect URLs: add `http://localhost:8081/reset-password`, `http://127.0.0.1:8081/reset-password`, `servlyag://reset-password` and `exp://**` (so "Forgot password?" links open the app's Set a new password screen). Add your real website's `/reset-password` address when you publish.
+   Supabase's built-in email only sends a few emails an hour and only to your Supabase team's addresses. Before real customers can get password reset emails, connect an email provider under Authentication > Emails > SMTP Settings.
 4. Settings > API: copy the Project URL and anon key into a new file `.env` (see `.env.example`). Add `.env` to `.gitignore`.
 
 ## 4. Run
@@ -56,8 +58,8 @@ Merchants cannot pick their tier or page layout. Only you can, in Supabase: Tabl
 ## Demo businesses (for testing)
 To see the app with real-looking merchants, run `supabase/demo-accounts.sql` in the SQL Editor: 10 made-up businesses (5 Starter, 3 Growth, 2 Business) with listings and active plans. Their emails end in `@demo.servly.test`, they have no password, and their phone numbers are fake 555 numbers. Remove them all with `supabase/demo-accounts-remove.sql`.
 
-## Next: the booking app
-Customer picks a date and time; the merchant confirms, declines, or proposes another time.
+## Booking app
+Merchants with the booking app (Business plan, or the add-on) open a customer's chat and tap "Book this customer", pick a date and time, and send it. The customer taps Confirm or Decline on the booking card. Merchants can cancel from the chat or the Bookings screen. Confirmed bookings get reminder messages in the chat 5 days and 3 days before (9:00 AM Antigua time) and on the day (7:00 AM). Customers see theirs under My bookings.
 
 ## Not built yet
-The booking app, online payment connection, deleting a listing, Settings screen, push notifications.
+Phone notifications for booking reminders, online payment connection, deleting a listing, Settings screen, push notifications.

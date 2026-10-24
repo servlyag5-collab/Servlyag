@@ -3,7 +3,9 @@ import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, 
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BookingCard } from '../../components/BookingCard';
 import { TopBar } from '../../components/Menu';
+import { hasBookingApp, type Booking } from '../../lib/bookings';
 import { channelName, phoneDigits, type Conversation, type Message } from '../../lib/chat';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
@@ -28,6 +30,13 @@ export default function Chat() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const sc = useRef<ScrollViewInstance>(null);
+  const [bookings, setBookings] = useState<Record<string, Booking>>({});
+  const [canBook, setCanBook] = useState(false); // merchant has the booking app
+
+  const loadBookings = useCallback(() => {
+    supabase.from('bookings').select('*').eq('conversation_id', id)
+      .then(({ data }) => setBookings(Object.fromEntries(((data as Booking[]) ?? []).map((b) => [b.id, b]))));
+  }, [id]);
 
   // Add a message once, whether it came from my own send or from the live feed.
   const add = useCallback((m: Message) => setRows((r) => (r?.some((x) => x.id === m.id) ? r : [...(r ?? []), m])), []);
@@ -37,16 +46,24 @@ export default function Chat() {
     supabase.from('conversations')
       .select('*,services(title),customer:profiles!customer_id(display_name),merchant:profiles!merchant_id(display_name)')
       .eq('id', id).single()
-      .then(({ data, error }) => { if (!data) return setErr(error?.message ?? 'Conversation not found.'); setC(data as unknown as Conv); });
+      .then(({ data, error }) => {
+        if (!data) return setErr(error?.message ?? 'Conversation not found.');
+        const conv = data as unknown as Conv;
+        setC(conv);
+        if (conv.merchant_id === uid) hasBookingApp().then(setCanBook);
+      });
     supabase.from('messages').select('*').eq('conversation_id', id).order('created_at')
       .then(({ data }) => setRows((data as Message[]) ?? []));
+    loadBookings();
     markRead(id);
-    // Live: the other person's new messages appear straight away.
+    // Live: new messages appear straight away, and booking cards update when answered or cancelled.
     const ch = supabase.channel(channelName(`chat-${id}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${id}` }, (p) => {
         add(p.new as Message);
         markRead(id);
+        if ((p.new as Message).booking_id) loadBookings();
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `conversation_id=eq.${id}` }, () => loadBookings())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [id, uid]);
@@ -94,11 +111,20 @@ export default function Chat() {
                 </View>
               )}
               {iAmMerchant && (
-                <Pressable onPress={() => send('review_request')} disabled={busy}
-                  style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.gold, backgroundColor: '#FFFBEA' }}>
-                  <Ionicons name="star" size={16} color={colors.gold} />
-                  <Text style={{ fontWeight: '700', color: colors.ink }}>Ask for a review</Text>
-                </Pressable>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {canBook && (
+                    <Pressable onPress={() => router.push({ pathname: '/book/[conversationId]', params: { conversationId: id } })}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.blue }}>
+                      <Ionicons name="calendar" size={16} color="#fff" />
+                      <Text style={{ fontWeight: '700', color: '#fff' }}>Book this customer</Text>
+                    </Pressable>
+                  )}
+                  <Pressable onPress={() => send('review_request')} disabled={busy}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.gold, backgroundColor: '#FFFBEA' }}>
+                    <Ionicons name="star" size={16} color={colors.gold} />
+                    <Text style={{ fontWeight: '700', color: colors.ink }}>Ask for a review</Text>
+                  </Pressable>
+                </View>
               )}
             </>
           )}
@@ -110,6 +136,23 @@ export default function Chat() {
           {rows?.length === 0 && <Text style={[ui.muted, { textAlign: 'center' }]}>No messages yet. Say hello!</Text>}
           {rows?.map((m) => {
             const mine = m.sender_id === uid;
+            // A booking request: the live booking card (Confirm/Decline for the customer, Cancel for the merchant).
+            if (m.kind === 'booking' && m.booking_id && bookings[m.booking_id]) return (
+              <View key={m.id} style={{ alignSelf: 'stretch' }}>
+                <BookingCard b={bookings[m.booking_id]} iAmMerchant={iAmMerchant} title={iAmMerchant ? 'You sent a booking' : 'Booking request'}
+                  subtitle={c?.services?.title} onChanged={loadBookings} />
+              </View>
+            );
+            // An automatic reminder before a confirmed booking.
+            if (m.kind === 'booking_reminder') return (
+              <View key={m.id} style={{ alignSelf: 'center', maxWidth: '90%', flexDirection: 'row', gap: 8, alignItems: 'flex-start', backgroundColor: '#FFFBEA', borderWidth: 1, borderColor: colors.gold, borderRadius: 14, padding: 12 }}>
+                <Ionicons name="notifications" size={18} color="#B07C00" />
+                <View style={{ flexShrink: 1, gap: 4 }}>
+                  <Text style={{ color: colors.ink, fontSize: 15, lineHeight: 21 }}>{m.body}</Text>
+                  <Text style={{ color: colors.muted, fontSize: 11 }}>{when(m.created_at)}</Text>
+                </View>
+              </View>
+            );
             // The merchant's review request: a highlighted card; the customer gets a Leave a review button.
             if (m.kind === 'review_request' && c) return (
               <View key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%', backgroundColor: '#FFFBEA', borderWidth: 1, borderColor: colors.gold, borderRadius: 18, padding: 14, gap: 8 }}>
