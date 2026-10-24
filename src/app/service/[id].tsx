@@ -5,6 +5,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover, photoUrl } from '../../components/Cover';
 import { TopBar } from '../../components/Menu';
+import { Reviews } from '../../components/Reviews';
 import { findConversation, sendFromListing } from '../../lib/chat';
 import { useMode } from '../../lib/mode';
 import { useSession } from '../../lib/session';
@@ -125,6 +126,7 @@ export default function ServiceDetail() {
                 </ScrollView>
               </>
             )}
+            <Reviews merchantId={s.merchant_id} limit={3} allowWrite={!preview} />
             <Text style={[ui.h2, { marginTop: 4 }]}>Send a note</Text>
             {!!convId && !preview && (
               <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: convId } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

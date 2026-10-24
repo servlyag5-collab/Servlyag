@@ -1,11 +1,13 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../components/Cover';
 import { TopBar } from '../components/Menu';
 import { PhoneToggle } from '../components/PhoneToggle';
 import { setMode, useMode } from '../lib/mode';
+import { downloadReceipt, money, receiptNumber, type Payment } from '../lib/receipt';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
@@ -24,6 +26,8 @@ export default function Account() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [loadErr, setLoadErr] = useState('');
+  const [pays, setPays] = useState<Payment[] | null>(null);
+  const [payErr, setPayErr] = useState('');
   const setBiz = (k: keyof typeof b) => (v: string) => { setB((p) => ({ ...p, [k]: v })); setMsg(''); };
 
   useFocusEffect(useCallback(() => {
@@ -43,7 +47,15 @@ export default function Account() {
     supabase.from('services').select('id,title,photos,price,city,village,active').eq('merchant_id', uid)
       .order('created_at', { ascending: false })
       .then(({ data }) => setRows((data as Svc[]) ?? []));
+    // Every plan payment (logged by activate_plan) has a receipt.
+    supabase.from('payments').select('*,tiers(name)').eq('merchant_id', uid).order('paid_at', { ascending: false })
+      .then(({ data, error }) => { setPayErr(error?.message ?? ''); setPays((data as Payment[]) ?? []); });
   }, [uid]));
+
+  async function getReceipt(p: Payment) {
+    setPayErr('');
+    try { await downloadReceipt(p, b.name, session?.user.email ?? ''); } catch (e) { setPayErr((e as Error).message); }
+  }
 
   async function save() {
     if (!b.name.trim()) return setMsg('Please add your name or business name.');
@@ -84,6 +96,26 @@ export default function Account() {
                     {active ? `${me.tiers?.name} · active until ${new Date(me.plan_expires_at!).toLocaleDateString()}` : 'No active plan. Customers cannot see your listings yet.'}
                   </Text>
                   <Pressable style={[ui.btn, ui.outline]} onPress={() => router.push('/plan')}><Text style={[ui.btnText, { color: colors.ink }]}>See plans</Text></Pressable>
+                </View>
+
+                <View style={ui.card}>
+                  <Text style={ui.h2}>Receipts</Text>
+                  {!pays && <ActivityIndicator color={colors.blue} />}
+                  {pays?.length === 0 && <Text style={ui.muted}>No payments yet. A receipt appears here each time your plan is paid.</Text>}
+                  {pays?.map((p) => (
+                    <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6, borderTopWidth: 1, borderColor: colors.border }}>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={{ fontSize: 16, fontWeight: '800', color: colors.ink }}>{new Date(p.paid_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</Text>
+                        <Text style={{ color: colors.muted, fontSize: 14 }}>{p.tiers?.name ?? p.tier_id}{p.booking_addon ? ' + booking app' : ''} · {money(p)}</Text>
+                        <Text style={{ color: colors.muted, fontSize: 12 }}>{receiptNumber(p)}</Text>
+                      </View>
+                      <Pressable style={[ui.btn, ui.outline, { height: 44, flexDirection: 'row', gap: 6 }]} onPress={() => getReceipt(p)}>
+                        <Ionicons name="download-outline" size={18} color={colors.blue} />
+                        <Text style={[ui.btnText, { color: colors.ink }]}>Download</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                  {!!payErr && <Text style={ui.error}>{payErr}</Text>}
                 </View>
 
                 <Text style={[ui.h2, { marginTop: 8 }]}>Your listings</Text>

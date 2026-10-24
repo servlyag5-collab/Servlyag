@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../../components/Cover';
 import { TopBar } from '../../components/Menu';
+import { Reviews } from '../../components/Reviews';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
@@ -45,6 +46,7 @@ export default function Business() {
               </Pressable>
             ))}
             {rows.length === 0 && <View><Text style={ui.muted}>No services listed yet.</Text></View>}
+            <Reviews merchantId={id} limit={5} />
           </>
         )}
       </ScrollView>

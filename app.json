@@ -31,7 +31,8 @@
           "photosPermission": "Servly AG needs your photos so you can show your work."
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

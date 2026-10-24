@@ -4,12 +4,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../components/Cover';
+import { FlagFrame } from '../components/FlagFrame';
 import { MenuButton } from '../components/Menu';
+import { RatingSummary } from '../components/Stars';
+import { fetchRatings, type Rating } from '../lib/reviews';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
-import { colors, flag, ui } from '../lib/theme';
+import { colors, ui } from '../lib/theme';
 
-type Row = { id: string; title: string; photos: string[]; price: number | null; city: string; village: string | null; profiles: { display_name: string } | null };
+type Row = { id: string; merchant_id: string; title: string; photos: string[]; price: number | null; city: string; village: string | null; profiles: { display_name: string } | null };
 const EMPTY = { q: '', city: '', village: '' };
 
 export default function Home() {
@@ -18,6 +21,7 @@ export default function Home() {
   const [name, setName] = useState('');
   const [f, setF] = useState(EMPTY);
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [ratings, setRatings] = useState<Record<string, Rating>>({});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const sc = useRef<ScrollViewInstance>(null);
@@ -37,7 +41,7 @@ export default function Home() {
     setErr('');
     setBusy(true);
     let q = supabase.from('services')
-      .select('id,title,photos,price,city,village,profiles(display_name)')
+      .select('id,merchant_id,title,photos,price,city,village,profiles(display_name)')
       .eq('active', true).order('priority', { ascending: false }).order('created_at', { ascending: false }).limit(50);
     if (x.city.trim()) q = q.ilike('city', x.city.trim());
     if (x.village.trim()) q = q.ilike('village', x.village.trim());
@@ -51,7 +55,9 @@ export default function Home() {
     const { data, error } = await q;
     setBusy(false);
     if (error) return setErr('Something went wrong. Please try again.');
-    setRows(data as unknown as Row[]);
+    const list = data as unknown as Row[];
+    setRows(list);
+    fetchRatings(list.map((r) => r.merchant_id)).then(setRatings);
     if (scroll) setTimeout(() => sc.current?.scrollTo({ y: resultsY.current, animated: true }), 60);
   }
   const search = () => run(f, true);
@@ -71,13 +77,8 @@ export default function Home() {
           )}
         </View>
 
-        {/* Hero card in a flag ribbon (mostly blue, with red, black, gold and white; see `flag` in theme.ts) and a soft blue glow. */}
-        <View style={{ borderRadius: 26, boxShadow: '0px 8px 24px rgba(0, 114, 198, 0.18)' }}>
-          <View style={{ borderRadius: 26, padding: 3, overflow: 'hidden' }}>
-            <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' }}>
-              {flag.map((s, i) => <View key={i} style={{ flex: s.flex, backgroundColor: s.color }} />)}
-            </View>
-        <View style={[ui.card, { borderWidth: 0, borderRadius: 23 }]}>
+        {/* Hero card in the flag ribbon (see FlagFrame). */}
+        <FlagFrame>
           <Text style={{ color: colors.blue, fontWeight: '800', letterSpacing: 2, fontSize: 13 }}>SERVLY AG / MARKETPLACE</Text>
           <Text style={ui.h1}>Find someone good for the job.</Text>
           <Text style={ui.muted}>Search local services by name or tag, pick a city or village, and send the merchant a note.</Text>
@@ -86,9 +87,7 @@ export default function Home() {
             <Text style={[ui.btnText, { color: colors.ink }]}>Offer a service</Text>
             <Ionicons name="arrow-forward" size={18} color={colors.ink} />
           </Pressable>
-        </View>
-          </View>
-        </View>
+        </FlagFrame>
 
         <Text style={[ui.h2, { marginTop: 8 }]}>Services near you</Text>
         <View style={ui.card}>
@@ -126,7 +125,11 @@ export default function Home() {
               <View style={{ flex: 1, gap: 4 }}>
                 <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink }}>{s.title}</Text>
                 <Text style={ui.muted}>{s.profiles?.display_name || 'Servly merchant'} · {s.village ? `${s.village}, ` : ''}{s.city}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.blue }}>{s.price != null ? `EC$${s.price}` : 'Ask for price'}</Text>
+                {/* Price, then the rating: stars, score out of 5 and number of reviews. */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 10, rowGap: 2 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.blue }}>{s.price != null ? `EC$${s.price}` : 'Ask for price'}</Text>
+                  <RatingSummary rating={ratings[s.merchant_id]} size={13} showEmpty />
+                </View>
               </View>
             </Pressable>
           ))}

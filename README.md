@@ -16,7 +16,7 @@ Copy `src/`, `assets/`, `supabase/`, `app.json` and `.env.example` from this fol
 
 ## 3. Supabase
 1. supabase.com > New project `servly`.
-2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen). Then paste `supabase/upgrade-v7-tier-order.sql` > Run (Business listings show first, then Growth, then Starter). Then paste `supabase/upgrade-v8-messages.sql` > Run (two-way messages between customers and merchants; existing notes are copied in). Then paste `supabase/upgrade-v9-phone-privacy.sql` > Run (merchants can hide their phone number from customers).
+2. SQL Editor > paste `supabase/schema.sql` > Run. Then paste `supabase/upgrade-v4.sql` > Run. Then paste `supabase/upgrade-v5-guest-browse.sql` > Run (lets people browse without an account). Then paste `supabase/upgrade-v6-tiers-booking.sql` > Run (tier names Starter/Growth/Business and the booking checkbox on the Plan screen). Then paste `supabase/upgrade-v7-tier-order.sql` > Run (Business listings show first, then Growth, then Starter). Then paste `supabase/upgrade-v8-messages.sql` > Run (two-way messages between customers and merchants; existing notes are copied in). Then paste `supabase/upgrade-v9-phone-privacy.sql` > Run (merchants can hide their phone number from customers). Then paste `supabase/upgrade-v10-support-reviews.sql` > Run (contact support and reviews).
 3. Authentication > Providers > Email: turn OFF "Confirm email" while testing.
 4. Settings > API: copy the Project URL and anon key into a new file `.env` (see `.env.example`). Add `.env` to `.gitignore`.
 
@@ -35,9 +35,9 @@ Press `w` for the web version.
 ## Subscription tiers
 | | Starter | Growth | Business |
 |---|---|---|---|
-| Price | 50 XCD/mo | 100 XCD/mo | 150 XCD/mo |
+| Price | 50 XCD/mo | 100 XCD/mo | 170 XCD/mo |
 | Business profile, messaging and call | yes | yes | yes |
-| Service listings | 1 | 2 | unlimited |
+| Service listings | 1 | 2 | 4 |
 | Placement in search | after Growth and Business | after Business | first (top) |
 | Booking app | paid add-on (checkbox on Plan screen) | paid add-on (checkbox on Plan screen) | included |
 
@@ -49,9 +49,12 @@ Merchants cannot pick their tier or page layout. Only you can, in Supabase: Tabl
 - **Plan screen:** the merchant chooses a tier (saved as a request). Listings are hidden from customers until the plan is active. You activate a plan after payment: `select public.activate_plan('MERCHANT-USER-ID', 'plus');` (the booking add-on is included automatically if they ticked it). It adds one month and logs the payment in `payments`.
 - **Online payment:** not connected yet. When you pick a provider, put its payment page in `.env` as `EXPO_PUBLIC_PAY_URL`; the Pay button then opens it with `merchant`, `tier`, `booking` and `amount` in the link. A webhook that calls `activate_plan` comes next.
 - **Booking add-on:** 25 XCD / month (table `addons`).
+- **Support:** merchants use Contact support in the ☰ menu. Read and answer in Table Editor > `support_tickets`: type your answer in `reply` and set `status` to `resolved`.
+- **Receipts:** every payment logged by `activate_plan` appears under Account > Receipts with a Download button. Put your business details in `SELLER` in `src/lib/receipt.ts`.
+- **Reviews:** customers who have messaged a merchant can leave one review (1-5 stars) and edit it later. Merchants can tap "Ask for a review" in a chat.
 
 ## Next: the booking app
 Customer picks a date and time; the merchant confirms, declines, or proposes another time.
 
 ## Not built yet
-The booking app, online payment connection, deleting a listing, Settings screen, push notifications, reviews.
+The booking app, online payment connection, deleting a listing, Settings screen, push notifications.

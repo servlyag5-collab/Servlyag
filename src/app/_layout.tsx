@@ -25,6 +25,7 @@ export default function RootLayout() {
           <Stack.Screen name="service/[id]" />
           <Stack.Screen name="business/[id]" />
           <Stack.Screen name="login" />
+          <Stack.Screen name="reviews/[merchantId]" />
           <Stack.Protected guard={!!session}>
             <Stack.Screen name="offer" />
             <Stack.Screen name="inbox" />
@@ -35,6 +36,8 @@ export default function RootLayout() {
             <Stack.Screen name="edit/[id]" />
             <Stack.Screen name="checkout" />
             <Stack.Screen name="chat/[id]" />
+            <Stack.Screen name="support" />
+            <Stack.Screen name="review/[merchantId]" />
           </Stack.Protected>
         </Stack>
       )}

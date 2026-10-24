@@ -70,6 +70,7 @@ export function MenuButton() {
     ...(merchant && hasBooking ? [{ label: 'Bookings', path: '/bookings', onPress: () => go('/bookings') }] : []),
     ...(hasListings ? [{ label: merchant ? 'Customer' : 'Merchant', hint: merchant ? 'Switch to customer view' : 'Switch to merchant view', onPress: toggle }] : []),
     { label: 'Account', path: '/account', onPress: () => go('/account') },
+    ...(merchant ? [{ label: 'Contact support', hint: 'Billing or other problems', path: '/support', onPress: () => go('/support') }] : []),
   ];
 
   return (

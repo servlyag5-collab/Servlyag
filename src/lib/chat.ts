@@ -5,7 +5,8 @@ export type Conversation = {
   id: string; service_id: string; customer_id: string; merchant_id: string; contact: string | null;
   last_message: string; last_message_at: string; customer_read_at: string | null; merchant_read_at: string | null;
 };
-export type Message = { id: string; conversation_id: string; sender_id: string; body: string; created_at: string };
+// kind 'review_request' = the merchant asking the customer for a review (shows a Leave a review button).
+export type Message = { id: string; conversation_id: string; sender_id: string; body: string; created_at: string; kind?: 'text' | 'review_request' };
 
 // Unread for me when something arrived after I last read it.
 export function isUnread(c: Conversation, uid: string) {

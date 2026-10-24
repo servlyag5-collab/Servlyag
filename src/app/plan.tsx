@@ -3,11 +3,13 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlagFrame } from '../components/FlagFrame';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 
 type T = { id: string; name: string; monthly_price: number; max_services: number | null; priority_rank: number; booking_included: boolean };
+const FEATURED = 'plus'; // Growth: shown with the flag frame and a "Most popular" badge
 type Me = { id: string; tier_id: string; plan_expires_at: string | null; requested_tier: string | null; booking_requested: boolean };
 
 export default function Plan() {
@@ -61,9 +63,9 @@ export default function Plan() {
             {tiers.map((t) => {
               const isCurrent = active && me.tier_id === t.id;
               const price = t.monthly_price + (withBooking(t) ? addon : 0);
-              return (
-                <View key={t.id} style={[ui.card, isCurrent && { borderColor: colors.blue, borderWidth: 2 }]}>
-                  {isCurrent && <Text style={{ color: colors.blue, fontWeight: '800', letterSpacing: 2, fontSize: 12 }}>YOUR CURRENT PLAN</Text>}
+              const body = (
+                <>
+                  {isCurrent &&<Text style={{ color: colors.blue, fontWeight: '800', letterSpacing: 2, fontSize: 12 }}>YOUR CURRENT PLAN</Text>}
                   <Text style={ui.h2}>{t.name} · {t.monthly_price} XCD / month</Text>
                   <Text style={ui.muted}>Business profile, customer messaging and call</Text>
                   <Text style={ui.muted}>{t.max_services ?? 'Unlimited'} service listing{t.max_services === 1 ? '' : 's'}</Text>
@@ -77,8 +79,11 @@ export default function Plan() {
                   <Pressable style={[ui.btn, ui.primary]} onPress={() => choose(t)}>
                     <Text style={[ui.btnText, { color: '#fff' }]}>{isCurrent ? 'Renew' : 'Choose'} {t.name} · {price} XCD</Text>
                   </Pressable>
-                </View>
+                </>
               );
+              // Growth is highlighted: the flag-ribbon frame from the Home screen and a "Most popular" badge.
+              if (t.id === FEATURED) return <FlagFrame key={t.id} badge="MOST POPULAR">{body}</FlagFrame>;
+              return <View key={t.id} style={[ui.card, isCurrent && { borderColor: colors.blue, borderWidth: 2 }]}>{body}</View>;
             })}
           </>
         )}

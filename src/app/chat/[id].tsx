@@ -53,14 +53,16 @@ export default function Chat() {
 
   useEffect(() => { setTimeout(() => sc.current?.scrollToEnd({ animated: true }), 60); }, [rows?.length]);
 
-  async function send() {
-    const body = text.trim();
+  async function send(kind: 'text' | 'review_request' = 'text') {
+    const body = kind === 'review_request'
+      ? `Thank you for choosing ${c?.merchant?.display_name || 'us'}! If you have a moment, we'd love a review of our service.`
+      : text.trim();
     if (!body || !uid) return;
     setBusy(true); setErr('');
-    const { data, error } = await supabase.from('messages').insert({ conversation_id: id, sender_id: uid, body }).select('*').single();
+    const { data, error } = await supabase.from('messages').insert({ conversation_id: id, sender_id: uid, body, kind }).select('*').single();
     setBusy(false);
     if (error) return setErr(error.message);
-    setText('');
+    if (kind === 'text') setText('');
     add(data as Message);
   }
 
@@ -91,6 +93,13 @@ export default function Chat() {
                   </Pressable>
                 </View>
               )}
+              {iAmMerchant && (
+                <Pressable onPress={() => send('review_request')} disabled={busy}
+                  style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.gold, backgroundColor: '#FFFBEA' }}>
+                  <Ionicons name="star" size={16} color={colors.gold} />
+                  <Text style={{ fontWeight: '700', color: colors.ink }}>Ask for a review</Text>
+                </Pressable>
+              )}
             </>
           )}
         </View>
@@ -101,6 +110,23 @@ export default function Chat() {
           {rows?.length === 0 && <Text style={[ui.muted, { textAlign: 'center' }]}>No messages yet. Say hello!</Text>}
           {rows?.map((m) => {
             const mine = m.sender_id === uid;
+            // The merchant's review request: a highlighted card; the customer gets a Leave a review button.
+            if (m.kind === 'review_request' && c) return (
+              <View key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%', backgroundColor: '#FFFBEA', borderWidth: 1, borderColor: colors.gold, borderRadius: 18, padding: 14, gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="star" size={16} color={colors.gold} />
+                  <Text style={{ fontWeight: '800', color: colors.ink }}>{mine ? 'You asked for a review' : 'Review request'}</Text>
+                </View>
+                <Text style={{ color: colors.ink, fontSize: 16, lineHeight: 22 }}>{m.body}</Text>
+                {!mine && (
+                  <Pressable style={[ui.btn, { height: 44, backgroundColor: colors.gold }]}
+                    onPress={() => router.push({ pathname: '/review/[merchantId]', params: { merchantId: c.merchant_id } })}>
+                    <Text style={[ui.btnText, { color: colors.ink }]}>Leave a review</Text>
+                  </Pressable>
+                )}
+                <Text style={{ color: colors.muted, fontSize: 11, textAlign: 'right' }}>{when(m.created_at)}</Text>
+              </View>
+            );
             return (
               <View key={m.id} style={{
                 alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%',
@@ -120,7 +146,7 @@ export default function Chat() {
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
             <TextInput style={[ui.field, { flex: 1, height: undefined, minHeight: 48, maxHeight: 120, paddingVertical: 12 }]}
               placeholder="Write a message" placeholderTextColor={colors.muted} multiline value={text} onChangeText={setText} editable={!!c} />
-            <Pressable onPress={send} disabled={busy || !text.trim() || !c} accessibilityLabel="Send message"
+            <Pressable onPress={() => send('text')} disabled={busy || !text.trim() || !c} accessibilityLabel="Send message"
               style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: text.trim() ? colors.blue : colors.border, alignItems: 'center', justifyContent: 'center' }}>
               {busy ? <ActivityIndicator color="#fff" /> : <Ionicons name="send" size={20} color="#fff" />}
             </Pressable>
