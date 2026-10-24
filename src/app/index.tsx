@@ -3,17 +3,22 @@ import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View,
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Cover } from '../components/Cover';
+import { ListingRow, type CardListing } from '../components/ListingRow';
 import { FlagFrame } from '../components/FlagFrame';
 import { MenuButton } from '../components/Menu';
-import { RatingSummary } from '../components/Stars';
 import { fetchRatings, type Rating } from '../lib/reviews';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 
-type Row = { id: string; merchant_id: string; title: string; photos: string[]; price: number | null; city: string; village: string | null; profiles: { display_name: string } | null };
+type Row = CardListing & { priority: number };
 const EMPTY = { q: '', city: '', village: '' };
+// Home rows, by search priority (from the merchant's tier: Business 2, Growth 1, Starter 0).
+const ROWS = [
+  { title: 'Top businesses', match: (p: number) => p >= 2 },
+  { title: 'Popular picks', match: (p: number) => p === 1 },
+  { title: 'More local services', match: (p: number) => p <= 0 },
+];
 
 export default function Home() {
   const session = useSession();
@@ -41,7 +46,7 @@ export default function Home() {
     setErr('');
     setBusy(true);
     let q = supabase.from('services')
-      .select('id,merchant_id,title,photos,price,city,village,profiles(display_name)')
+      .select('id,merchant_id,title,photos,price,price_from,priority,city,village,profiles(display_name)')
       .eq('active', true).order('priority', { ascending: false }).order('created_at', { ascending: false }).limit(50);
     if (x.city.trim()) q = q.ilike('city', x.city.trim());
     if (x.village.trim()) q = q.ilike('village', x.village.trim());
@@ -119,20 +124,11 @@ export default function Home() {
               <Text style={ui.muted}>No services found. Try different words or clear the filters.</Text>
             </View>
           )}
-          {rows?.map((s) => (
-            <Pressable key={s.id} style={[ui.card, { flexDirection: 'row', gap: 14, padding: 14 }]} onPress={() => router.push({ pathname: '/service/[id]', params: { id: s.id } })}>
-              <Cover photos={s.photos} title={s.title} width={96} height={96} />
-              <View style={{ flex: 1, gap: 4 }}>
-                <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink }}>{s.title}</Text>
-                <Text style={ui.muted}>{s.profiles?.display_name || 'Servly merchant'} · {s.village ? `${s.village}, ` : ''}{s.city}</Text>
-                {/* Price, then the rating: stars, score out of 5 and number of reviews. */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 10, rowGap: 2 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.blue }}>{s.price != null ? `EC$${s.price}` : 'Ask for price'}</Text>
-                  <RatingSummary rating={ratings[s.merchant_id]} size={13} showEmpty />
-                </View>
-              </View>
-            </Pressable>
-          ))}
+          {/* Swipeable rows by tier (Business, then Growth, then Starter), newest first in each row. */}
+          {rows && ROWS.map((r) => {
+            const list = rows.filter((s) => r.match(s.priority));
+            return list.length > 0 && <ListingRow key={r.title} title={r.title} rows={list} ratings={ratings} />;
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>

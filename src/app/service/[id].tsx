@@ -8,11 +8,12 @@ import { TopBar } from '../../components/Menu';
 import { Reviews } from '../../components/Reviews';
 import { findConversation, sendFromListing } from '../../lib/chat';
 import { useMode } from '../../lib/mode';
+import { formatPrice } from '../../lib/price';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
-type S = { photos: string[]; merchant_id: string; title: string; description: string; price: number | null; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null } | null };
+type S = { photos: string[]; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null } | null };
 
 // The page structure comes ONLY from the merchant's subscription tier (basic | plus | premium).
 // Merchants cannot choose or change it. Edit the three layouts here.
@@ -20,7 +21,7 @@ function Listing({ s }: { s: S }) {
   const tier = s.profiles?.tier_id ?? 'basic';
   const who = s.profiles?.display_name || 'Servly merchant';
   const place = `${s.village ? s.village + ', ' : ''}${s.city}`;
-  const price = s.price != null ? `EC$${s.price}` : 'Ask for price';
+  const price = formatPrice(s.price, s.price_from);
 
   if (tier === 'basic') return (
     <>
@@ -68,7 +69,7 @@ export default function ServiceDetail() {
   const sendAfterLogin = useRef(false);
 
   useEffect(() => {
-    supabase.from('services').select('photos,merchant_id,title,description,price,city,village,profiles(display_name,tier_id,public_phone)').eq('id', id).single()
+    supabase.from('services').select('photos,merchant_id,title,description,price,price_from,city,village,profiles(display_name,tier_id,public_phone)').eq('id', id).single()
       .then(({ data, error }) => { if (!data) setLoadErr(error?.message ?? 'This listing could not be found.'); setS(data as unknown as S); });
   }, [id]);
 

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverTag, photoUrl } from '../../components/Cover';
 import { TopBar } from '../../components/Menu';
 import { PhoneToggle } from '../../components/PhoneToggle';
+import { PriceInput } from '../../components/PriceInput';
 import { useMode } from '../../lib/mode';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
@@ -25,6 +26,7 @@ export default function EditListing() {
   const [b, setB] = useState({ name: '', bio: '', phone: '' });
   const [showPhone, setShowPhone] = useState(true);
   const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '' });
+  const [priceFrom, setPriceFrom] = useState(false); // "From EC$..." starting price
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [removed, setRemoved] = useState<string[]>([]); // saved photos to delete on Save
   const [loaded, setLoaded] = useState(false);
@@ -36,7 +38,7 @@ export default function EditListing() {
   useEffect(() => {
     if (!uid) return;
     Promise.all([
-      supabase.from('services').select('title,description,tags,price,city,village,photos').eq('id', id).eq('merchant_id', uid).single(),
+      supabase.from('services').select('title,description,tags,price,price_from,city,village,photos').eq('id', id).eq('merchant_id', uid).single(),
       supabase.from('profiles').select('display_name,bio,show_phone').eq('id', uid).single(),
       supabase.rpc('my_phone'), // the real number is private; only its owner can read it
     ]).then(([s, p, ph]) => {
@@ -45,6 +47,7 @@ export default function EditListing() {
         title: s.data.title, description: s.data.description, tags: (s.data.tags as string[]).join(', '),
         price: s.data.price != null ? String(s.data.price) : '', city: s.data.city, village: s.data.village ?? '',
       });
+      setPriceFrom(!!s.data.price_from);
       setPhotos(((s.data.photos ?? []) as string[]).map((path) => ({ path })));
       if (p.data) {
         setB({ name: p.data.display_name, bio: p.data.bio, phone: (ph.data as string | null) ?? '' });
@@ -95,6 +98,7 @@ export default function EditListing() {
       description: f.description.trim(),
       tags: f.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean),
       price: f.price.trim() ? Number(f.price) : null,
+      price_from: priceFrom,
       city: f.city.trim(),
       village: f.village.trim() || null,
       photos: paths,
@@ -126,7 +130,7 @@ export default function EditListing() {
             <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Describe what you offer" multiline value={f.description} onChangeText={set('description')} />
             <TextInput style={ui.field} placeholder="Search tags, separated by commas" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
             <Text style={[ui.muted, { fontSize: 14, marginTop: -6 }]}>Tags help customers find you in search. They are not shown on your listing.</Text>
-            <TextInput style={ui.field} placeholder="Price in EC$ (optional)" keyboardType="decimal-pad" value={f.price} onChangeText={set('price')} />
+            <PriceInput value={f.price} onChange={set('price')} from={priceFrom} onFromChange={setPriceFrom} />
             <TextInput style={ui.field} placeholder="City" value={f.city} onChangeText={set('city')} />
             <TextInput style={ui.field} placeholder="Village (optional)" value={f.village} onChangeText={set('village')} />
 

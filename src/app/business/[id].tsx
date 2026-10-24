@@ -5,11 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../../components/Cover';
 import { TopBar } from '../../components/Menu';
 import { Reviews } from '../../components/Reviews';
+import { formatPrice } from '../../lib/price';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
 type P = { display_name: string; bio: string; public_phone: string | null };
-type Svc = { id: string; title: string; photos: string[]; price: number | null; city: string; village: string | null };
+type Svc = { id: string; title: string; photos: string[]; price: number | null; price_from: boolean; city: string; village: string | null };
 
 export default function Business() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,7 +19,7 @@ export default function Business() {
 
   useEffect(() => {
     supabase.from('profiles').select('display_name,bio,public_phone').eq('id', id).single().then(({ data }) => setP(data as P));
-    supabase.from('services').select('id,title,photos,price,city,village').eq('merchant_id', id).eq('active', true)
+    supabase.from('services').select('id,title,photos,price,price_from,city,village').eq('merchant_id', id).eq('active', true)
       .order('created_at', { ascending: false }).then(({ data }) => setRows((data as Svc[]) ?? []));
   }, [id]);
 
@@ -41,7 +42,7 @@ export default function Business() {
                 <Cover photos={s.photos} title={s.title} width={72} height={72} radius={12} />
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{s.title}</Text>
-                  <Text style={ui.muted}>{s.village ? `${s.village}, ` : ''}{s.city} · {s.price != null ? `EC$${s.price}` : 'Ask for price'}</Text>
+                  <Text style={ui.muted}>{s.village ? `${s.village}, ` : ''}{s.city} · {formatPrice(s.price, s.price_from)}</Text>
                 </View>
               </Pressable>
             ))}

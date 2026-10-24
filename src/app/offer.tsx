@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverTag } from '../components/Cover';
 import { TopBar } from '../components/Menu';
 import { PhoneToggle } from '../components/PhoneToggle';
+import { PriceInput } from '../components/PriceInput';
 import { setMode } from '../lib/mode';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
@@ -20,6 +21,7 @@ export default function Offer() {
   const [b, setB] = useState({ name: '', bio: '', phone: '' });
   const [showPhone, setShowPhone] = useState(true);
   const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '' });
+  const [priceFrom, setPriceFrom] = useState(false); // "From EC$..." starting price
   const [gate, setGate] = useState<Gate | null>(null);
   const [photos, setPhotos] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [addonPrice, setAddonPrice] = useState<number | null>(null);
@@ -74,6 +76,7 @@ export default function Offer() {
       description: f.description.trim(),
       tags: f.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean),
       price: f.price.trim() ? Number(f.price) : null,
+      price_from: priceFrom,
       city: f.city.trim(),
       village: f.village.trim() || null,
     }).select('id').single();
@@ -137,7 +140,7 @@ export default function Offer() {
         <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Describe what you offer" multiline value={f.description} onChangeText={set('description')} />
         <TextInput style={ui.field} placeholder="Search tags, separated by commas (photographer, events)" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
         <Text style={[ui.muted, { fontSize: 14, marginTop: -6 }]}>Tags help customers find you in search. They are not shown on your listing.</Text>
-        <TextInput style={ui.field} placeholder="Price in EC$ (optional)" keyboardType="decimal-pad" value={f.price} onChangeText={set('price')} />
+        <PriceInput value={f.price} onChange={set('price')} from={priceFrom} onFromChange={setPriceFrom} />
         <TextInput style={ui.field} placeholder="City" value={f.city} onChangeText={set('city')} />
         <TextInput style={ui.field} placeholder="Village (optional)" value={f.village} onChangeText={set('village')} />
 

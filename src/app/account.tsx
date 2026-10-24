@@ -7,13 +7,14 @@ import { Cover } from '../components/Cover';
 import { TopBar } from '../components/Menu';
 import { PhoneToggle } from '../components/PhoneToggle';
 import { setMode, useMode } from '../lib/mode';
+import { formatPrice } from '../lib/price';
 import { downloadReceipt, money, receiptNumber, type Payment } from '../lib/receipt';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 
 type Me = { display_name: string; bio: string; show_phone: boolean; plan_expires_at: string | null; tiers: { name: string } | null };
-type Svc = { id: string; title: string; photos: string[]; price: number | null; city: string; village: string | null; active: boolean };
+type Svc = { id: string; title: string; photos: string[]; price: number | null; price_from: boolean; city: string; village: string | null; active: boolean };
 
 export default function Account() {
   const session = useSession();
@@ -44,7 +45,7 @@ export default function Account() {
       setShowPhone(p.show_phone);
       setB({ name: p.display_name, bio: p.bio, phone: (ph.data as string | null) ?? '' });
     });
-    supabase.from('services').select('id,title,photos,price,city,village,active').eq('merchant_id', uid)
+    supabase.from('services').select('id,title,photos,price,price_from,city,village,active').eq('merchant_id', uid)
       .order('created_at', { ascending: false })
       .then(({ data }) => setRows((data as Svc[]) ?? []));
     // Every plan payment (logged by activate_plan) has a receipt.
@@ -127,7 +128,7 @@ export default function Account() {
                       <Cover photos={s.photos} title={s.title} width={72} height={72} radius={12} />
                       <View style={{ flex: 1, gap: 4 }}>
                         <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{s.title}</Text>
-                        <Text style={ui.muted}>{s.village ? `${s.village}, ` : ''}{s.city} · {s.price != null ? `EC$${s.price}` : 'Ask for price'}</Text>
+                        <Text style={ui.muted}>{s.village ? `${s.village}, ` : ''}{s.city} · {formatPrice(s.price, s.price_from)}</Text>
                         <Text style={{ fontWeight: '700', color: s.active && active ? colors.blue : colors.muted }}>
                           {s.active && active ? 'Visible to customers' : 'Hidden from customers'}
                         </Text>
