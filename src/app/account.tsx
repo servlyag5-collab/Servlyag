@@ -5,7 +5,10 @@ import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../components/Cover';
 import { TopBar } from '../components/Menu';
+import { LegalLinks } from '../components/LegalLinks';
 import { PhoneToggle } from '../components/PhoneToggle';
+import { PlanBanner } from '../components/PlanBanner';
+import { forgetThisDevice } from '../lib/push';
 import { setMode, useMode } from '../lib/mode';
 import { formatPrice } from '../lib/price';
 import { downloadReceipt, money, receiptNumber, type Payment } from '../lib/receipt';
@@ -29,6 +32,10 @@ export default function Account() {
   const [loadErr, setLoadErr] = useState('');
   const [pays, setPays] = useState<Payment[] | null>(null);
   const [payErr, setPayErr] = useState('');
+  const [askDelete, setAskDelete] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [delErr, setDelErr] = useState('');
   const setBiz = (k: keyof typeof b) => (v: string) => { setB((p) => ({ ...p, [k]: v })); setMsg(''); };
 
   useFocusEffect(useCallback(() => {
@@ -67,6 +74,20 @@ export default function Account() {
     setMsg(error ? error.message : 'Saved.');
   }
 
+  // Delete my account: remove my photos from storage, then the database deletes everything else.
+  async function deleteAccount() {
+    setDeleting(true); setDelErr('');
+    const { data: svcs } = await supabase.from('services').select('photos').eq('merchant_id', uid!);
+    const paths = ((svcs as { photos: string[] }[]) ?? []).flatMap((s) => s.photos ?? []);
+    if (paths.length) await supabase.storage.from('service-photos').remove(paths);
+    await forgetThisDevice();
+    const { error } = await supabase.rpc('delete_my_account');
+    if (error) { setDeleting(false); return setDelErr(error.message); }
+    setMode('customer');
+    await supabase.auth.signOut();
+    router.replace('/');
+  }
+
   const active = !!me?.plan_expires_at && new Date(me.plan_expires_at) > new Date();
 
   return (
@@ -75,6 +96,7 @@ export default function Account() {
         <TopBar />
         <Text style={ui.h1}>Account</Text>
         <Text style={ui.muted}>{session?.user.email}</Text>
+        <PlanBanner />
         {!me ? (loadErr ? <Text style={ui.error}>{loadErr}</Text> : <ActivityIndicator color={colors.blue} />) : (
           <>
             <View style={ui.card}>
@@ -159,6 +181,36 @@ export default function Account() {
                 <Pressable style={[ui.btn, ui.primary]} onPress={() => router.push('/offer')}><Text style={[ui.btnText, { color: '#fff' }]}>Offer a service</Text></Pressable>
               </View>
             )}
+
+            {/* Delete my account (required by Apple and Google): type DELETE to confirm. */}
+            <View style={[ui.card, { borderColor: colors.red, marginTop: 16 }]}>
+              <Text style={[ui.h2, { color: colors.red }]}>Delete my account</Text>
+              <Text style={ui.muted}>
+                This permanently deletes your account, profile, listings, photos, messages, bookings and reviews. It can't be undone.
+                {rows && rows.length > 0 ? ' Your plan is not refunded.' : ''}
+              </Text>
+              {askDelete ? (
+                <>
+                  <Text style={{ fontWeight: '700', color: colors.ink }}>Type DELETE to confirm.</Text>
+                  <TextInput style={ui.field} value={confirmText} onChangeText={setConfirmText} autoCapitalize="characters" placeholder="DELETE" />
+                  {!!delErr && <Text style={ui.error}>{delErr}</Text>}
+                  <View style={ui.row}>
+                    <Pressable style={[ui.btn, ui.outline, { flex: 1 }]} onPress={() => { setAskDelete(false); setConfirmText(''); }}>
+                      <Text style={[ui.btnText, { color: colors.ink }]}>Keep my account</Text>
+                    </Pressable>
+                    <Pressable style={[ui.btn, { flex: 1, backgroundColor: colors.red, opacity: confirmText.trim() === 'DELETE' ? 1 : 0.4 }]}
+                      disabled={confirmText.trim() !== 'DELETE' || deleting} onPress={deleteAccount}>
+                      {deleting ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>Delete forever</Text>}
+                    </Pressable>
+                  </View>
+                </>
+              ) : (
+                <Pressable style={[ui.btn, ui.outline]} onPress={() => setAskDelete(true)}>
+                  <Text style={[ui.btnText, { color: colors.red }]}>Delete my account</Text>
+                </Pressable>
+              )}
+            </View>
+            <LegalLinks />
           </>
         )}
       </ScrollView>

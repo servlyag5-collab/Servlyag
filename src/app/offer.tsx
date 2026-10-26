@@ -9,6 +9,7 @@ import { TopBar } from '../components/Menu';
 import { PhoneToggle } from '../components/PhoneToggle';
 import { PriceInput } from '../components/PriceInput';
 import { setMode } from '../lib/mode';
+import { shrinkPhoto } from '../lib/photos';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 
@@ -84,10 +85,9 @@ export default function Offer() {
     if (photos.length) {
       const paths: string[] = [];
       for (const [i, a] of photos.entries()) {
-        const type = a.mimeType ?? 'image/jpeg';
-        const path = `${user!.id}/${svc.id}/${i}.${type.split('/')[1]}`;
-        const buf = await (await fetch(a.uri)).arrayBuffer();
-        const up = await supabase.storage.from('service-photos').upload(path, buf, { contentType: type });
+        const small = await shrinkPhoto(a); // resized + compressed before upload
+        const path = `${user!.id}/${svc.id}/${i}.${small.ext}`;
+        const up = await supabase.storage.from('service-photos').upload(path, small.buf, { contentType: small.contentType });
         if (!up.error) paths.push(path);
       }
       if (paths.length) await supabase.from('services').update({ photos: paths }).eq('id', svc.id);

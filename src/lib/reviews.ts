@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 export type Rating = { average: number; total: number };
 export type Review = {
   id: string; merchant_id: string; service_id: string | null; customer_id: string; rating: number; comment: string;
-  created_at: string; updated_at: string;
+  created_at: string; updated_at: string; reply: string | null; replied_at: string | null;
   customer: { display_name: string } | null; services: { title: string } | null;
 };
 

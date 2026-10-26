@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BookingCard } from '../../components/BookingCard';
 import { TopBar } from '../../components/Menu';
+import { ReportButton } from '../../components/ReportButton';
 import { hasBookingApp, type Booking } from '../../lib/bookings';
 import { channelName, phoneDigits, type Conversation, type Message } from '../../lib/chat';
 import { useSession } from '../../lib/session';
@@ -32,6 +33,8 @@ export default function Chat() {
   const sc = useRef<ScrollViewInstance>(null);
   const [bookings, setBookings] = useState<Record<string, Booking>>({});
   const [canBook, setCanBook] = useState(false); // merchant has the booking app
+  const [blocked, setBlocked] = useState(false);   // I blocked the other person
+  const [askBlock, setAskBlock] = useState(false);
 
   const loadBookings = useCallback(() => {
     supabase.from('bookings').select('*').eq('conversation_id', id)
@@ -78,13 +81,29 @@ export default function Chat() {
     setBusy(true); setErr('');
     const { data, error } = await supabase.from('messages').insert({ conversation_id: id, sender_id: uid, body, kind }).select('*').single();
     setBusy(false);
-    if (error) return setErr(error.message);
+    if (error) return setErr(/row-level security/i.test(error.message) ? "You can't message this person right now." : error.message);
     if (kind === 'text') setText('');
     add(data as Message);
   }
 
   const iAmMerchant = !!c && c.merchant_id === uid;
   const other = c ? (iAmMerchant ? c.customer?.display_name || 'Customer' : c.merchant?.display_name || 'Merchant') : '';
+  const otherId = c ? (iAmMerchant ? c.customer_id : c.merchant_id) : '';
+
+  // Block / unblock the other person: blocked people can't message or book you (enforced by the database).
+  useEffect(() => {
+    if (!uid || !otherId) return;
+    supabase.from('blocks').select('blocked_id').eq('blocker_id', uid).eq('blocked_id', otherId).maybeSingle()
+      .then(({ data }) => setBlocked(!!data));
+  }, [uid, otherId]);
+  async function setBlock(on: boolean) {
+    setAskBlock(false);
+    const { error } = on
+      ? await supabase.from('blocks').insert({ blocker_id: uid, blocked_id: otherId })
+      : await supabase.from('blocks').delete().eq('blocker_id', uid!).eq('blocked_id', otherId);
+    if (error) return setErr(error.message);
+    setBlocked(on);
+  }
   const bar = { width: '100%' as const, maxWidth: 640, alignSelf: 'center' as const, paddingHorizontal: 16 };
 
   return (
@@ -98,6 +117,22 @@ export default function Chat() {
                 <Text style={ui.h2} numberOfLines={1}>{other}</Text>
                 <Text style={{ color: colors.blue, fontWeight: '700' }} numberOfLines={1}>About: {c.services?.title ?? 'a listing'}</Text>
               </Pressable>
+              <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+                <ReportButton targetType="user" targetId={otherId} label={`Report ${other}`} />
+                <Pressable onPress={() => (blocked ? setBlock(false) : setAskBlock(true))} hitSlop={6}>
+                  <Text style={{ color: blocked ? colors.blue : colors.red, fontSize: 13, fontWeight: '700', textDecorationLine: 'underline' }}>{blocked ? 'Unblock' : 'Block'}</Text>
+                </Pressable>
+              </View>
+              {askBlock && (
+                <View style={{ backgroundColor: '#FDECEE', borderRadius: 12, padding: 12, gap: 8 }}>
+                  <Text style={{ color: colors.ink, fontWeight: '700' }}>Block {other}? They won't be able to message you or send you bookings. You can unblock them here any time.</Text>
+                  <View style={ui.row}>
+                    <Pressable style={[ui.btn, ui.outline, { flex: 1, height: 40 }]} onPress={() => setAskBlock(false)}><Text style={[ui.btnText, { color: colors.ink }]}>Cancel</Text></Pressable>
+                    <Pressable style={[ui.btn, { flex: 1, height: 40, backgroundColor: colors.red }]} onPress={() => setBlock(true)}><Text style={[ui.btnText, { color: '#fff' }]}>Block</Text></Pressable>
+                  </View>
+                </View>
+              )}
+              {blocked && <Text style={{ color: colors.red, fontWeight: '700' }}>You blocked {other}. They can't message you or send you bookings.</Text>}
               {iAmMerchant && !!c.contact && (
                 <View style={ui.row}>
                   <Pressable style={[ui.btn, ui.outline, { flex: 1, height: 44, flexDirection: 'row', gap: 6 }]} onPress={() => Linking.openURL(`tel:+${phoneDigits(c.contact!)}`)}>

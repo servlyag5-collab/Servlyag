@@ -5,6 +5,7 @@ import { router, useFocusEffect, usePathname, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hasBookingApp } from '../lib/bookings';
 import { isUnread, type Conversation } from '../lib/chat';
+import { forgetThisDevice } from '../lib/push';
 import { setMode, useMode } from '../lib/mode';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
@@ -23,6 +24,7 @@ export function MenuButton() {
   const [unread, setUnread] = useState(0);
   const [hasBooking, setHasBooking] = useState(false);
   const [hasListings, setHasListings] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useFocusEffect(useCallback(() => {
     if (!uid) return;
@@ -39,6 +41,8 @@ export function MenuButton() {
       .then(({ data }) => setUnread(((data as Conversation[]) ?? []).filter((c) => isUnread(c, uid)).length));
     // Merchant Bookings shows when they have the booking app (Business tier, or the paid add-on).
     hasBookingApp().then(setHasBooking);
+    // The owner's dashboard shows only for admins (you add yourself in SQL).
+    supabase.rpc('is_admin').then(({ data }) => setIsAdmin(!!data));
   }, [uid, mode]));
 
   if (!session) return null;
@@ -55,6 +59,7 @@ export function MenuButton() {
   async function logOut() {
     setOpen(false);
     setMode('customer');
+    await forgetThisDevice();
     await supabase.auth.signOut();
     router.replace('/');
   }
@@ -68,6 +73,7 @@ export function MenuButton() {
     ...(hasListings ? [{ label: merchant ? 'Customer' : 'Merchant', hint: merchant ? 'Switch to customer view' : 'Switch to merchant view', onPress: toggle }] : []),
     { label: 'Account', path: '/account', onPress: () => go('/account') },
     ...(merchant ? [{ label: 'Contact support', hint: 'Billing or other problems', path: '/support', onPress: () => go('/support') }] : []),
+    ...(isAdmin ? [{ label: 'Admin', hint: 'Plans, support and reports', path: '/admin', onPress: () => go('/admin' as Href) }] : []),
   ];
 
   return (

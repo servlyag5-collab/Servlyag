@@ -3,6 +3,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, Vi
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LegalLinks } from '../components/LegalLinks';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
@@ -71,6 +72,7 @@ export default function Login() {
           <Pressable style={[ui.btn, ui.primary]} onPress={go} disabled={busy}>
             {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>{button}</Text>}
           </Pressable>
+          {mode === 'up' && <LegalLinks prefix="By signing up you agree to our" />}
           <Pressable onPress={() => switchTo(mode === 'up' ? 'in' : mode === 'reset' ? 'in' : 'up')}>
             <Text style={{ color: colors.blue, fontWeight: '700', textAlign: 'center' }}>
               {mode === 'in' ? 'New to Servly? Create an account' : mode === 'reset' ? 'Back to log in' : 'Have an account? Log in'}

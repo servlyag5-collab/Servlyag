@@ -5,6 +5,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover, photoUrl } from '../../components/Cover';
 import { TopBar } from '../../components/Menu';
+import { ReportButton } from '../../components/ReportButton';
 import { Reviews } from '../../components/Reviews';
 import { findConversation, sendFromListing } from '../../lib/chat';
 import { useMode } from '../../lib/mode';
@@ -17,16 +18,18 @@ type S = { photos: string[]; merchant_id: string; title: string; description: st
 
 // The page structure comes ONLY from the merchant's subscription tier (basic | plus | premium).
 // Merchants cannot choose or change it. Edit the three layouts here.
-function Listing({ s }: { s: S }) {
+// The business name is a link to the business profile (all their listings and reviews).
+function Listing({ s, onBusiness }: { s: S; onBusiness?: () => void }) {
   const tier = s.profiles?.tier_id ?? 'basic';
   const who = s.profiles?.display_name || 'Servly merchant';
+  const link = onBusiness ? { textDecorationLine: 'underline' as const, fontWeight: '700' as const } : null;
   const place = `${s.village ? s.village + ', ' : ''}${s.city}`;
   const price = formatPrice(s.price, s.price_from);
 
   if (tier === 'basic') return (
     <>
       <Text style={ui.h1}>{s.title}</Text>
-      <Text style={ui.muted}>{who} · {place}</Text>
+      <Text style={ui.muted}><Text style={link} onPress={onBusiness}>{who}</Text> · {place}</Text>
       <Text style={{ fontSize: 18, fontWeight: '800', color: colors.blue }}>{price}</Text>
       {!!s.description && <Text style={ui.muted}>{s.description}</Text>}
     </>
@@ -41,7 +44,7 @@ function Listing({ s }: { s: S }) {
           </View>
         )}
         <Text style={[ui.h1, { color: '#fff' }]}>{s.title}</Text>
-        <Text style={{ color: '#E6F1FA', fontSize: 16 }}>{who} · {place}</Text>
+        <Text style={{ color: '#E6F1FA', fontSize: 16 }}><Text style={link} onPress={onBusiness}>{who}</Text> · {place}</Text>
         <Text style={{ color: '#fff', fontSize: 20, fontWeight: '800' }}>{price}</Text>
       </View>
       {!!s.description && <Text style={ui.muted}>{s.description}</Text>}
@@ -118,7 +121,7 @@ export default function ServiceDetail() {
             )}
             {/* Photo 1 is the cover (logo or best photo); photos 2-5 show the merchant's work. */}
             {s.photos?.length > 0 && <Cover photos={s.photos} title={s.title} width="100%" height={220} />}
-            <Listing s={s} />
+            <Listing s={s} onBusiness={preview ? undefined : () => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })} />
             {s.photos?.length > 1 && (
               <>
                 <Text style={[ui.h2, { marginTop: 8 }]}>Our work</Text>
@@ -128,6 +131,9 @@ export default function ServiceDetail() {
               </>
             )}
             <Reviews merchantId={s.merchant_id} serviceId={id} limit={3} allowWrite={!preview} />
+            {!preview && session?.user.id !== s.merchant_id && (
+              <View style={{ alignItems: 'flex-end' }}><ReportButton targetType="listing" targetId={id} label="Report this listing" /></View>
+            )}
             <Text style={[ui.h2, { marginTop: 4 }]}>Send a note</Text>
             {!!convId && !preview && (
               <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: convId } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

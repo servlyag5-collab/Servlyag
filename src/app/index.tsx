@@ -5,7 +5,9 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ListingRow, type CardListing } from '../components/ListingRow';
 import { FlagFrame } from '../components/FlagFrame';
+import { LegalLinks } from '../components/LegalLinks';
 import { MenuButton } from '../components/Menu';
+import { PlanBanner } from '../components/PlanBanner';
 import { fetchListingRatings, type Rating } from '../lib/reviews';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
@@ -13,6 +15,9 @@ import { colors, ui } from '../lib/theme';
 
 type Row = CardListing & { priority: number };
 const EMPTY = { q: '', city: '', village: '' };
+const PAGE = 30; // results loaded at a time
+const LOGO_W = 240;             // width of the logo at the top of Home
+const LOGO_RATIO = 549 / 2066;  // logo.png height / width
 // Home rows, by search priority (from the merchant's tier: Business 2, Growth 1, Starter 0).
 const ROWS = [
   { title: 'Top businesses', match: (p: number) => p >= 2 },
@@ -29,6 +34,8 @@ export default function Home() {
   const [ratings, setRatings] = useState<Record<string, Rating>>({});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [hasMore, setHasMore] = useState(false);
+  const [query, setQuery] = useState(EMPTY); // the search the results belong to (for "Show more")
   const sc = useRef<ScrollViewInstance>(null);
   const resultsY = useRef(0);
   const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
@@ -42,26 +49,23 @@ export default function Home() {
       .then(({ data: p }) => setName(p?.display_name || session.user.email || ''));
   }, [uid]);
 
-  async function run(x: typeof EMPTY, scroll: boolean) {
+  // Search in the database (search_services): name, description and hidden tags, tolerant of small
+  // spelling mistakes; Business first, then Growth, then Starter. Loads PAGE results at a time.
+  async function run(x: typeof EMPTY, scroll: boolean, more = false) {
     setErr('');
     setBusy(true);
-    let q = supabase.from('services')
+    const from = more ? (rows?.length ?? 0) : 0;
+    const { data, error } = await supabase
+      .rpc('search_services', { p_q: x.q.replace(/[%_\\]/g, ' ').trim(), p_city: x.city.trim(), p_village: x.village.trim() })
       .select('id,merchant_id,title,photos,price,price_from,priority,city,village,profiles(display_name)')
-      .eq('active', true).order('priority', { ascending: false }).order('created_at', { ascending: false }).limit(50);
-    if (x.city.trim()) q = q.ilike('city', x.city.trim());
-    if (x.village.trim()) q = q.ilike('village', x.village.trim());
-    // Match the name or description, or any tag equal to the whole search or to one of its words.
-    // Tags are never shown to customers; they only help listings come up here.
-    const t = x.q.replace(/[,()%*{}"\\]/g, ' ').replace(/\s+/g, ' ').trim();
-    if (t) {
-      const words = [...new Set([t, ...t.split(' ')].map((w) => w.toLowerCase()).filter((w) => w.length > 1))];
-      q = q.or([`title.ilike.%${t}%`, `description.ilike.%${t}%`, ...words.map((w) => `tags.cs.{"${w}"}`)].join(','));
-    }
-    const { data, error } = await q;
+      .range(from, from + PAGE - 1);
     setBusy(false);
     if (error) return setErr('Something went wrong. Please try again.');
-    const list = data as unknown as Row[];
+    const page = (data as unknown as Row[]) ?? [];
+    const list = more ? [...(rows ?? []), ...page] : page;
     setRows(list);
+    setHasMore(page.length === PAGE);
+    setQuery(x);
     fetchListingRatings(list.map((r) => r.id)).then(setRatings);
     if (scroll) setTimeout(() => sc.current?.scrollTo({ y: resultsY.current, animated: true }), 60);
   }
@@ -71,7 +75,19 @@ export default function Home() {
   return (
     <SafeAreaView style={ui.screen}>
       <ScrollView ref={sc} contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
-        <Image source={require('../../assets/logo.png')} style={{ height: 52, width: 196 }} resizeMode="contain" />
+        {/* The logo picture in two parts: the full map pin, and the name cropped just below its flag underline.
+            The tagline is real text (not part of the picture) so it stays readable on phones. */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: LOGO_W * 0.06 }}>
+          <View style={{ width: LOGO_W * 0.215, height: LOGO_W * LOGO_RATIO, overflow: 'hidden' }}>
+            <Image source={require('../../assets/logo.png')} style={{ width: LOGO_W, height: LOGO_W * LOGO_RATIO }} />
+          </View>
+          <View style={{ gap: 4, flexShrink: 1 }}>
+            <View style={{ width: LOGO_W * 0.725, height: LOGO_W * LOGO_RATIO * 0.63, overflow: 'hidden' }}>
+              <Image source={require('../../assets/logo.png')} style={{ width: LOGO_W, height: LOGO_W * LOGO_RATIO, marginLeft: -LOGO_W * 0.275 }} />
+            </View>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }}>Whatever you need, someone's ready.</Text>
+          </View>
+        </View>
         <View style={[ui.row, { alignItems: 'center' }]}>
           <Text style={{ flex: 1, color: colors.muted, fontSize: 16 }} numberOfLines={1}>{session ? name : 'Browsing as a guest'}</Text>
           {session ? <MenuButton /> : (
@@ -83,11 +99,12 @@ export default function Home() {
         </View>
 
         {/* Hero card in the flag ribbon (see FlagFrame). */}
-        <FlagFrame>
-          <Text style={{ color: colors.blue, fontWeight: '800', letterSpacing: 2, fontSize: 13 }}>SERVLY AG / MARKETPLACE</Text>
-          <Text style={ui.h1}>Find someone good for the job.</Text>
-          <Text style={ui.muted}>Search local services by name or tag, pick a city or village, and send the merchant a note.</Text>
-          <Pressable style={[ui.btn, ui.outline, { alignSelf: 'flex-start', flexDirection: 'row', gap: 8 }]} onPress={() => (session ? router.push('/offer') : router.push({ pathname: '/login', params: { mode: 'up' } }))}>
+        {session && <PlanBanner />}
+        <FlagFrame compact>
+          <Text style={{ color: colors.blue, fontWeight: '800', letterSpacing: 2, fontSize: 12 }}>SERVLY AG / MARKETPLACE</Text>
+          <Text style={[ui.h1, { fontSize: 26, lineHeight: 31 }]}>Find someone good for the job.</Text>
+          <Text style={[ui.muted, { fontSize: 15, lineHeight: 21 }]}>Search local services by name or tag, pick a city or village, and send the merchant a note.</Text>
+          <Pressable style={[ui.btn, ui.outline, { alignSelf: 'flex-start', flexDirection: 'row', gap: 8, height: 42, marginTop: 4 }]} onPress={() => (session ? router.push('/offer') : router.push({ pathname: '/login', params: { mode: 'up' } }))}>
             <Ionicons name="storefront-outline" size={20} color={colors.blue} />
             <Text style={[ui.btnText, { color: colors.ink }]}>Offer a service</Text>
             <Ionicons name="arrow-forward" size={18} color={colors.ink} />
@@ -129,7 +146,13 @@ export default function Home() {
             const list = rows.filter((s) => r.match(s.priority));
             return list.length > 0 && <ListingRow key={r.title} title={r.title} rows={list} ratings={ratings} />;
           })}
+          {hasMore && (
+            <Pressable style={[ui.btn, ui.outline]} onPress={() => run(query, false, true)} disabled={busy}>
+              {busy ? <ActivityIndicator color={colors.blue} /> : <Text style={[ui.btnText, { color: colors.ink }]}>Show more services</Text>}
+            </Pressable>
+          )}
         </View>
+        <View style={{ marginTop: 16 }}><LegalLinks /></View>
       </ScrollView>
     </SafeAreaView>
   );

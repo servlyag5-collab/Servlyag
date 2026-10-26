@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Splash } from '../components/Splash';
+import { registerForPush, useNotificationTaps } from '../lib/push';
 import { useSession } from '../lib/session';
 import { colors } from '../lib/theme';
 
@@ -19,6 +20,11 @@ export default function RootLayout() {
   const session = useSession();
   const [splash, setSplash] = useState(!splashPlayed);
   const loading = session === undefined;
+  const uid = session?.user.id;
+
+  // Phone notifications: register this device after login; tapping one opens the right screen.
+  useEffect(() => { if (uid) registerForPush(); }, [uid]);
+  useNotificationTaps();
 
   return (
     <>
@@ -34,6 +40,8 @@ export default function RootLayout() {
           <Stack.Screen name="login" />
           <Stack.Screen name="reset-password" />
           <Stack.Screen name="reviews/[merchantId]" />
+          <Stack.Screen name="privacy" />
+          <Stack.Screen name="terms" />
           <Stack.Protected guard={!!session}>
             <Stack.Screen name="offer" />
             <Stack.Screen name="inbox" />
@@ -47,6 +55,7 @@ export default function RootLayout() {
             <Stack.Screen name="support" />
             <Stack.Screen name="review/[serviceId]" />
             <Stack.Screen name="book/[conversationId]" />
+            <Stack.Screen name="admin" />
           </Stack.Protected>
         </Stack>
       )}

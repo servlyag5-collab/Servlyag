@@ -48,18 +48,40 @@ function receiptHtml(p: Payment, business: string, email: string) {
 </body></html>`;
 }
 
-// Phones: make a PDF and open the share sheet (save to Files, WhatsApp, email). Web: open Print / Save as PDF.
+// Web: print the receipt from an invisible frame on the same page (no pop-up for the browser to block);
+// the print window lets people choose "Save as PDF". If printing isn't possible, download it as a file.
+function printOnWeb(html: string, fileName: string) {
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  Object.assign(frame.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' });
+  document.body.appendChild(frame);
+  const cleanUp = () => setTimeout(() => frame.remove(), 1000);
+  try {
+    const doc = frame.contentWindow!.document;
+    doc.open(); doc.write(html); doc.close();
+    setTimeout(() => {
+      try { frame.contentWindow!.focus(); frame.contentWindow!.print(); } catch { downloadFile(html, fileName); }
+      cleanUp();
+    }, 300);
+  } catch {
+    frame.remove();
+    downloadFile(html, fileName);
+  }
+}
+
+// Save the receipt as a file the person can open and print later.
+function downloadFile(html: string, fileName: string) {
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Phones: make a PDF and open the share sheet (save to Files, WhatsApp, email). Web: Print / Save as PDF.
 export async function downloadReceipt(p: Payment, business: string, email: string) {
   const html = receiptHtml(p, business, email);
-  if (Platform.OS === 'web') {
-    const w = window.open('', '_blank');
-    if (!w) throw new Error('Please allow pop-ups for this site to download your receipt.');
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
-    return;
-  }
+  if (Platform.OS === 'web') return printOnWeb(html, `Servly-receipt-${receiptNumber(p)}.html`);
   const { uri } = await Print.printToFileAsync({ html });
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: `Receipt ${receiptNumber(p)}` });

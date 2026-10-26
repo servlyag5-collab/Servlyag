@@ -9,6 +9,7 @@ import { TopBar } from '../../components/Menu';
 import { PhoneToggle } from '../../components/PhoneToggle';
 import { PriceInput } from '../../components/PriceInput';
 import { useMode } from '../../lib/mode';
+import { shrinkPhoto } from '../../lib/photos';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
@@ -86,10 +87,9 @@ export default function EditListing() {
     for (const [i, p] of photos.entries()) {
       if (p.path) { paths.push(p.path); continue; }
       const a = p.asset!;
-      const type = a.mimeType ?? 'image/jpeg';
-      const path = `${uid}/${id}/${Date.now()}-${i}.${type.split('/')[1]}`;
-      const buf = await (await fetch(a.uri)).arrayBuffer();
-      const r = await supabase.storage.from('service-photos').upload(path, buf, { contentType: type });
+      const small = await shrinkPhoto(a); // resized + compressed before upload
+      const path = `${uid}/${id}/${Date.now()}-${i}.${small.ext}`;
+      const r = await supabase.storage.from('service-photos').upload(path, small.buf, { contentType: small.contentType });
       if (!r.error) paths.push(path);
     }
 

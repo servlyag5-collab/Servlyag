@@ -32,7 +32,13 @@
         }
       ],
       "expo-font",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "color": "#0072C6"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
