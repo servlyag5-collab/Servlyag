@@ -3,7 +3,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View,
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ListingRow, type CardListing } from '../components/ListingRow';
+import { ListingGrid, ListingRow, type CardListing } from '../components/ListingRow';
 import { LegalLinks } from '../components/LegalLinks';
 import { MenuButton } from '../components/Menu';
 import { PlanBanner } from '../components/PlanBanner';
@@ -18,6 +18,8 @@ type Row = CardListing & { priority: number };
 const EMPTY = { q: '', city: '', village: '' };
 const PAGE = 30; // results loaded at a time
 // City / Village boxes inside the dark hero: see-through white with white text.
+// Search boxes in the computer search bar: light grey, no border.
+const wideField = { height: 56, borderRadius: 14, borderWidth: 0, backgroundColor: colors.field, fontSize: 17, width: '100%' as const, minWidth: 0 };
 const heroField = { backgroundColor: 'rgba(255, 255, 255, 0.12)', borderColor: 'rgba(255, 255, 255, 0.22)', color: '#fff', borderRadius: 14, minWidth: 0 };
 const LOGO_W = 240;             // width of the logo at the top of Home
 const LOGO_RATIO = 549 / 2066;  // logo.png height / width
@@ -76,11 +78,13 @@ export default function Home() {
   const search = () => run(f, true);
   const clear = () => { setF(EMPTY); run(EMPTY, false); };
   const filtered = !!(query.q || query.city || query.village); // the results shown are a search, not everything
-  const narrow = useWindowDimensions().width < 430; // phones: smaller headline and sun, so they never overlap
+  const screenW = useWindowDimensions().width;
+  const narrow = screenW < 430; // phones: smaller headline and sun, so they never overlap
+  const wide = screenW >= 900;  // computers: full-width hero, one-line search, listings in a grid
 
-  return (
-    <SafeAreaView style={ui.screen}>
-      <ScrollView ref={sc} contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
+  // The pieces of the page (laid out below for phones or computers).
+  const topBar = (
+    <>
         {/* Top bar: the logo (full pin + the name cropped below its flag underline) and Log in / ☰. */}
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: LOGO_W * 0.05 }}>
@@ -98,6 +102,116 @@ export default function Home() {
             </Pressable>
           )}
         </View>
+    </>
+  );
+  const invite = (
+    <>
+        {/* For businesses: a quiet invitation under the hero. */}
+        <Pressable onPress={() => (session ? router.push('/offer') : router.push({ pathname: '/login', params: { mode: 'up' } }))}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 18, backgroundColor: '#EAF3FB' }}>
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="storefront" size={20} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: fonts.title, fontSize: 16, color: colors.ink }}>Run a business?</Text>
+            <Text style={{ color: colors.muted, fontSize: 14 }}>List your services on Servly</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.blue} />
+        </Pressable>
+    </>
+  );
+  const results = (
+    <>
+        <View onLayout={(e) => { resultsY.current = e.nativeEvent.layout.y; }} style={{ gap: 12 }}>
+          {rows && <Text style={ui.muted}>{rows.length} {rows.length === 1 ? 'service' : 'services'} found</Text>}
+          {rows?.length === 0 && (
+            <View style={[ui.card, { borderColor: colors.red, borderWidth: 2 }]}>
+              <Text style={ui.muted}>No services found. Try different words or clear the filters.</Text>
+            </View>
+          )}
+          {/* By tier (Business, then Growth, then Starter), newest first: swipe rows on phones, a grid on computers. */}
+          {rows && ROWS.map((r) => {
+            const list = rows.filter((s) => r.match(s.priority));
+            return list.length > 0 && (wide
+              ? <ListingGrid key={r.title} title={r.title} rows={list} ratings={ratings} />
+              : <ListingRow key={r.title} title={r.title} rows={list} ratings={ratings} />);
+          })}
+          {hasMore && (
+            <Pressable style={[ui.btn, ui.outline]} onPress={() => run(query, false, true)} disabled={busy}>
+              {busy ? <ActivityIndicator color={colors.blue} /> : <Text style={[ui.btnText, { color: colors.ink }]}>Show more services</Text>}
+            </Pressable>
+          )}
+        </View>
+    </>
+  );
+  const legal = <View style={{ marginTop: 16 }}><LegalLinks /></View>;
+
+  // Computers: the hero runs edge to edge; everything else sits in a centred column up to 1200 px wide.
+  if (wide) {
+    const column = { width: '100%' as const, maxWidth: 1200, alignSelf: 'center' as const, paddingHorizontal: 32 };
+    return (
+      <SafeAreaView style={ui.screen}>
+        <ScrollView ref={sc} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+          <View style={[column, { paddingVertical: 16, gap: 12 }]}>
+            {topBar}
+            {session && <PlanBanner />}
+          </View>
+
+          {/* Full-width hero: big headline left, the flag's gold sun rising on the right, one-line search. */}
+          <View style={{ backgroundColor: colors.harbour, overflow: 'hidden' }}>
+            <View pointerEvents="none" style={{ position: 'absolute', right: -120, top: -150, width: 560, height: 560, borderRadius: 280, backgroundColor: 'rgba(252, 209, 22, 0.14)' }} />
+            <View pointerEvents="none" style={{ position: 'absolute', right: -40, top: -70, width: 380, height: 380, borderRadius: 190, backgroundColor: colors.gold }} />
+            <View style={[column, { paddingTop: 64, paddingBottom: 56, gap: 18 }]}>
+              {!!session && !!name && <Text style={{ color: '#BFD8EE', fontSize: 17, fontWeight: '600' }} numberOfLines={1}>Welcome back, {name}</Text>}
+              <Text style={{ fontFamily: fonts.heading, fontSize: 60, lineHeight: 62, color: '#fff', letterSpacing: -1.5, maxWidth: 680 }}>
+                Whatever you need, someone's ready.
+              </Text>
+              <Text style={{ color: '#CFE3F5', fontSize: 19, lineHeight: 27, maxWidth: 560 }}>
+                Find trusted local services across Antigua and Barbuda, and message or call them directly.
+              </Text>
+              {/* One-line search bar: what, city, village, Search. */}
+              <View style={{ marginTop: 14, flexDirection: 'row', gap: 10, backgroundColor: '#fff', borderRadius: 20, padding: 8, maxWidth: 1000,
+                boxShadow: '0px 18px 40px rgba(0, 0, 0, 0.25)' }}>
+                <View style={{ flex: 2, minWidth: 0 }}>
+                  <TextInput style={[ui.field, wideField, { paddingLeft: 46 }]} placeholder="What do you need? e.g. photographer" placeholderTextColor={colors.muted}
+                    value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false} />
+                  <View pointerEvents="none" style={{ position: 'absolute', left: 16, top: 0, bottom: 0, justifyContent: 'center' }}>
+                    <Ionicons name="search" size={21} color={colors.blue} />
+                  </View>
+                </View>
+                <TextInput style={[ui.field, wideField, { flex: 1 }]} placeholder="City" placeholderTextColor={colors.muted} value={f.city} onChangeText={set('city')} onSubmitEditing={search} />
+                <TextInput style={[ui.field, wideField, { flex: 1 }]} placeholder="Village" placeholderTextColor={colors.muted} value={f.village} onChangeText={set('village')} onSubmitEditing={search} />
+                <Pressable style={[ui.btn, { backgroundColor: colors.gold, height: 56, borderRadius: 14, paddingHorizontal: 28 }]} onPress={search} disabled={busy}>
+                  {busy ? <ActivityIndicator color={colors.ink} /> : <Text style={{ fontFamily: fonts.title, fontSize: 18, color: colors.ink }}>Search services</Text>}
+                </Pressable>
+              </View>
+              {!!err && <Text style={{ color: '#FFD3D8', fontSize: 15 }}>{err}</Text>}
+              {filtered && (
+                <Pressable onPress={clear} disabled={busy} style={{ alignSelf: 'flex-start' }}>
+                  <Text style={{ color: '#CFE3F5', fontWeight: '700', textDecorationLine: 'underline' }}>Clear search and show everything</Text>
+                </Pressable>
+              )}
+            </View>
+            <View style={{ flexDirection: 'row', height: 8 }}>
+              {flag.map((st, i) => <View key={i} style={{ flex: st.flex, backgroundColor: st.color }} />)}
+            </View>
+          </View>
+
+          <View style={[column, { paddingTop: 28, gap: 28 }]}>
+            {invite}
+            {results}
+            {legal}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Phones and small screens.
+  return (
+    <SafeAreaView style={ui.screen}>
+      <ScrollView ref={sc} contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
+        {topBar}
 
         {session && <PlanBanner />}
 
@@ -142,38 +256,10 @@ export default function Home() {
           </View>
         </View>
 
-        {/* For businesses: a quiet invitation under the hero. */}
-        <Pressable onPress={() => (session ? router.push('/offer') : router.push({ pathname: '/login', params: { mode: 'up' } }))}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 18, backgroundColor: '#EAF3FB' }}>
-          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="storefront" size={20} color="#fff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: fonts.title, fontSize: 16, color: colors.ink }}>Run a business?</Text>
-            <Text style={{ color: colors.muted, fontSize: 14 }}>List your services on Servly</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.blue} />
-        </Pressable>
+        {invite}
 
-        <View onLayout={(e) => { resultsY.current = e.nativeEvent.layout.y; }} style={{ gap: 12 }}>
-          {rows && <Text style={ui.muted}>{rows.length} {rows.length === 1 ? 'service' : 'services'} found</Text>}
-          {rows?.length === 0 && (
-            <View style={[ui.card, { borderColor: colors.red, borderWidth: 2 }]}>
-              <Text style={ui.muted}>No services found. Try different words or clear the filters.</Text>
-            </View>
-          )}
-          {/* Swipeable rows by tier (Business, then Growth, then Starter), newest first in each row. */}
-          {rows && ROWS.map((r) => {
-            const list = rows.filter((s) => r.match(s.priority));
-            return list.length > 0 && <ListingRow key={r.title} title={r.title} rows={list} ratings={ratings} />;
-          })}
-          {hasMore && (
-            <Pressable style={[ui.btn, ui.outline]} onPress={() => run(query, false, true)} disabled={busy}>
-              {busy ? <ActivityIndicator color={colors.blue} /> : <Text style={[ui.btnText, { color: colors.ink }]}>Show more services</Text>}
-            </Pressable>
-          )}
-        </View>
-        <View style={{ marginTop: 16 }}><LegalLinks /></View>
+        {results}
+        {legal}
       </ScrollView>
     </SafeAreaView>
   );

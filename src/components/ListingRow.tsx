@@ -19,13 +19,13 @@ const CARD_W = 240;
 const GAP = 12;
 
 // One listing card: cover on top, five-star rating, two-line title, business name, price bottom right.
-function ListingCard({ s, rating, now }: { s: CardListing; rating?: Rating; now: Date }) {
+function ListingCard({ s, rating, now, width = CARD_W }: { s: CardListing; rating?: Rating; now: Date; width?: number }) {
   const price = formatPrice(s.price, s.price_from);
   const open = !!s.show_hours && openStatus(normalizeHours(s.hours), now).open;
   return (
     <Pressable onPress={() => router.push({ pathname: '/service/[id]', params: { id: s.id } })}
-      style={{ width: CARD_W, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
-      <Cover photos={s.photos} title={s.title} width={CARD_W} height={150} radius={0} />
+      style={{ width, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+      <Cover photos={s.photos} title={s.title} width={width} height={Math.round(width / 1.6)} radius={0} />
       <View style={{ padding: 12, gap: 6, flex: 1 }}>
         {/* Five stars and "4.0/5 · 12 reviews", shown only once the merchant has a review. */}
         <RatingSummary rating={rating} size={13} />
@@ -89,6 +89,25 @@ export function ListingRow({ title, rows, ratings }: { title: string; rows: Card
         onScroll={(e) => { x.current = e.nativeEvent.contentOffset.x; }} scrollEventThrottle={32}>
         {rows.map((s) => <ListingCard key={s.id} s={s} rating={ratings[s.id]} now={now} />)}
       </ScrollView>
+    </View>
+  );
+}
+
+// Computers (wide screens): a heading and the cards in a grid, 3 or 4 across, filling the width.
+export function ListingGrid({ title, rows, ratings }: { title: string; rows: CardListing[]; ratings: Record<string, Rating> }) {
+  const [width, setWidth] = useState(0);
+  const now = useNow();
+  const gap = 20;
+  const cols = width >= 1080 ? 4 : 3;
+  const cardW = width ? Math.floor((width - gap * (cols - 1)) / cols) : 0;
+  return (
+    <View style={{ gap: 14 }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      <Text style={{ fontSize: 26, fontFamily: fonts.title, color: colors.ink, letterSpacing: -0.4 }}>{title}</Text>
+      {cardW > 0 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap }}>
+          {rows.map((s) => <ListingCard key={s.id} s={s} rating={ratings[s.id]} now={now} width={cardW} />)}
+        </View>
+      )}
     </View>
   );
 }
