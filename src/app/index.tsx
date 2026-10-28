@@ -112,7 +112,7 @@ export default function Home() {
               Whatever you need, someone's ready.
             </Text>
             <Text style={{ color: '#CFE3F5', fontSize: 16, lineHeight: 22, maxWidth: 420 }}>
-              Find trusted local services across Antigua and Barbuda, and message them directly.
+              Find trusted local services across Antigua and Barbuda, and message or call them directly.
             </Text>
             {/* The whole box is the text field (so any tap starts typing); the icon sits on top and ignores taps. */}
             <View style={{ marginTop: 6 }}>
