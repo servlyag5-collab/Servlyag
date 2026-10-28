@@ -6,11 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CARD_W, GAP, ListingRow, type CardListing } from '../components/ListingRow';
 import { LegalLinks } from '../components/LegalLinks';
 import { MenuButton } from '../components/Menu';
+import { PlacePicker } from '../components/PlacePicker';
 import { PlanBanner } from '../components/PlanBanner';
 import { fetchListingRatings, type Rating } from '../lib/reviews';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { useMode } from '../lib/mode';
+import { PARISHES, VILLAGES } from '../lib/places';
 import { customerName } from '../lib/names';
 import { colors, flag, fonts, ui } from '../lib/theme';
 
@@ -179,8 +181,9 @@ export default function Home() {
                     <Ionicons name="search" size={21} color={colors.blue} />
                   </View>
                 </View>
-                <TextInput style={[ui.field, wideField, { flex: 1 }]} placeholder="City" placeholderTextColor={colors.muted} value={f.city} onChangeText={set('city')} onSubmitEditing={search} />
-                <TextInput style={[ui.field, wideField, { flex: 1 }]} placeholder="Village" placeholderTextColor={colors.muted} value={f.village} onChangeText={set('village')} onSubmitEditing={search} />
+                {/* Parish and village pick from lists (src/lib/places.ts), or use what they type. */}
+                <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Parish" placeholder="Parish" value={f.city} onChange={set('city')} options={PARISHES} boxStyle={wideField} /></View>
+                <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Village" placeholder="Village" value={f.village} onChange={set('village')} options={VILLAGES} boxStyle={wideField} /></View>
                 <Pressable style={[ui.btn, { backgroundColor: colors.gold, height: 56, borderRadius: 14, paddingHorizontal: 28 }]} onPress={search} disabled={busy}>
                   {busy ? <ActivityIndicator color={colors.ink} /> : <Text style={{ fontFamily: fonts.title, fontSize: 18, color: colors.ink }}>Search services</Text>}
                 </Pressable>
@@ -238,8 +241,9 @@ export default function Home() {
               </View>
             </View>
             <View style={ui.row}>
-              <TextInput style={[ui.field, heroField, { flex: 1 }]} placeholder="City" placeholderTextColor="#9FBCD6" value={f.city} onChangeText={set('city')} onSubmitEditing={search} />
-              <TextInput style={[ui.field, heroField, { flex: 1 }]} placeholder="Village" placeholderTextColor="#9FBCD6" value={f.village} onChangeText={set('village')} onSubmitEditing={search} />
+              {/* Parish and village pick from lists (src/lib/places.ts), or use what they type. */}
+              <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Parish" placeholder="Parish" value={f.city} onChange={set('city')} options={PARISHES} boxStyle={heroField} textColor="#fff" placeholderColor="#9FBCD6" /></View>
+              <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Village" placeholder="Village" value={f.village} onChange={set('village')} options={VILLAGES} boxStyle={heroField} textColor="#fff" placeholderColor="#9FBCD6" /></View>
             </View>
             {!!err && <View style={ui.row}><Text style={{ flex: 1, color: '#FFD3D8', fontSize: 14 }}>{err}</Text>{err.startsWith('Something') && <Pressable onPress={search}><Text style={{ color: colors.gold, fontWeight: '700' }}>Try again</Text></Pressable>}</View>}
             <Pressable style={[ui.btn, { backgroundColor: colors.gold, height: 54, borderRadius: 16 }]} onPress={search} disabled={busy}>

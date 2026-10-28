@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts, ui } from '../lib/theme';
 
 // A box that opens a searchable list (e.g. the parishes, or the villages in src/lib/places.ts).
 // Merchants pick one, or type a place that isn't listed and use exactly what they typed.
-export function PlacePicker({ label, value, onChange, options, placeholder }: {
+// boxStyle / textColor / placeholderColor let the box match where it sits (e.g. the dark Home hero).
+export function PlacePicker({ label, value, onChange, options, placeholder, boxStyle, textColor = colors.ink, placeholderColor = colors.muted }: {
   label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string;
+  boxStyle?: StyleProp<ViewStyle>; textColor?: string; placeholderColor?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -17,10 +19,10 @@ export function PlacePicker({ label, value, onChange, options, placeholder }: {
 
   return (
     <>
-      <Pressable style={[ui.field, { flexDirection: 'row', alignItems: 'center', gap: 8 }]} onPress={() => setOpen(true)}
+      <Pressable style={[ui.field, { flexDirection: 'row', alignItems: 'center', gap: 8 }, boxStyle]} onPress={() => setOpen(true)}
         accessibilityRole="button" accessibilityLabel={`${label}: ${value || 'not chosen'}`}>
-        <Text style={{ flex: 1, fontSize: 16, color: value ? colors.ink : colors.muted }} numberOfLines={1}>{value || placeholder}</Text>
-        <Ionicons name="chevron-down" size={18} color={colors.muted} />
+        <Text style={{ flex: 1, fontSize: 16, color: value ? textColor : placeholderColor }} numberOfLines={1}>{value || placeholder}</Text>
+        <Ionicons name="chevron-down" size={18} color={placeholderColor} />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
