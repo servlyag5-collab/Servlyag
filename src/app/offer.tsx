@@ -9,6 +9,7 @@ import { WideSplit } from '../components/WideSplit';
 import { PlacePicker } from '../components/PlacePicker';
 import { PARISHES, VILLAGES } from '../lib/places';
 import { TagRules } from '../components/TagRules';
+import { parseTags, tagsProblem } from '../lib/tags';
 import { TopBar } from '../components/Menu';
 import { PhoneToggle } from '../components/PhoneToggle';
 import { PriceInput } from '../components/PriceInput';
@@ -74,6 +75,7 @@ export default function Offer() {
     if (!b.name.trim()) return setErr('Add your business name.');
     if (showPhone && !b.phone.trim()) return setErr('Add a phone or WhatsApp number so customers can call you, or turn off "Show my phone number".');
     if (!f.title.trim() || !f.city.trim()) return setErr('Please add a service name and a city or parish.');
+    if (tagsProblem(f.tags)) return setErr(tagsProblem(f.tags)!);
     if (f.price.trim() && isNaN(Number(f.price))) return setErr('Price must be a number.');
     if (showHours && hoursProblem(hours)) return setErr(hoursProblem(hours)!);
     setBusy(true); setErr('');
@@ -84,7 +86,7 @@ export default function Offer() {
       merchant_id: user!.id,
       title: f.title.trim(),
       description: f.description.trim(),
-      tags: f.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean),
+      tags: parseTags(f.tags),
       price: f.price.trim() ? Number(f.price) : null,
       price_from: priceFrom,
       show_hours: showHours,
@@ -151,7 +153,7 @@ export default function Offer() {
         <TextInput style={ui.field} placeholder="Service name (e.g. Wedding photography)" value={f.title} onChangeText={set('title')} />
         <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Describe what you offer" multiline value={f.description} onChangeText={set('description')} />
         <TextInput style={ui.field} placeholder="Search tags, separated by commas (photographer, events)" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
-        <TagRules />
+        <TagRules count={parseTags(f.tags).length} />
         <PriceInput value={f.price} onChange={set('price')} from={priceFrom} onFromChange={setPriceFrom} />
         {/* Pick a parish and village from the lists (src/lib/places.ts), or type one that isn't listed. */}
         <PlacePicker label="City or parish" placeholder="City or parish" value={f.city} onChange={set('city')} options={PARISHES} />

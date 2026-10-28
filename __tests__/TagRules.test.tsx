@@ -16,6 +16,11 @@ describe('Tag rules (Offer a service / Edit listing)', () => {
     expect(screen.queryByText('Breaking these rules has penalties')).toBeNull();
   });
 
+  it('shows how many tags are used, out of 10', async () => {
+    await render(<TagRules count={4} />);
+    expect(screen.getByText('4 of 10 tags')).toBeTruthy();
+  });
+
   it('is backed by the Terms of Service', () => {
     const rules = TERMS.find((s) => s.heading === 'What is not allowed')!.body.join(' ');
     expect(rules).toMatch(/unrelated tags/);

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, type Href } from 'expo-router';
+import { MAX_TAGS } from '../lib/tags';
 import { colors, fonts, ui } from '../lib/theme';
 
 // The line under the tags box on Offer a service and Edit listing, with an ⓘ "Tag rules" button.
@@ -10,15 +11,19 @@ import { colors, fonts, ui } from '../lib/theme';
 const RULES = [
   'Only use tags for the services this listing actually offers. A photographer might use: photographer, photography, wedding photos, events.',
   "Don't add tags for services you don't offer, popular words, or other businesses' names to show up in more searches.",
-  'Keep it to a handful of tags that describe this service.',
+  `Use up to ${MAX_TAGS} tags that describe this service.`,
 ];
 
-export function TagRules() {
+// count: how many tags are typed now (shown as "4 of 10 tags", red when over the limit).
+export function TagRules({ count = 0 }: { count?: number }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: -6 }}>
-        <Text style={[ui.muted, { fontSize: 14, lineHeight: 20, flex: 1 }]}>Tags help customers find you in search. They are not shown on your listing.</Text>
+        <Text style={[ui.muted, { fontSize: 14, lineHeight: 20, flex: 1 }]}>
+          <Text style={{ fontWeight: '700', color: count > MAX_TAGS ? colors.red : colors.ink }}>{count} of {MAX_TAGS} tags</Text>
+          {' · '}Tags help customers find you in search. They are not shown on your listing.
+        </Text>
         <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel="Tag rules"
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 2 }}>
           <Ionicons name="information-circle-outline" size={20} color={colors.blue} />
