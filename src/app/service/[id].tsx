@@ -121,7 +121,8 @@ export default function ServiceDetail() {
               </View>
             )}
             {/* Photo 1 is the cover (logo or best photo); photos 2-5 show the merchant's work. */}
-            {s.photos?.length > 0 && <Cover photos={s.photos} title={s.title} width="100%" height={220} />}
+            {/* Same 16:10 shape as the Home cards, so the whole cover shows (nothing cut off). */}
+            {s.photos?.length > 0 && <Cover photos={s.photos} title={s.title} width="100%" aspectRatio={1.6} />}
             <Listing s={s} onBusiness={preview ? undefined : () => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })} />
             {s.show_hours && <HoursCard hours={s.hours} />}
             {s.photos?.length > 1 && (

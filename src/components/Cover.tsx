@@ -14,12 +14,15 @@ export function CoverTag() {
 }
 
 // A listing's cover: its first photo (logo or best photo), or a blue square with the first letter.
-export function Cover({ photos, title, width, height, radius = 14 }: { photos?: string[] | null; title: string; width: DimensionValue; height: number; radius?: number }) {
+// Pass a fixed `height`, or an `aspectRatio` (width / height) to keep the photo's shape at any width.
+export function Cover({ photos, title, width, height, aspectRatio, radius = 14 }: {
+  photos?: string[] | null; title: string; width: DimensionValue; height?: number; aspectRatio?: number; radius?: number;
+}) {
   const first = photos?.[0];
-  if (first) return <Image source={{ uri: photoUrl(first) }} style={{ width, height, borderRadius: radius, backgroundColor: colors.field }} resizeMode="cover" />;
+  if (first) return <Image source={{ uri: photoUrl(first) }} style={{ width, height, aspectRatio, borderRadius: radius, backgroundColor: colors.field }} resizeMode="cover" />;
   return (
-    <View style={{ width, height, borderRadius: radius, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: '#fff', fontWeight: '800', fontSize: Math.round(height / 2.4) }}>{(title.trim()[0] ?? 'S').toUpperCase()}</Text>
+    <View style={{ width, height, aspectRatio, borderRadius: radius, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ color: '#fff', fontWeight: '800', fontSize: Math.round((height ?? 220) / 2.4) }}>{(title.trim()[0] ?? 'S').toUpperCase()}</Text>
     </View>
   );
 }
