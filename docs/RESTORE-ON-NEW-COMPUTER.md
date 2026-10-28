@@ -1,10 +1,16 @@
-# Servly AG: set up the app on a new computer (from the backup)
+# Servly AG: set up the app on a new computer
 
-The backup is a zip file on the external drive, in `D:\Servly-Backup\` (for example
-`servly-app-backup-2026-10-28.zip`). It holds the whole app: every code file, the full git history,
-the database scripts, the demo covers, the docs, and your `.env` settings file.
+There are **two copies** of the app outside this computer. Use either one:
 
-It does **not** hold `node_modules` (about 400 MB of downloaded tools); step 4 downloads them again.
+| Copy | Where | What it holds |
+|---|---|---|
+| **GitHub** (online, private) | https://github.com/servlyag5-collab/Servlyag (sign in as servlyag5-collab) | All code and full history, always up to date when you "push". **Not** the `.env` settings file. |
+| **Backup zip** (external drive) | `D:\Servly-Backup\` on the TOSHIBA drive, e.g. `servly-app-backup-2026-10-28.zip` | Everything, including the `.env` settings file, as of the date in its name. |
+
+Neither holds `node_modules` (about 400 MB of downloaded tools); step 4 downloads them again.
+
+**Quickest way back:** get the code from GitHub (always newest), and copy the `.env` file out of the
+newest backup zip on the external drive.
 
 ---
 
@@ -27,9 +33,15 @@ You don't need a backup of these; signing in is enough:
    - **The Claude desktop app** (to keep working with Claude): https://claude.ai/download
    - On your phone: **Expo Go** (App Store / Play Store).
 
-2. **Copy the backup** from the external drive to the new computer, for example into your
-   `Downloads` folder. Right-click the zip > **Extract All**. You get a folder called `servly-app`.
-   (It's best to put it at `Downloads\servly-ag-starter\servly-app`, the same place as before.)
+2. **Get the app**, either way:
+   - **From GitHub (newest):** open a terminal in your `Downloads` folder and run
+     ```bash
+     git clone https://github.com/servlyag5-collab/Servlyag.git servly-app
+     ```
+     A GitHub sign-in window opens the first time. Then copy the `.env` file from the newest backup zip
+     (on the external drive) into the new `servly-app` folder.
+   - **From the external drive:** copy the newest zip into your `Downloads` folder, right-click it >
+     **Extract All**. You get a folder called `servly-app` (`.env` included).
 
 3. **Open a terminal in that folder**: open the `servly-app` folder in File Explorer, click the address
    bar, type `powershell` and press Enter. (Or, in the Claude app, open the folder and use its terminal.)
@@ -81,6 +93,10 @@ You don't need a backup of these; signing in is enough:
 - The **git history** comes with the backup, so every saved version is still there.
 - Your `.env` file holds your Supabase address and **publishable** key. They're not secret passwords, but
   keep the backup private anyway.
-- **Make a fresh backup** after big changes: ask Claude to "make a new backup on the external drive".
-- For an automatic online backup as well, the project can be put in a **private GitHub repository**
-  (ask Claude to set it up).
+- **Keep GitHub up to date:** after saving changes (a "commit"), send them to GitHub with
+  ```bash
+  git push
+  ```
+  or ask Claude to "commit and push to GitHub".
+- **Make a fresh backup zip** after big changes: ask Claude to "make a new backup on the external drive".
+- GitHub's **free** plan is enough: private repositories cost nothing.
