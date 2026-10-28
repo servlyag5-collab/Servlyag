@@ -13,7 +13,7 @@ describe('phone numbers', () => {
 
 describe('unread conversations', () => {
   const base: Conversation = {
-    id: 'c', service_id: 's', customer_id: 'cust', merchant_id: 'merch', contact: null,
+    id: 'c', service_id: 's', customer_id: 'cust', merchant_id: 'merch', contact: null, customer_as_business: false,
     last_message: 'Hello', last_message_at: '2026-10-24T12:00:00Z', customer_read_at: null, merchant_read_at: null,
   };
   it('is unread when a message arrived after I last read it', () => {

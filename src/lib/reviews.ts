@@ -5,8 +5,8 @@ import { supabase } from './supabase';
 export type Rating = { average: number; total: number };
 export type Review = {
   id: string; merchant_id: string; service_id: string | null; customer_id: string; rating: number; comment: string;
-  created_at: string; updated_at: string; reply: string | null; replied_at: string | null;
-  customer: { display_name: string } | null; services: { title: string } | null;
+  created_at: string; updated_at: string; reply: string | null; replied_at: string | null; as_business: boolean;
+  customer: { display_name: string; screen_name: string } | null; services: { title: string } | null;
 };
 
 // Average stars and count for several listings at once (e.g. the Home rows), keyed by listing id.

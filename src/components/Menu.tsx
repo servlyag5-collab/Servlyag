@@ -123,6 +123,9 @@ export function MenuButton() {
   );
 }
 
+const BAR_LOGO_W = 104;          // width of the small top-bar logo
+const LOGO_RATIO = 549 / 2066;   // logo.png height / width
+
 // "← Back" on the left, a small Servly logo in the middle (tap = Home), the ☰ menu on the right.
 // The two sides take equal space so the logo stays centred, even for guests (no ☰). Used on every inner screen.
 export function TopBar() {
@@ -134,7 +137,16 @@ export function TopBar() {
         </Pressable>
       </View>
       <Pressable onPress={() => router.dismissTo('/')} accessibilityLabel="Servly home">
-        <Image source={require('../../assets/logo.png')} style={{ height: 28, width: 106 }} resizeMode="contain" />
+        {/* Like the Home logo: the whole map pin, then the name cropped just below its flag underline (no slogan),
+            centred on the pin's height. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: BAR_LOGO_W * 0.06 }}>
+          <View style={{ width: BAR_LOGO_W * 0.215, height: BAR_LOGO_W * LOGO_RATIO, overflow: 'hidden' }}>
+            <Image source={require('../../assets/logo.png')} style={{ width: BAR_LOGO_W, height: BAR_LOGO_W * LOGO_RATIO }} />
+          </View>
+          <View style={{ width: BAR_LOGO_W * 0.725, height: BAR_LOGO_W * LOGO_RATIO * 0.63, overflow: 'hidden' }}>
+            <Image source={require('../../assets/logo.png')} style={{ width: BAR_LOGO_W, height: BAR_LOGO_W * LOGO_RATIO, marginLeft: -BAR_LOGO_W * 0.275 }} />
+          </View>
+        </View>
       </Pressable>
       <View style={{ flex: 1, alignItems: 'flex-end' }}>
         <MenuButton />

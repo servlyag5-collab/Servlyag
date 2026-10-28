@@ -8,9 +8,10 @@ import { bookingWhen, fromAntigua, hasBookingApp } from '../../lib/bookings';
 import { formatPrice } from '../../lib/price';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
+import { customerName } from '../../lib/names';
 import { colors, ui } from '../../lib/theme';
 
-type Conv = { merchant_id: string; services: { title: string } | null; customer: { display_name: string } | null };
+type Conv = { merchant_id: string; services: { title: string } | null; customer_as_business: boolean; customer: { display_name: string; screen_name: string } | null };
 
 // The merchant books the customer from their chat: pick a date and time, then send for confirmation.
 export default function BookCustomer() {
@@ -27,7 +28,7 @@ export default function BookCustomer() {
 
   useEffect(() => {
     if (!uid) return;
-    supabase.from('conversations').select('merchant_id,services(title),customer:profiles!customer_id(display_name)').eq('id', conversationId).maybeSingle()
+    supabase.from('conversations').select('merchant_id,customer_as_business,services(title),customer:profiles!customer_id(display_name,screen_name)').eq('id', conversationId).maybeSingle()
       .then(({ data }) => setC(data as unknown as Conv | null));
     hasBookingApp().then(setAllowed);
   }, [conversationId, uid]);
@@ -64,7 +65,7 @@ export default function BookCustomer() {
         ) : (
           <>
             <View style={{ gap: 2 }}>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{c.customer?.display_name || 'Customer'}</Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{customerName(c.customer, c.customer_as_business)}</Text>
               <Text style={{ fontSize: 15, fontWeight: '700', color: colors.blue }}>{c.services?.title ?? 'Your listing'}</Text>
             </View>
             <View style={ui.card}>

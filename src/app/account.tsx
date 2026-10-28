@@ -16,7 +16,9 @@ import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 
-type Me = { display_name: string; bio: string; show_phone: boolean; plan_expires_at: string | null; tiers: { name: string } | null };
+type Me = { display_name: string; screen_name: string; bio: string; show_phone: boolean; plan_expires_at: string | null; tiers: { name: string } | null };
+const label = { fontSize: 14, fontWeight: '700' as const, color: colors.ink, marginBottom: -4 };
+
 type Svc = { id: string; title: string; photos: string[]; price: number | null; price_from: boolean; city: string; village: string | null; active: boolean };
 
 export default function Account() {
@@ -24,7 +26,7 @@ export default function Account() {
   const uid = session?.user.id;
   const merchant = useMode() === 'merchant';
   const [me, setMe] = useState<Me | null>(null);
-  const [b, setB] = useState({ name: '', bio: '', phone: '' });
+  const [b, setB] = useState({ screen: '', name: '', bio: '', phone: '' });
   const [showPhone, setShowPhone] = useState(true);
   const [rows, setRows] = useState<Svc[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -42,7 +44,7 @@ export default function Account() {
     if (!uid) return;
     // The real phone number is private: only my_phone() returns it, and only to its owner.
     Promise.all([
-      supabase.from('profiles').select('display_name,bio,show_phone,plan_expires_at,tiers!tier_id(name)').eq('id', uid).single(),
+      supabase.from('profiles').select('display_name,screen_name,bio,show_phone,plan_expires_at,tiers!tier_id(name)').eq('id', uid).single(),
       supabase.rpc('my_phone'),
     ]).then(([{ data, error }, ph]) => {
       if (!data) return setLoadErr(error?.message ?? 'Could not load your account.');
@@ -50,7 +52,7 @@ export default function Account() {
       const p = data as unknown as Me;
       setMe(p);
       setShowPhone(p.show_phone);
-      setB({ name: p.display_name, bio: p.bio, phone: (ph.data as string | null) ?? '' });
+      setB({ screen: p.screen_name, name: p.display_name, bio: p.bio, phone: (ph.data as string | null) ?? '' });
     });
     supabase.from('services').select('id,title,photos,price,price_from,city,village,active').eq('merchant_id', uid)
       .order('created_at', { ascending: false })
@@ -66,10 +68,13 @@ export default function Account() {
   }
 
   async function save() {
-    if (!b.name.trim()) return setMsg('Please add your name or business name.');
+    const hasListings = !!rows?.length;
+    if (!b.screen.trim()) return setMsg('Please add your name.');
+    if (hasListings && !b.name.trim()) return setMsg('Please add your business name.');
     setBusy(true); setMsg('');
+    // The business name only changes for people with a listing (it's set on Offer a service).
     const { error } = await supabase.from('profiles')
-      .update({ display_name: b.name.trim(), bio: b.bio.trim(), phone: b.phone.trim() || null, show_phone: showPhone }).eq('id', uid!);
+      .update({ screen_name: b.screen.trim(), ...(hasListings ? { display_name: b.name.trim() } : {}), bio: b.bio.trim(), phone: b.phone.trim() || null, show_phone: showPhone }).eq('id', uid!);
     setBusy(false);
     setMsg(error ? error.message : 'Saved.');
   }
@@ -101,7 +106,16 @@ export default function Account() {
           <>
             <View style={ui.card}>
               <Text style={ui.h2}>Your details</Text>
-              <TextInput style={ui.field} placeholder="Your name or business name" value={b.name} onChangeText={setBiz('name')} />
+              <Text style={label}>Name</Text>
+              <TextInput style={ui.field} placeholder="Name" maxLength={40} value={b.screen} onChangeText={setBiz('screen')} />
+              <Text style={[ui.muted, { fontSize: 13, lineHeight: 18 }]}>Shown on your reviews and messages when you use Servly as a customer.</Text>
+              {rows && rows.length > 0 && (
+                <>
+                  <Text style={label}>Business name</Text>
+                  <TextInput style={ui.field} placeholder="Business name" value={b.name} onChangeText={setBiz('name')} />
+                  <Text style={[ui.muted, { fontSize: 13, lineHeight: 18 }]}>Shown on your listings, and on messages and reviews you send in Merchant view.</Text>
+                </>
+              )}
               <TextInput style={[ui.field, { height: 96, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="About you or your business" multiline value={b.bio} onChangeText={setBiz('bio')} />
               <TextInput style={ui.field} placeholder="Phone or WhatsApp number" keyboardType="phone-pad" value={b.phone} onChangeText={setBiz('phone')} />
               {rows && rows.length > 0 && <PhoneToggle value={showPhone} onChange={(v) => { setShowPhone(v); setMsg(''); }} />}

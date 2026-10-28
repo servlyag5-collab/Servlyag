@@ -63,7 +63,7 @@ export const TERMS: Section[] = [
   ] },
   { heading: 'Merchant plans', body: [
     'Merchants pay a monthly subscription (Starter, Growth or Business) and may add the booking app. Prices are shown in the app in Eastern Caribbean dollars (XCD). Each payment covers one month; listings are hidden when a plan ends until it is renewed.',
-    'Unless the law requires otherwise, subscription payments are not refundable for a month already started.',
+    'Plans renew monthly until cancelled. How to cancel, and when payments can be refunded, is explained in our Refund and Cancellation Policy, which is part of these terms.',
   ] },
   { heading: 'Bookings', body: [
     'Merchants can send a booking for a customer to confirm. A confirmed booking is an arrangement between the customer and the merchant. Merchants may cancel bookings; Servly is not responsible for missed, cancelled or changed appointments.',
@@ -86,5 +86,37 @@ export const TERMS: Section[] = [
   ] },
   { heading: 'Law and contact', body: [
     `These terms are governed by the laws of Antigua and Barbuda. We may update them and will show the new date at the top. Questions? Contact ${CONTACT}.`,
+  ] },
+];
+
+// Refund and Cancellation Policy (servlyag.com/refunds). Owner's rules (Oct 2026): no refund once a month
+// has started; cancel through Contact support; billing mistakes reported within 30 days are refunded.
+export const REFUNDS: Section[] = [
+  { heading: 'About this policy', body: [
+    'This policy covers payments made to Servly AG: monthly merchant plans (Starter, Growth and Business) and the booking app add-on. Prices are in Eastern Caribbean dollars (XCD).',
+    'Servly does not take payment for the services merchants offer. If you paid a merchant for a haircut, a delivery or any other service, refunds for that service are between you and the merchant.',
+  ] },
+  { heading: 'How monthly plans work', body: [
+    'Each payment covers one month, starting when the plan is activated. Plans renew every month, and the payment method is charged automatically, until the plan is cancelled.',
+    'If a monthly payment does not go through, the plan ends on its end date and the listings are hidden from customers until it is renewed.',
+  ] },
+  { heading: 'Cancelling', body: [
+    `You can cancel at any time. In the app, open the ☰ menu > Contact support and choose Billing, or email ${CONTACT}. We will confirm your cancellation.`,
+    'To avoid the next charge, please cancel before your renewal date (shown on your Account page). After you cancel, your plan keeps working until the end of the month you have paid for. Then it ends and your listings are hidden. Your account and listings are kept, so you can renew later.',
+  ] },
+  { heading: 'Refunds', body: [
+    'Once a month has started, the payment for that month is not refundable, including for unused days or features, unless the law requires otherwise.',
+    'This also applies if listings are hidden or removed because they broke our Terms of Service.',
+  ] },
+  { heading: 'Billing mistakes', body: [
+    `If you were charged by mistake (for example charged twice, charged after we confirmed your cancellation, or charged the wrong amount), tell us within 30 days of the charge through Contact support or ${CONTACT}. We will refund the amount charged by mistake.`,
+    'Refunds go back to the card or account you paid with. Your bank may take several business days to show it.',
+    'If something looks wrong on your statement, please contact us before disputing the charge with your bank. We can usually fix it faster.',
+  ] },
+  { heading: 'Price changes', body: [
+    'If a plan price changes, we will tell merchants before the new price applies to their next payment.',
+  ] },
+  { heading: 'Law and contact', body: [
+    `This policy is governed by the laws of Antigua and Barbuda and does not affect any rights you have under that law. We may update it and will show the new date at the top. Questions? Contact ${CONTACT}.`,
   ] },
 ];

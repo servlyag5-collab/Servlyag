@@ -10,11 +10,12 @@ import { hasBookingApp, type Booking } from '../../lib/bookings';
 import { channelName, phoneDigits, type Conversation, type Message } from '../../lib/chat';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
+import { customerName } from '../../lib/names';
 import { colors, ui } from '../../lib/theme';
 
 type Conv = Conversation & {
   services: { title: string } | null;
-  customer: { display_name: string } | null;
+  customer: { display_name: string; screen_name: string } | null;
   merchant: { display_name: string } | null;
 };
 const when = (iso: string) => new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -47,7 +48,7 @@ export default function Chat() {
   useEffect(() => {
     if (!uid) return;
     supabase.from('conversations')
-      .select('*,services(title),customer:profiles!customer_id(display_name),merchant:profiles!merchant_id(display_name)')
+      .select('*,services(title),customer:profiles!customer_id(display_name,screen_name),merchant:profiles!merchant_id(display_name)')
       .eq('id', id).single()
       .then(({ data, error }) => {
         if (!data) return setErr(error?.message ?? 'Conversation not found.');
@@ -87,7 +88,7 @@ export default function Chat() {
   }
 
   const iAmMerchant = !!c && c.merchant_id === uid;
-  const other = c ? (iAmMerchant ? c.customer?.display_name || 'Customer' : c.merchant?.display_name || 'Merchant') : '';
+  const other = c ? (iAmMerchant ? customerName(c.customer, c.customer_as_business) : c.merchant?.display_name || 'Merchant') : '';
   const otherId = c ? (iAmMerchant ? c.customer_id : c.merchant_id) : '';
 
   // Block / unblock the other person: blocked people can't message or book you (enforced by the database).

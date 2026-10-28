@@ -8,11 +8,11 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "ag.servly.app",
+      "bundleIdentifier": "com.servlyag.app",
       "supportsTablet": true
     },
     "android": {
-      "package": "ag.servly.app",
+      "package": "com.servlyag.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-foreground.png",
         "backgroundColor": "#0072C6"
@@ -38,7 +38,8 @@
         {
           "color": "#0072C6"
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

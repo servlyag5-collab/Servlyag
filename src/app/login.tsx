@@ -28,6 +28,7 @@ export default function Login() {
   const switchTo = (m: typeof mode) => { setMode(m); setMsg(''); setInfo(''); };
 
   async function go() {
+    if (mode === 'up' && !name.trim()) return setMsg('Please enter your name.');
     if (!email.trim()) return setMsg('Please enter your email.');
     setBusy(true); setMsg(''); setInfo('');
     if (mode === 'reset') {
@@ -39,7 +40,7 @@ export default function Login() {
     }
     const r = mode === 'in'
       ? await supabase.auth.signInWithPassword({ email: email.trim(), password: pw })
-      : await supabase.auth.signUp({ email: email.trim(), password: pw, options: { data: { display_name: name.trim() } } });
+      : await supabase.auth.signUp({ email: email.trim(), password: pw, options: { data: { screen_name: name.trim() } } });
     setBusy(false);
     if (r.error) setMsg(r.error.message);
     else if (mode === 'up' && !r.data.session) setInfo('Check your email to confirm your account, then log in.');
@@ -56,7 +57,13 @@ export default function Login() {
         <View style={ui.card}>
           <Text style={ui.h2}>{title}</Text>
           {mode === 'reset' && <Text style={ui.muted}>Enter the email you signed up with and we'll send you a link to choose a new password.</Text>}
-          {mode === 'up' && <TextInput style={ui.field} placeholder="Your name or business name" value={name} onChangeText={setName} />}
+          {/* Your name (saved as screen_name) shows on reviews and messages sent as a customer. A business name is asked for later, on Offer a service. */}
+          {mode === 'up' && (
+            <>
+              <TextInput style={ui.field} placeholder="Name" maxLength={40} autoComplete="name" value={name} onChangeText={setName} />
+              <Text style={[ui.muted, { fontSize: 13, lineHeight: 18, marginTop: -6 }]}>Shown on your reviews and messages. You can change it later in Account.</Text>
+            </>
+          )}
           <TextInput style={ui.field} placeholder="Email" autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={email} onChangeText={setEmail} />
           {mode !== 'reset' && (
             <TextInput style={ui.field} placeholder="Password" secureTextEntry autoCapitalize="none" autoCorrect={false}

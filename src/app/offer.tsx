@@ -8,6 +8,8 @@ import { CoverTag } from '../components/Cover';
 import { TopBar } from '../components/Menu';
 import { PhoneToggle } from '../components/PhoneToggle';
 import { PriceInput } from '../components/PriceInput';
+import { HoursEditor } from '../components/HoursEditor';
+import { DEFAULT_HOURS, hoursProblem, type Hours } from '../lib/hours';
 import { setMode } from '../lib/mode';
 import { shrinkPhoto } from '../lib/photos';
 import { supabase } from '../lib/supabase';
@@ -23,6 +25,8 @@ export default function Offer() {
   const [showPhone, setShowPhone] = useState(true);
   const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '' });
   const [priceFrom, setPriceFrom] = useState(false); // "From EC$..." starting price
+  const [showHours, setShowHours] = useState(false); // opening hours switch (hours stay saved when off)
+  const [hours, setHours] = useState<Hours>(DEFAULT_HOURS);
   const [gate, setGate] = useState<Gate | null>(null);
   const [photos, setPhotos] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [addonPrice, setAddonPrice] = useState<number | null>(null);
@@ -67,6 +71,7 @@ export default function Offer() {
     if (showPhone && !b.phone.trim()) return setErr('Add a phone or WhatsApp number so customers can call you, or turn off "Show my phone number".');
     if (!f.title.trim() || !f.city.trim()) return setErr('Please add a service name and a city.');
     if (f.price.trim() && isNaN(Number(f.price))) return setErr('Price must be a number.');
+    if (showHours && hoursProblem(hours)) return setErr(hoursProblem(hours)!);
     setBusy(true); setErr('');
     const { data: { user } } = await supabase.auth.getUser();
     const up = await supabase.from('profiles').update({ display_name: b.name.trim(), bio: b.bio.trim(), phone: b.phone.trim() || null, show_phone: showPhone }).eq('id', user!.id);
@@ -78,6 +83,8 @@ export default function Offer() {
       tags: f.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean),
       price: f.price.trim() ? Number(f.price) : null,
       price_from: priceFrom,
+      show_hours: showHours,
+      hours,
       city: f.city.trim(),
       village: f.village.trim() || null,
     }).select('id').single();
@@ -143,6 +150,7 @@ export default function Offer() {
         <PriceInput value={f.price} onChange={set('price')} from={priceFrom} onFromChange={setPriceFrom} />
         <TextInput style={ui.field} placeholder="City" value={f.city} onChangeText={set('city')} />
         <TextInput style={ui.field} placeholder="Village (optional)" value={f.village} onChangeText={set('village')} />
+        <HoursEditor show={showHours} onShow={setShowHours} hours={hours} onChange={setHours} />
 
         <Text style={[ui.h2, { marginTop: 8 }]}>Photos (optional, up to 5)</Text>
         <Text style={ui.muted}>Your first photo is the cover: use your logo or your best photo. It shows in search results. The other 4 show your work on the listing page.</Text>

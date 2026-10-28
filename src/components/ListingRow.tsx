@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, View, type ScrollViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { normalizeHours, openStatus, useNow } from '../lib/hours';
 import { formatPrice } from '../lib/price';
 import type { Rating } from '../lib/reviews';
 import { colors } from '../lib/theme';
@@ -11,14 +12,16 @@ import { RatingSummary } from './Stars';
 export type CardListing = {
   id: string; merchant_id: string; title: string; photos: string[]; price: number | null; price_from: boolean;
   city: string; village: string | null; profiles: { display_name: string } | null;
+  show_hours?: boolean; hours?: unknown;
 };
 
 const CARD_W = 240;
 const GAP = 12;
 
 // One listing card: cover on top, five-star rating, two-line title, business name, price bottom right.
-function ListingCard({ s, rating }: { s: CardListing; rating?: Rating }) {
+function ListingCard({ s, rating, now }: { s: CardListing; rating?: Rating; now: Date }) {
   const price = formatPrice(s.price, s.price_from);
+  const open = !!s.show_hours && openStatus(normalizeHours(s.hours), now).open;
   return (
     <Pressable onPress={() => router.push({ pathname: '/service/[id]', params: { id: s.id } })}
       style={{ width: CARD_W, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
@@ -30,11 +33,20 @@ function ListingCard({ s, rating }: { s: CardListing; rating?: Rating }) {
         <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
           {s.profiles?.display_name || 'Servly merchant'} · {s.village || s.city}
         </Text>
-        <Text style={{ alignSelf: 'flex-end', marginTop: 'auto', fontSize: 14, color: colors.muted }}>
-          {s.price == null ? <Text style={{ fontWeight: '800', color: colors.blue }}>{price}</Text> : s.price_from
-            ? <>From <Text style={{ fontSize: 19, fontWeight: '800', color: colors.blue }}>{price.replace('From ', '')}</Text></>
-            : <Text style={{ fontSize: 19, fontWeight: '800', color: colors.blue }}>{price}</Text>}
-        </Text>
+        {/* Bottom line: a small "Open" on the left (only while the listing shows hours and is open now), price on the right. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 'auto' }}>
+          {open && (
+            // A small gold tag with dark text (gold text on white would be too faint to read).
+            <View style={{ backgroundColor: colors.gold, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.ink }}>Open</Text>
+            </View>
+          )}
+          <Text style={{ marginLeft: 'auto', fontSize: 14, color: colors.muted }}>
+            {s.price == null ? <Text style={{ fontWeight: '800', color: colors.blue }}>{price}</Text> : s.price_from
+              ? <>From <Text style={{ fontSize: 19, fontWeight: '800', color: colors.blue }}>{price.replace('From ', '')}</Text></>
+              : <Text style={{ fontSize: 19, fontWeight: '800', color: colors.blue }}>{price}</Text>}
+          </Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -45,6 +57,7 @@ export function ListingRow({ title, rows, ratings }: { title: string; rows: Card
   const sc = useRef<ScrollViewInstance>(null);
   const x = useRef(0);
   const [width, setWidth] = useState(0);
+  const now = useNow(); // re-checks "Open" every minute while Home stays open
   // Move by as many whole cards as fit on screen, so a card edge always lines up on the left.
   const step = (dir: 1 | -1) => {
     const card = CARD_W + GAP;
@@ -74,7 +87,7 @@ export function ListingRow({ title, rows, ratings }: { title: string; rows: Card
       <ScrollView ref={sc} horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast"
         snapToInterval={CARD_W + GAP} snapToAlignment="start" contentContainerStyle={{ gap: GAP, paddingRight: 16 }}
         onScroll={(e) => { x.current = e.nativeEvent.contentOffset.x; }} scrollEventThrottle={32}>
-        {rows.map((s) => <ListingCard key={s.id} s={s} rating={ratings[s.id]} />)}
+        {rows.map((s) => <ListingCard key={s.id} s={s} rating={ratings[s.id]} now={now} />)}
       </ScrollView>
     </View>
   );

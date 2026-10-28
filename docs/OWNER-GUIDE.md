@@ -10,7 +10,7 @@ only you can do. File paths are inside the `servly-app` folder.
 
 ## 1. Do these first (after this update)
 
-1. **Run the database update.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run.
+1. **Run the database updates.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run, then `supabase/upgrade-v15-opening-hours.sql` > Run, then `supabase/upgrade-v16-screen-name.sql` > Run.
    Supabase warns about "destructive operations": those lines replace old rules with stricter ones
    (blocking) and keep payment records when an account is deleted. No data is removed.
 2. **Make yourself an admin** (SQL Editor, change the email):
@@ -29,7 +29,7 @@ only you can do. File paths are inside the `servly-app` folder.
 |---|---|---|
 | **Admin dashboard** (☰ > Admin) | Activate/renew plans, switch the booking app, answer support, handle reports | `src/app/admin.tsx`; who is an admin: the `admins` table (SQL above) |
 | **Delete my account** (Account, bottom) | Deletes the account and everything attached; keeps payment records without the name | Screen: `src/app/account.tsx` (`deleteAccount`); database: `delete_my_account()` in v14 |
-| **Privacy Policy / Terms** | Draft legal pages, linked from sign-up, Account and Home | **Wording:** `src/lib/legal.ts` (headings and paragraphs). Date: `LEGAL_UPDATED`. Have a lawyer review before launch. |
+| **Privacy Policy / Terms / Refund and Cancellation Policy** | Draft legal pages (`/privacy`, `/terms`, `/refunds`), linked from sign-up, Account and Home; Checkout links the refund policy next to Pay. Refund rules: no refund once a month starts, cancel via Contact support, billing mistakes refunded if reported within 30 days | **Wording:** `src/lib/legal.ts` (`PRIVACY`, `TERMS`, `REFUNDS`: headings and paragraphs). Date: `LEGAL_UPDATED`. Have a lawyer review before launch. |
 | **Reports** (listings, reviews, people) | Anyone logged in can report; you see them in Admin > Reports | Reasons list: `REASONS` in `src/components/ReportButton.tsx` (also allowed reasons in the `reports` table, v14) |
 | **Blocking** (in a chat) | Blocked people can't message, start a chat, or book you | Chat screen: `src/app/chat/[id].tsx`; rules: v14 section 3 |
 | **Review replies** | Merchants reply publicly to reviews of their listings | `ReviewItem` in `src/components/Reviews.tsx` |
@@ -37,6 +37,8 @@ only you can do. File paths are inside the `servly-app` folder.
 | **Plan ending notification** | Phone notification about 3 days before (9:00 AM Antigua) | `plan_expiry_reminders()` and its schedule in v14 section 7 |
 | **Search** | Name, description and hidden tags; forgives small spelling mistakes; 30 results at a time | Results per page: `PAGE` in `src/app/index.tsx`. How forgiving: the `0.45` / `0.4` numbers in `search_services()` (v14 section 6; lower = more forgiving) |
 | **Smaller photos** | Photos shrink to max 1600 px wide, JPEG quality 0.7 before upload | `MAX_WIDTH` and `QUALITY` in `src/lib/photos.ts` |
+| **Opening hours** (per listing) | "Show opening hours" switch + weekly table on Offer/Edit; "Open now / Closed now" card on the listing (Antigua time) | Starting week: `DEFAULT_HOURS` in `src/lib/hours.ts`. Editor: `src/components/HoursEditor.tsx`. Card: `src/components/HoursCard.tsx`. Small "Open" on Home cards (only while open): `ListingCard` in `src/components/ListingRow.tsx`. Database: `supabase/upgrade-v15-opening-hours.sql`. Demo hours: `supabase/demo-opening-hours.sql` |
+| **Name (screen name)** | The "Name" asked at sign-up; shown on reviews and messages sent in Customer view. In Merchant view the business name is shown instead. Each chat/review remembers which | Sign-up: `src/app/login.tsx`. Account: Name + Business name boxes in `src/app/account.tsx`. Which name to show: `customerName` in `src/lib/names.ts`. Database: `supabase/upgrade-v16-screen-name.sql` |
 | **Business profile link** | Tapping the business name on a listing opens their profile | `Listing` in `src/app/service/[id].tsx` |
 | **Push notifications** | New messages, booking cards, booking reminders, plan ending | App side: `src/lib/push.ts`. What triggers them and their wording: `push_new_message()` and `plan_expiry_reminders()` in v14 section 7 |
 | **Payments (provider-ready)** | Activates a plan automatically when your provider confirms a payment | `supabase/functions/payment-webhook/index.ts` (the part marked PROVIDER-SPECIFIC) |
@@ -130,7 +132,7 @@ npx supabase db push
 **Your current project already has all of these** (you ran them in the SQL Editor). Tell the tool so
 it doesn't run them twice:
 ```bash
-npx supabase migration repair --status applied 20261024000001 20261024000002 20261024000003 20261024000004 20261024000005 20261024000006 20261024000007 20261024000008 20261024000009 20261024000010 20261024000011 20261024000012
+npx supabase migration repair --status applied 20261024000001 20261024000002 20261024000003 20261024000004 20261024000005 20261024000006 20261024000007 20261024000008 20261024000009 20261024000010 20261024000011 20261024000012 20261026000013 20261026000014
 ```
 For future database changes, add a new numbered file to `supabase/migrations/` and run `npx supabase db push`.
 (The `upgrade-v*.sql` files stay for pasting into the SQL Editor, as before.)

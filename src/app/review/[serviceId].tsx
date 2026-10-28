@@ -4,6 +4,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TopBar } from '../../components/Menu';
 import { Stars } from '../../components/Stars';
+import { useMode } from '../../lib/mode';
+import { customerName, type PersonNames } from '../../lib/names';
 import { canReview } from '../../lib/reviews';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
@@ -17,6 +19,8 @@ export default function WriteReview() {
   const { serviceId } = useLocalSearchParams<{ serviceId: string }>();
   const session = useSession();
   const uid = session?.user.id;
+  const [asBusiness, setAsBusiness] = useState(useMode() === 'merchant'); // a saved review keeps the name it was posted with
+  const [me, setMe] = useState<PersonNames>(null);
   const [svc, setSvc] = useState<Svc | null>(null);
   const [state, setState] = useState<'loading' | 'own' | 'not-customer' | 'ready'>('loading');
   const [existing, setExisting] = useState<string | null>(null); // my review's id, if I already wrote one
@@ -30,12 +34,14 @@ export default function WriteReview() {
     Promise.all([
       supabase.from('services').select('title,merchant_id,profiles(display_name)').eq('id', serviceId).maybeSingle(),
       canReview(serviceId, uid),
-      supabase.from('reviews').select('id,rating,comment').eq('service_id', serviceId).eq('customer_id', uid).maybeSingle(),
-    ]).then(([s, ok, r]) => {
+      supabase.from('reviews').select('id,rating,comment,as_business').eq('service_id', serviceId).eq('customer_id', uid).maybeSingle(),
+      supabase.from('profiles').select('display_name,screen_name').eq('id', uid).maybeSingle(),
+    ]).then(([s, ok, r, p]) => {
+      setMe(p.data as PersonNames);
       const service = s.data as unknown as Svc | null;
       setSvc(service);
       if (service?.merchant_id === uid) return setState('own');
-      if (r.data) { setExisting(r.data.id); setRating(r.data.rating); setComment(r.data.comment); return setState('ready'); }
+      if (r.data) { setExisting(r.data.id); setAsBusiness(r.data.as_business); setRating(r.data.rating); setComment(r.data.comment); return setState('ready'); }
       setState(ok ? 'ready' : 'not-customer');
     });
   }, [serviceId, uid]);
@@ -45,7 +51,7 @@ export default function WriteReview() {
     setBusy(true); setMsg('');
     const { error } = existing
       ? await supabase.from('reviews').update({ rating, comment: comment.trim() }).eq('id', existing)
-      : await supabase.from('reviews').insert({ service_id: serviceId, merchant_id: svc?.merchant_id, customer_id: uid, rating, comment: comment.trim() });
+      : await supabase.from('reviews').insert({ service_id: serviceId, merchant_id: svc?.merchant_id, customer_id: uid, rating, comment: comment.trim(), as_business: asBusiness });
     setBusy(false);
     if (error) return setMsg(error.code === '23505' ? 'You have already reviewed this listing.' : error.message);
     router.back();
@@ -76,6 +82,7 @@ export default function WriteReview() {
             </View>
             <TextInput style={[ui.field, { height: 120, paddingTop: 14, textAlignVertical: 'top' }]} multiline maxLength={1000}
               placeholder="Tell others about the service (optional)" value={comment} onChangeText={setComment} />
+            <Text style={[ui.muted, { fontSize: 14 }]}>Your review shows as <Text style={{ fontWeight: '800', color: colors.ink }}>{customerName(me, asBusiness, 'you')}</Text>.</Text>
             <Text style={[ui.muted, { fontSize: 14 }]}>You can review each listing once. You can come back and edit your review any time.</Text>
             {!!msg && <Text style={ui.error}>{msg}</Text>}
             <Pressable style={[ui.btn, ui.primary]} onPress={save} disabled={busy}>

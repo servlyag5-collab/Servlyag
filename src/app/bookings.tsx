@@ -9,11 +9,13 @@ import { channelName } from '../lib/chat';
 import { useMode } from '../lib/mode';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
+import { customerName } from '../lib/names';
 import { colors, ui } from '../lib/theme';
 
 type Row = Booking & {
   services: { title: string } | null;
-  customer: { display_name: string } | null;
+  customer: { display_name: string; screen_name: string } | null;
+  conversations: { customer_as_business: boolean } | null;
   merchant: { display_name: string } | null;
 };
 
@@ -32,7 +34,7 @@ export default function Bookings() {
   const load = useCallback(() => {
     if (!uid) return;
     supabase.from('bookings')
-      .select('*,services(title),customer:profiles!customer_id(display_name),merchant:profiles!merchant_id(display_name)')
+      .select('*,services(title),customer:profiles!customer_id(display_name,screen_name),conversations(customer_as_business),merchant:profiles!merchant_id(display_name)')
       .eq(col, uid).order('starts_at')
       .then(({ data, error }) => { setErr(error?.message ?? ''); setRows((data as unknown as Row[]) ?? []); });
     if (merchant) hasBookingApp().then(setAllowed); else setAllowed(true);
@@ -93,7 +95,7 @@ export default function Bookings() {
             {list.map((b) => (
               <View key={b.id} style={{ gap: 6 }}>
                 <BookingCard b={b} iAmMerchant={merchant} onChanged={load}
-                  title={merchant ? b.customer?.display_name || 'Customer' : b.merchant?.display_name || 'Merchant'}
+                  title={merchant ? customerName(b.customer, b.conversations?.customer_as_business) : b.merchant?.display_name || 'Merchant'}
                   subtitle={b.services?.title} />
                 <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: b.conversation_id } })} style={{ alignSelf: 'flex-end' }}>
                   <Text style={{ color: colors.blue, fontWeight: '700' }}>Open chat ›</Text>

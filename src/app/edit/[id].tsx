@@ -8,6 +8,8 @@ import { CoverTag, photoUrl } from '../../components/Cover';
 import { TopBar } from '../../components/Menu';
 import { PhoneToggle } from '../../components/PhoneToggle';
 import { PriceInput } from '../../components/PriceInput';
+import { HoursEditor } from '../../components/HoursEditor';
+import { DEFAULT_HOURS, hoursProblem, normalizeHours, type Hours } from '../../lib/hours';
 import { useMode } from '../../lib/mode';
 import { shrinkPhoto } from '../../lib/photos';
 import { useSession } from '../../lib/session';
@@ -28,6 +30,8 @@ export default function EditListing() {
   const [showPhone, setShowPhone] = useState(true);
   const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '' });
   const [priceFrom, setPriceFrom] = useState(false); // "From EC$..." starting price
+  const [showHours, setShowHours] = useState(false); // opening hours switch (hours stay saved when off)
+  const [hours, setHours] = useState<Hours>(DEFAULT_HOURS);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [removed, setRemoved] = useState<string[]>([]); // saved photos to delete on Save
   const [loaded, setLoaded] = useState(false);
@@ -39,7 +43,7 @@ export default function EditListing() {
   useEffect(() => {
     if (!uid) return;
     Promise.all([
-      supabase.from('services').select('title,description,tags,price,price_from,city,village,photos').eq('id', id).eq('merchant_id', uid).single(),
+      supabase.from('services').select('title,description,tags,price,price_from,show_hours,hours,city,village,photos').eq('id', id).eq('merchant_id', uid).single(),
       supabase.from('profiles').select('display_name,bio,show_phone').eq('id', uid).single(),
       supabase.rpc('my_phone'), // the real number is private; only its owner can read it
     ]).then(([s, p, ph]) => {
@@ -49,6 +53,8 @@ export default function EditListing() {
         price: s.data.price != null ? String(s.data.price) : '', city: s.data.city, village: s.data.village ?? '',
       });
       setPriceFrom(!!s.data.price_from);
+      setShowHours(!!s.data.show_hours);
+      setHours(normalizeHours(s.data.hours));
       setPhotos(((s.data.photos ?? []) as string[]).map((path) => ({ path })));
       if (p.data) {
         setB({ name: p.data.display_name, bio: p.data.bio, phone: (ph.data as string | null) ?? '' });
@@ -77,6 +83,7 @@ export default function EditListing() {
     if (showPhone && !b.phone.trim()) return setErr('Add a phone or WhatsApp number so customers can call you, or turn off "Show my phone number".');
     if (!f.title.trim() || !f.city.trim()) return setErr('Please add a service name and a city.');
     if (f.price.trim() && isNaN(Number(f.price))) return setErr('Price must be a number.');
+    if (showHours && hoursProblem(hours)) return setErr(hoursProblem(hours)!);
     setBusy(true); setErr('');
 
     const up = await supabase.from('profiles').update({ display_name: b.name.trim(), bio: b.bio.trim(), phone: b.phone.trim() || null, show_phone: showPhone }).eq('id', uid!);
@@ -99,6 +106,8 @@ export default function EditListing() {
       tags: f.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean),
       price: f.price.trim() ? Number(f.price) : null,
       price_from: priceFrom,
+      show_hours: showHours,
+      hours,
       city: f.city.trim(),
       village: f.village.trim() || null,
       photos: paths,
@@ -133,6 +142,7 @@ export default function EditListing() {
             <PriceInput value={f.price} onChange={set('price')} from={priceFrom} onFromChange={setPriceFrom} />
             <TextInput style={ui.field} placeholder="City" value={f.city} onChangeText={set('city')} />
             <TextInput style={ui.field} placeholder="Village (optional)" value={f.village} onChangeText={set('village')} />
+            <HoursEditor show={showHours} onShow={setShowHours} hours={hours} onChange={setHours} />
 
             <Text style={[ui.h2, { marginTop: 8 }]}>Photos ({count} of 5)</Text>
             <Text style={ui.muted}>The cover (your logo or best photo) shows in search results. The other photos show your work on the listing page. Tap × to remove, or Make cover to move a photo to the front. Changes are saved when you tap Save.</Text>

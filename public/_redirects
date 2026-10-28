@@ -1,0 +1,2 @@
+# Netlify: send every address (e.g. /privacy, /service/123) to the app, which shows the right page.
+/*    /index.html   200

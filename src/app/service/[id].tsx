@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover, photoUrl } from '../../components/Cover';
+import { HoursCard } from '../../components/HoursCard';
 import { TopBar } from '../../components/Menu';
 import { ReportButton } from '../../components/ReportButton';
 import { Reviews } from '../../components/Reviews';
@@ -14,7 +15,7 @@ import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
-type S = { photos: string[]; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null } | null };
+type S = { photos: string[]; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; show_hours: boolean; hours: unknown; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null } | null };
 
 // The page structure comes ONLY from the merchant's subscription tier (basic | plus | premium).
 // Merchants cannot choose or change it. Edit the three layouts here.
@@ -72,7 +73,7 @@ export default function ServiceDetail() {
   const sendAfterLogin = useRef(false);
 
   useEffect(() => {
-    supabase.from('services').select('photos,merchant_id,title,description,price,price_from,city,village,profiles(display_name,tier_id,public_phone)').eq('id', id).single()
+    supabase.from('services').select('photos,merchant_id,title,description,price,price_from,show_hours,hours,city,village,profiles(display_name,tier_id,public_phone)').eq('id', id).single()
       .then(({ data, error }) => { if (!data) setLoadErr(error?.message ?? 'This listing could not be found.'); setS(data as unknown as S); });
   }, [id]);
 
@@ -93,7 +94,7 @@ export default function ServiceDetail() {
     if (s && session.user.id === s.merchant_id) return setMsg('This is your own listing.');
     setBusy(true); setMsg('');
     try {
-      const conv = await sendFromListing(id, session.user.id, body.trim(), contact.trim());
+      const conv = await sendFromListing(id, session.user.id, body.trim(), contact.trim(), merchant);
       setBody(''); setConvId(conv);
       router.push({ pathname: '/chat/[id]', params: { id: conv } });
     } catch (e) {
@@ -122,6 +123,7 @@ export default function ServiceDetail() {
             {/* Photo 1 is the cover (logo or best photo); photos 2-5 show the merchant's work. */}
             {s.photos?.length > 0 && <Cover photos={s.photos} title={s.title} width="100%" height={220} />}
             <Listing s={s} onBusiness={preview ? undefined : () => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })} />
+            {s.show_hours && <HoursCard hours={s.hours} />}
             {s.photos?.length > 1 && (
               <>
                 <Text style={[ui.h2, { marginTop: 8 }]}>Our work</Text>
@@ -130,7 +132,8 @@ export default function ServiceDetail() {
                 </ScrollView>
               </>
             )}
-            <Reviews merchantId={s.merchant_id} serviceId={id} limit={3} allowWrite={!preview} />
+            {/* Only the newest review here; "Read all N reviews" opens the full list. */}
+            <Reviews merchantId={s.merchant_id} serviceId={id} limit={1} allowWrite={!preview} />
             {!preview && session?.user.id !== s.merchant_id && (
               <View style={{ alignItems: 'flex-end' }}><ReportButton targetType="listing" targetId={id} label="Report this listing" /></View>
             )}

@@ -11,6 +11,8 @@ import { PlanBanner } from '../components/PlanBanner';
 import { fetchListingRatings, type Rating } from '../lib/reviews';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
+import { useMode } from '../lib/mode';
+import { customerName } from '../lib/names';
 import { colors, ui } from '../lib/theme';
 
 type Row = CardListing & { priority: number };
@@ -27,6 +29,7 @@ const ROWS = [
 
 export default function Home() {
   const session = useSession();
+  const merchantView = useMode() === 'merchant';
   const uid = session?.user.id;
   const [name, setName] = useState('');
   const [f, setF] = useState(EMPTY);
@@ -45,9 +48,9 @@ export default function Home() {
   // Re-runs when someone logs in or out, so the header always matches.
   useEffect(() => {
     if (!session) { setName(''); return; }
-    supabase.from('profiles').select('display_name').eq('id', session.user.id).single()
-      .then(({ data: p }) => setName(p?.display_name || session.user.email || ''));
-  }, [uid]);
+    supabase.from('profiles').select('display_name,screen_name').eq('id', session.user.id).single()
+      .then(({ data: p }) => setName(customerName(p, merchantView, session.user.email || '')));
+  }, [uid, merchantView]);
 
   // Search in the database (search_services): name, description and hidden tags, tolerant of small
   // spelling mistakes; Business first, then Growth, then Starter. Loads PAGE results at a time.
@@ -57,7 +60,7 @@ export default function Home() {
     const from = more ? (rows?.length ?? 0) : 0;
     const { data, error } = await supabase
       .rpc('search_services', { p_q: x.q.replace(/[%_\\]/g, ' ').trim(), p_city: x.city.trim(), p_village: x.village.trim() })
-      .select('id,merchant_id,title,photos,price,price_from,priority,city,village,profiles(display_name)')
+      .select('id,merchant_id,title,photos,price,price_from,show_hours,hours,priority,city,village,profiles(display_name)')
       .range(from, from + PAGE - 1);
     setBusy(false);
     if (error) return setErr('Something went wrong. Please try again.');
@@ -88,7 +91,8 @@ export default function Home() {
             <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }}>Whatever you need, someone's ready.</Text>
           </View>
         </View>
-        <View style={[ui.row, { alignItems: 'center' }]}>
+        {/* marginTop: breathing room between the logo and this line, so the top doesn't feel crowded. */}
+        <View style={[ui.row, { alignItems: 'center', marginTop: 14 }]}>
           <Text style={{ flex: 1, color: colors.muted, fontSize: 16 }} numberOfLines={1}>{session ? name : 'Browsing as a guest'}</Text>
           {session ? <MenuButton /> : (
             <Pressable onPress={() => router.push('/login')} style={[ui.row, { alignItems: 'center', gap: 6 }]}>

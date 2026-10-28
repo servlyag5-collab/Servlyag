@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 // One conversation = one customer + one listing. Both sides can send messages.
 export type Conversation = {
   id: string; service_id: string; customer_id: string; merchant_id: string; contact: string | null;
+  customer_as_business: boolean; // started in Merchant view: show the customer's business name, not screen name
   last_message: string; last_message_at: string; customer_read_at: string | null; merchant_read_at: string | null;
 };
 // kind 'review_request' = the merchant asking for a review (shows a Leave a review button);
@@ -32,10 +33,11 @@ export async function findConversation(serviceId: string, uid: string) {
 }
 
 // Find or start the customer's conversation about a listing, then send the first (or next) message.
-export async function sendFromListing(serviceId: string, uid: string, body: string, contact: string) {
+// asBusiness (started in Merchant view): the merchant sees my business name instead of my screen name.
+export async function sendFromListing(serviceId: string, uid: string, body: string, contact: string, asBusiness = false) {
   let id = await findConversation(serviceId, uid);
   if (!id) {
-    const r = await supabase.from('conversations').insert({ service_id: serviceId, customer_id: uid, contact: contact || null }).select('id').single();
+    const r = await supabase.from('conversations').insert({ service_id: serviceId, customer_id: uid, contact: contact || null, customer_as_business: asBusiness }).select('id').single();
     if (r.error) {
       id = await findConversation(serviceId, uid); // started at the same moment on another device
       if (!id) throw new Error(r.error.message);

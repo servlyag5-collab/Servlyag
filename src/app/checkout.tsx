@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TopBar } from '../components/Menu';
 import { useSession } from '../lib/session';
@@ -45,7 +45,14 @@ export default function Checkout() {
               {withBooking && line('Booking app add-on', `${addon} XCD`)}
               <View style={{ height: 1, backgroundColor: colors.border }} />
               {line('Total per month', `${total} XCD`, true)}
-              <Text style={ui.muted}>Your listings go live as soon as your payment is confirmed. The plan runs for one month.</Text>
+              <Text style={ui.muted}>Your listings go live as soon as your payment is confirmed. Each payment covers one month.</Text>
+              {/* Shown before paying, as banks and the stores expect: renewal, how to cancel, refunds. */}
+              <Text style={[ui.muted, { fontSize: 14, lineHeight: 20 }]}>
+                Renews every month until you cancel (Contact support). No refund once a month has started.{' '}
+                <Text style={{ color: colors.blue, fontWeight: '700', textDecorationLine: 'underline' }} onPress={() => router.push('/refunds' as Href)}>
+                  Refund and Cancellation Policy
+                </Text>
+              </Text>
             </View>
             {PAY_URL ? (
               <Pressable style={[ui.btn, ui.primary]}

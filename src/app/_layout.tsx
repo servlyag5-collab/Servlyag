@@ -42,6 +42,7 @@ export default function RootLayout() {
           <Stack.Screen name="reviews/[merchantId]" />
           <Stack.Screen name="privacy" />
           <Stack.Screen name="terms" />
+          <Stack.Screen name="refunds" />
           <Stack.Protected guard={!!session}>
             <Stack.Screen name="offer" />
             <Stack.Screen name="inbox" />

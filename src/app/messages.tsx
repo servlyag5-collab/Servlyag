@@ -8,11 +8,12 @@ import { channelName, isUnread, type Conversation } from '../lib/chat';
 import { useMode } from '../lib/mode';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
+import { customerName } from '../lib/names';
 import { colors, ui } from '../lib/theme';
 
 type Row = Conversation & {
   services: { title: string; photos: string[] } | null;
-  customer: { display_name: string } | null;
+  customer: { display_name: string; screen_name: string } | null;
   merchant: { display_name: string } | null;
 };
 const when = (iso: string) => {
@@ -35,7 +36,7 @@ export default function Messages() {
   const load = useCallback(() => {
     if (!uid) return;
     supabase.from('conversations')
-      .select('*,services(title,photos),customer:profiles!customer_id(display_name),merchant:profiles!merchant_id(display_name)')
+      .select('*,services(title,photos),customer:profiles!customer_id(display_name,screen_name),merchant:profiles!merchant_id(display_name)')
       .eq(col, uid).neq('last_message', '').order('last_message_at', { ascending: false })
       .then(({ data, error }) => { setErr(error?.message ?? ''); setRows((data as unknown as Row[]) ?? []); });
   }, [uid, col]);
@@ -63,7 +64,7 @@ export default function Messages() {
         )}
         {rows?.map((c) => {
           const unread = !!uid && isUnread(c, uid);
-          const other = merchant ? c.customer?.display_name || 'Customer' : c.merchant?.display_name || 'Merchant';
+          const other = merchant ? customerName(c.customer, c.customer_as_business) : c.merchant?.display_name || 'Merchant';
           return (
             <Pressable key={c.id} onPress={() => router.push({ pathname: '/chat/[id]', params: { id: c.id } })}
               style={[ui.card, { flexDirection: 'row', gap: 12, padding: 14, alignItems: 'center' }, unread && { borderColor: colors.blue, borderWidth: 2 }]}>

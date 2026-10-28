@@ -1,12 +1,30 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import { customerName } from '../lib/names';
 import { canReview, type Rating, type Review } from '../lib/reviews';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 import { ReportButton } from './ReportButton';
 import { RatingSummary, Stars } from './Stars';
+
+// Long text shows its first 4 lines with "Read more" (and "Show less" once opened).
+const LONG = 180; // characters; longer than this (or more than 3 line breaks) gets the button
+export function MoreText({ text, style }: { text: string; style: object }) {
+  const [open, setOpen] = useState(false);
+  const long = text.length > LONG || text.split('\n').length > 4;
+  return (
+    <View style={{ gap: 4 }}>
+      <Text style={style} numberOfLines={long && !open ? 4 : undefined}>{text}</Text>
+      {long && (
+        <Pressable onPress={() => setOpen(!open)} style={{ alignSelf: 'flex-start' }} accessibilityRole="button">
+          <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 14 }}>{open ? 'Show less' : 'Read more'}</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
 
 // One review: stars, comment, the merchant's public reply (the merchant can write/edit it here),
 // and a Report link for everyone else.
@@ -29,18 +47,18 @@ function ReviewItem({ r, uid, showListing, onChanged }: { r: Review; uid?: strin
     <View style={[ui.card, { padding: 14, gap: 6 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Text style={{ flex: 1, fontWeight: '800', fontSize: 16, color: colors.ink }} numberOfLines={1}>
-          {r.customer_id === uid ? 'You' : r.customer?.display_name || 'Customer'}
+          {r.customer_id === uid ? 'You' : customerName(r.customer, r.as_business)}
         </Text>
         <Text style={{ fontSize: 12, color: colors.muted }}>{new Date(r.updated_at).toLocaleDateString()}</Text>
       </View>
       <Stars value={r.rating} size={16} />
       {showListing && !!r.services?.title && <Text style={{ fontSize: 13, fontWeight: '700', color: colors.blue }}>About: {r.services.title}</Text>}
-      {!!r.comment && <Text style={[ui.muted, { color: colors.ink }]}>{r.comment}</Text>}
+      {!!r.comment && <MoreText text={r.comment} style={[ui.muted, { color: colors.ink }]} />}
 
       {!!r.reply && !editing && (
         <View style={{ backgroundColor: '#EAF3FB', borderRadius: 12, padding: 12, gap: 4 }}>
           <Text style={{ fontWeight: '800', color: colors.blue }}>Response from the business</Text>
-          <Text style={{ fontSize: 15, color: colors.ink, lineHeight: 21 }}>{r.reply}</Text>
+          <MoreText text={r.reply} style={{ fontSize: 15, color: colors.ink, lineHeight: 21 }} />
         </View>
       )}
       {editing && (
@@ -72,7 +90,7 @@ function ReviewItem({ r, uid, showListing, onChanged }: { r: Review; uid?: strin
 
 // Reviews for ONE listing (pass serviceId, e.g. on the listing page) or for a whole business
 // (pass only merchantId, e.g. the business profile; each review then says which listing it's about).
-// `limit` shows the newest few with a "See all" link; `allowWrite` is off in the owner's preview.
+// `limit` shows the newest few with a "Read all" link; `allowWrite` is off in the owner's preview.
 export function Reviews({ merchantId, serviceId, limit, allowWrite = true }: {
   merchantId: string; serviceId?: string; limit?: number; allowWrite?: boolean;
 }) {
@@ -87,7 +105,7 @@ export function Reviews({ merchantId, serviceId, limit, allowWrite = true }: {
   const reload = () => setTick((t) => t + 1);
 
   useFocusEffect(useCallback(() => {
-    let q = supabase.from('reviews').select('*,customer:profiles!customer_id(display_name),services(title)').order('created_at', { ascending: false });
+    let q = supabase.from('reviews').select('*,customer:profiles!customer_id(display_name,screen_name),services(title)').order('created_at', { ascending: false });
     q = serviceId ? q.eq('service_id', serviceId) : q.eq('merchant_id', merchantId);
     if (limit) q = q.limit(limit);
     q.then(({ data, error }) => { setErr(error?.message ?? ''); setRows((data as unknown as Review[]) ?? []); });
@@ -114,7 +132,7 @@ export function Reviews({ merchantId, serviceId, limit, allowWrite = true }: {
       {rows?.map((r) => <ReviewItem key={r.id} r={r} uid={uid} showListing={!serviceId} onChanged={reload} />)}
       {!!limit && total > limit && (
         <Pressable onPress={() => router.push({ pathname: '/reviews/[merchantId]', params: serviceId ? { merchantId, service: serviceId } : { merchantId } })}>
-          <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>See all {total} reviews</Text>
+          <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>Read all {total} reviews</Text>
         </Pressable>
       )}
       {mine !== null && serviceId && (
