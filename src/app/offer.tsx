@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverTag } from '../components/Cover';
+import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { PhoneToggle } from '../components/PhoneToggle';
 import { PriceInput } from '../components/PriceInput';
@@ -109,6 +110,7 @@ export default function Offer() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
+        <WideSplit>
         <Text style={ui.h1}>Offer a service</Text>
         {!gate ? <ActivityIndicator color={colors.blue} /> : (
           <>
@@ -181,6 +183,7 @@ export default function Offer() {
         )}
           </>
         )}
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );

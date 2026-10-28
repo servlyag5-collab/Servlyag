@@ -11,7 +11,7 @@ import { channelName, phoneDigits, type Conversation, type Message } from '../..
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { customerName } from '../../lib/names';
-import { colors, ui } from '../../lib/theme';
+import { colors, ui, SIDE, WIDE } from '../../lib/theme';
 
 type Conv = Conversation & {
   services: { title: string } | null;
@@ -105,7 +105,8 @@ export default function Chat() {
     if (error) return setErr(error.message);
     setBlocked(on);
   }
-  const bar = { width: '100%' as const, maxWidth: 640, alignSelf: 'center' as const, paddingHorizontal: 16 };
+  // Header and reply bar: full width on computers (same margins as every page), the app column on phones.
+  const bar = WIDE ? { width: '100%' as const, paddingHorizontal: SIDE } : { width: '100%' as const, maxWidth: 640, alignSelf: 'center' as const, paddingHorizontal: 16 };
 
   return (
     <SafeAreaView style={ui.screen}>

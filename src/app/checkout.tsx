@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
@@ -35,6 +36,7 @@ export default function Checkout() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page}>
         <TopBar />
+        <WideSplit>
         <Text style={ui.h1}>Checkout</Text>
         {!t ? <ActivityIndicator color={colors.blue} /> : (
           <>
@@ -72,6 +74,7 @@ export default function Checkout() {
             )}
           </>
         )}
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );

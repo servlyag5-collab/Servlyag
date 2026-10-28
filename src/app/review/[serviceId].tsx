@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WideSplit } from '../../components/WideSplit';
 import { TopBar } from '../../components/Menu';
 import { Stars } from '../../components/Stars';
 import { useMode } from '../../lib/mode';
@@ -61,6 +62,7 @@ export default function WriteReview() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
+        <WideSplit>
         <Text style={ui.h1}>{existing ? 'Edit your review' : 'Write a review'}</Text>
         {!!svc && (
           <View style={{ gap: 2 }}>
@@ -90,6 +92,7 @@ export default function WriteReview() {
             </Pressable>
           </View>
         )}
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );

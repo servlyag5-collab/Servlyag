@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverTag, photoUrl } from '../../components/Cover';
+import { WideSplit } from '../../components/WideSplit';
 import { TopBar } from '../../components/Menu';
 import { PhoneToggle } from '../../components/PhoneToggle';
 import { PriceInput } from '../../components/PriceInput';
@@ -123,6 +124,7 @@ export default function EditListing() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
+        <WideSplit>
         <Text style={ui.h1}>Edit listing</Text>
         {!merchant ? <Text style={ui.muted}>Switch to merchant view (in the ☰ menu) to edit your listings.</Text>
           : !loaded ? (err ? <Text style={ui.error}>{err}</Text> : <ActivityIndicator color={colors.blue} />) : (
@@ -176,6 +178,7 @@ export default function EditListing() {
             </Pressable>
           </>
         )}
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );

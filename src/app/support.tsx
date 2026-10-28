@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { channelName } from '../lib/chat';
 import { useSession } from '../lib/session';
@@ -57,6 +58,7 @@ export default function Support() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
+        <WideSplit>
         <Text style={ui.h1}>Contact support</Text>
         <Text style={ui.muted}>Questions about billing, your listings or your account? Send us a message and we'll reply here.</Text>
 
@@ -104,6 +106,7 @@ export default function Support() {
             )}
           </View>
         ))}
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );

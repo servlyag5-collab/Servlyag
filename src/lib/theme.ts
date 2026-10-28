@@ -1,4 +1,9 @@
-import { StyleSheet } from 'react-native';
+import { Dimensions, Platform, StyleSheet } from 'react-native';
+
+// Computers (the website on a screen 900 px or wider): every page uses the full width, content starts at
+// the left with the same side margins as Home. Phones and tablets keep the app layout.
+export const WIDE = Platform.OS === 'web' && Dimensions.get('window').width >= 900;
+export const SIDE = WIDE ? 56 : 16; // side margin of every page
 
 export const colors = {
   blue: '#0072C6', red: '#CE1126', black: '#111111', gold: '#FCD116',
@@ -26,7 +31,9 @@ export const flag = [
 
 export const ui = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  page: { padding: 16, gap: 12, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  page: WIDE
+    ? { paddingHorizontal: SIDE, paddingTop: 14, paddingBottom: 48, gap: 14, width: '100%' }
+    : { padding: 16, gap: 12, width: '100%', maxWidth: 640, alignSelf: 'center' },
   card: { backgroundColor: colors.card, borderRadius: 24, borderWidth: 1, borderColor: colors.border, padding: 20, gap: 12 },
   field: { backgroundColor: colors.field, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: 14, height: 52, fontSize: 16, color: colors.ink },
   btn: { height: 52, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },

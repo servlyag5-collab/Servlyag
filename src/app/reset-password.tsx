@@ -3,6 +3,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, Vi
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
@@ -63,6 +64,7 @@ export default function ResetPassword() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
+        <WideSplit>
         <View style={ui.card}>
           <Text style={ui.h2}>Set a new password</Text>
           {state === 'checking' && <ActivityIndicator color={colors.blue} />}
@@ -96,6 +98,7 @@ export default function ResetPassword() {
             </>
           )}
         </View>
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );

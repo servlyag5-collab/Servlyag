@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../components/Cover';
+import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { LegalLinks } from '../components/LegalLinks';
 import { PhoneToggle } from '../components/PhoneToggle';
@@ -99,6 +100,7 @@ export default function Account() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
+        <WideSplit>
         <Text style={ui.h1}>Account</Text>
         <Text style={ui.muted}>{session?.user.email}</Text>
         <PlanBanner />
@@ -227,6 +229,7 @@ export default function Account() {
             <LegalLinks />
           </>
         )}
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );

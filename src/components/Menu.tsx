@@ -9,7 +9,7 @@ import { forgetThisDevice } from '../lib/push';
 import { setMode, useMode } from '../lib/mode';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
-import { colors, ui } from '../lib/theme';
+import { colors, ui, SIDE, WIDE } from '../lib/theme';
 
 type Item = { label: string; hint?: string; path?: string; badge?: number; onPress: () => void };
 
@@ -89,7 +89,8 @@ export function MenuButton() {
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(20,33,43,0.25)' }} onPress={() => setOpen(false)}>
-          <View style={{ width: '100%', maxWidth: 640, alignSelf: 'center', alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: insets.top + 56 }}>
+          {/* Drops down under the ☰ button: far right on computers, inside the app column on phones. */}
+          <View style={{ width: '100%', ...(WIDE ? {} : { maxWidth: 640, alignSelf: 'center' as const }), alignItems: 'flex-end', paddingHorizontal: SIDE, paddingTop: insets.top + 56 }}>
             <Pressable style={[ui.card, { width: 300, maxWidth: '100%', padding: 12, gap: 4 }]}>
               <Text style={{ color: colors.blue, fontWeight: '800', letterSpacing: 2, fontSize: 12, paddingHorizontal: 18, paddingTop: 6, paddingBottom: 4 }}>
                 {merchant ? 'MERCHANT VIEW' : 'CUSTOMER VIEW'}

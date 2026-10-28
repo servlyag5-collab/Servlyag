@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlagFrame } from '../components/FlagFrame';
+import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
@@ -53,6 +54,7 @@ export default function Plan() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page}>
         <TopBar />
+        <WideSplit>
         <Text style={ui.h1}>{next === 'offer' ? 'Choose a plan to start selling' : 'Your plan'}</Text>
         {next === 'offer' && <Text style={ui.muted}>Your plan decides how many services you can list. You'll create your listing right after checkout.</Text>}
         {!me ? (loadErr ? <Text style={ui.error}>{loadErr}</Text> : <ActivityIndicator color={colors.blue} />) : (
@@ -87,6 +89,7 @@ export default function Plan() {
             })}
           </>
         )}
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );

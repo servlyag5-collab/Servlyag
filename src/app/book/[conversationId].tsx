@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DateTimePicker, type Pick } from '../../components/DateTimePicker';
+import { WideSplit } from '../../components/WideSplit';
 import { TopBar } from '../../components/Menu';
 import { bookingWhen, fromAntigua, hasBookingApp } from '../../lib/bookings';
 import { formatPrice } from '../../lib/price';
@@ -53,6 +54,7 @@ export default function BookCustomer() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
+        <WideSplit>
         <Text style={ui.h1}>Book this customer</Text>
         {(!c || allowed === null) ? <ActivityIndicator color={colors.blue} /> : !iAmMerchant ? (
           <Text style={ui.muted}>Only the merchant can book from this chat.</Text>
@@ -90,6 +92,7 @@ export default function BookCustomer() {
             </Pressable>
           </>
         )}
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );

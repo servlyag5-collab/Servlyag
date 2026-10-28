@@ -5,7 +5,7 @@ import { customerName } from '../lib/names';
 import { canReview, type Rating, type Review } from '../lib/reviews';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
-import { colors, ui } from '../lib/theme';
+import { colors, ui, WIDE } from '../lib/theme';
 import { ReportButton } from './ReportButton';
 import { RatingSummary, Stars } from './Stars';
 
@@ -129,7 +129,12 @@ export function Reviews({ merchantId, serviceId, limit, allowWrite = true }: {
       {!!err && <Text style={ui.error}>{err}</Text>}
       {total > 0 ? <RatingSummary rating={rating} size={18} /> : rows && !err && <Text style={ui.muted}>No reviews yet.</Text>}
       {!rows && <ActivityIndicator color={colors.blue} />}
-      {rows?.map((r) => <ReviewItem key={r.id} r={r} uid={uid} showListing={!serviceId} onChanged={reload} />)}
+      {/* Computers: reviews in two columns; phones: one under the other. */}
+      {WIDE ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
+          {rows?.map((r) => <View key={r.id} style={{ flexBasis: '45%', flexGrow: 1 }}><ReviewItem r={r} uid={uid} showListing={!serviceId} onChanged={reload} /></View>)}
+        </View>
+      ) : rows?.map((r) => <ReviewItem key={r.id} r={r} uid={uid} showListing={!serviceId} onChanged={reload} />)}
       {!!limit && total > limit && (
         <Pressable onPress={() => router.push({ pathname: '/reviews/[merchantId]', params: serviceId ? { merchantId, service: serviceId } : { merchantId } })}>
           <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>Read all {total} reviews</Text>

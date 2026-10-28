@@ -4,6 +4,7 @@ import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LegalLinks } from '../components/LegalLinks';
+import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
@@ -54,6 +55,7 @@ export default function Login() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
+        <WideSplit>
         <View style={ui.card}>
           <Text style={ui.h2}>{title}</Text>
           {mode === 'reset' && <Text style={ui.muted}>Enter the email you signed up with and we'll send you a link to choose a new password.</Text>}
@@ -89,6 +91,7 @@ export default function Login() {
             <Text style={{ color: colors.muted, fontWeight: '700', textAlign: 'center' }}>Keep browsing without an account</Text>
           </Pressable>
         </View>
+        </WideSplit>
       </ScrollView>
     </SafeAreaView>
   );
