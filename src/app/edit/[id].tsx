@@ -8,6 +8,7 @@ import { CoverTag, photoUrl } from '../../components/Cover';
 import { WideSplit } from '../../components/WideSplit';
 import { PlacePicker } from '../../components/PlacePicker';
 import { PARISHES, VILLAGES } from '../../lib/places';
+import { TagRules } from '../../components/TagRules';
 import { TopBar } from '../../components/Menu';
 import { PhoneToggle } from '../../components/PhoneToggle';
 import { PriceInput } from '../../components/PriceInput';
@@ -142,7 +143,7 @@ export default function EditListing() {
             <TextInput style={ui.field} placeholder="Service name" value={f.title} onChangeText={set('title')} />
             <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Describe what you offer" multiline value={f.description} onChangeText={set('description')} />
             <TextInput style={ui.field} placeholder="Search tags, separated by commas" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
-            <Text style={[ui.muted, { fontSize: 14, marginTop: -6 }]}>Tags help customers find you in search. They are not shown on your listing.</Text>
+            <TagRules />
             <PriceInput value={f.price} onChange={set('price')} from={priceFrom} onFromChange={setPriceFrom} />
             {/* Pick a parish and village from the lists (src/lib/places.ts), or type one that isn't listed. */}
             <PlacePicker label="City or parish" placeholder="City or parish" value={f.city} onChange={set('city')} options={PARISHES} />

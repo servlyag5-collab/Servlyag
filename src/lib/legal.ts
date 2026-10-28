@@ -74,6 +74,7 @@ export const TERMS: Section[] = [
   { heading: 'What is not allowed', body: [
     'Illegal services, scams, spam, fake listings or reviews, harassment, hate, sexual content, or sharing other people\'s personal information without permission.',
     'Trying to get around plan limits or Servly\'s security, or using Servly to contact people for unrelated marketing.',
+    'Misleading listings: search tags, titles or descriptions for services the business does not offer, for example adding unrelated tags so a listing shows up in more searches. Such listings may be hidden, suspended or removed, and repeated misuse can lead to the account being closed.',
   ] },
   { heading: 'Reports, blocking and removal', body: [
     'You can report listings, reviews and users, and block people you don\'t want to hear from. We may hide content, suspend or close accounts that break these terms.',
