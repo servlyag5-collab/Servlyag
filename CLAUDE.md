@@ -53,6 +53,7 @@ Three subscription tiers, set only by the owner in Supabase (merchants can never
 - Refund and Cancellation Policy (`src/app/refunds.tsx`, text `REFUNDS` in `src/lib/legal.ts`, DRAFT): no refund once a month has started; cancel through Contact support (no self-service cancel until the bank gateway is connected); billing mistakes refunded if reported within 30 days. Terms point to it; `LegalLinks` and Checkout link it.
 - Customers send a **note** to a listing (phone/WhatsApp optional), which starts a two-way conversation. They do NOT book times yet.
 - Photos: optional, max 5 per service, chosen when the service is published.
+- City and Village on Offer/Edit are searchable pickers (`PlacePicker`): City lists the parishes (St. George, St. John, St. Mary, St. Paul, St. Peter, St. Philip, Barbuda), Village lists villages; both from `src/lib/places.ts` (edit there to add places). Merchants can also use a place that isn't listed. City is still required, Village optional. Still plain text in the database (no DB change).
 - Village is an optional field on services and in search. City/Village/text search ignores empty fields (there is no price filter).
 
 ## What exists

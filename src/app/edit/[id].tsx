@@ -6,6 +6,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverTag, photoUrl } from '../../components/Cover';
 import { WideSplit } from '../../components/WideSplit';
+import { PlacePicker } from '../../components/PlacePicker';
+import { PARISHES, VILLAGES } from '../../lib/places';
 import { TopBar } from '../../components/Menu';
 import { PhoneToggle } from '../../components/PhoneToggle';
 import { PriceInput } from '../../components/PriceInput';
@@ -82,7 +84,7 @@ export default function EditListing() {
   async function save() {
     if (!b.name.trim()) return setErr('Add your business name.');
     if (showPhone && !b.phone.trim()) return setErr('Add a phone or WhatsApp number so customers can call you, or turn off "Show my phone number".');
-    if (!f.title.trim() || !f.city.trim()) return setErr('Please add a service name and a city.');
+    if (!f.title.trim() || !f.city.trim()) return setErr('Please add a service name and a city or parish.');
     if (f.price.trim() && isNaN(Number(f.price))) return setErr('Price must be a number.');
     if (showHours && hoursProblem(hours)) return setErr(hoursProblem(hours)!);
     setBusy(true); setErr('');
@@ -142,8 +144,9 @@ export default function EditListing() {
             <TextInput style={ui.field} placeholder="Search tags, separated by commas" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
             <Text style={[ui.muted, { fontSize: 14, marginTop: -6 }]}>Tags help customers find you in search. They are not shown on your listing.</Text>
             <PriceInput value={f.price} onChange={set('price')} from={priceFrom} onFromChange={setPriceFrom} />
-            <TextInput style={ui.field} placeholder="City" value={f.city} onChangeText={set('city')} />
-            <TextInput style={ui.field} placeholder="Village (optional)" value={f.village} onChangeText={set('village')} />
+            {/* Pick a parish and village from the lists (src/lib/places.ts), or type one that isn't listed. */}
+            <PlacePicker label="City or parish" placeholder="City or parish" value={f.city} onChange={set('city')} options={PARISHES} />
+            <PlacePicker label="Village" placeholder="Village (optional)" value={f.village} onChange={set('village')} options={VILLAGES} />
             <HoursEditor show={showHours} onShow={setShowHours} hours={hours} onChange={setHours} />
 
             <Text style={[ui.h2, { marginTop: 8 }]}>Photos ({count} of 5)</Text>
