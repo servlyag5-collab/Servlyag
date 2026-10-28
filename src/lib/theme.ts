@@ -3,6 +3,12 @@ import { StyleSheet } from 'react-native';
 export const colors = {
   blue: '#0072C6', red: '#CE1126', black: '#111111', gold: '#FCD116',
   ink: '#14212B', muted: '#5A6B70', bg: '#FAFAF7', card: '#FFFFFF', field: '#F3F3EF', border: '#D9D6CC',
+  harbour: '#0B3A63', // deep sea blue (a darker shade of the main blue): the Home hero
+};
+
+// Heading font: Bricolage Grotesque (loaded in _layout.tsx). Use fontFamily without fontWeight.
+export const fonts = {
+  heading: 'BricolageGrotesque_800ExtraBold', title: 'BricolageGrotesque_700Bold', semi: 'BricolageGrotesque_600SemiBold',
 };
 
 // Flag ribbon, left to right, mirrored. Built around the most recognisable part of the Antigua and
@@ -27,8 +33,8 @@ export const ui = StyleSheet.create({
   primary: { backgroundColor: colors.blue },
   outline: { borderWidth: 1, borderColor: colors.border, backgroundColor: '#fff' },
   btnText: { fontSize: 16, fontWeight: '700' },
-  h1: { fontSize: 32, fontWeight: '800', color: colors.ink },
-  h2: { fontSize: 24, fontWeight: '800', color: colors.ink },
+  h1: { fontSize: 32, fontFamily: 'BricolageGrotesque_800ExtraBold', color: colors.ink, letterSpacing: -0.5 },
+  h2: { fontSize: 23, fontFamily: 'BricolageGrotesque_700Bold', color: colors.ink, letterSpacing: -0.3 },
   muted: { fontSize: 16, color: colors.muted, lineHeight: 24 },
   row: { flexDirection: 'row', gap: 12 },
   error: { color: colors.red, fontSize: 14 },

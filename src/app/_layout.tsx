@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, View } from 'react-native';
 import { Stack } from 'expo-router';
+import { BricolageGrotesque_600SemiBold, BricolageGrotesque_700Bold, BricolageGrotesque_800ExtraBold, useFonts } from '@expo-google-fonts/bricolage-grotesque';
 import { StatusBar } from 'expo-status-bar';
 import { Splash } from '../components/Splash';
 import { registerForPush, useNotificationTaps } from '../lib/push';
@@ -19,7 +20,9 @@ if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.pa
 export default function RootLayout() {
   const session = useSession();
   const [splash, setSplash] = useState(!splashPlayed);
-  const loading = session === undefined;
+  // Heading font. If it ever fails to load, the app carries on with the default font.
+  const [fontsLoaded, fontError] = useFonts({ BricolageGrotesque_600SemiBold, BricolageGrotesque_700Bold, BricolageGrotesque_800ExtraBold });
+  const loading = session === undefined || (!fontsLoaded && !fontError);
   const uid = session?.user.id;
 
   // Phone notifications: register this device after login; tapping one opens the right screen.

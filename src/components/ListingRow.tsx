@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { normalizeHours, openStatus, useNow } from '../lib/hours';
 import { formatPrice } from '../lib/price';
 import type { Rating } from '../lib/reviews';
-import { colors } from '../lib/theme';
+import { colors, fonts } from '../lib/theme';
 import { Cover } from './Cover';
 import { RatingSummary } from './Stars';
 
@@ -29,7 +29,7 @@ function ListingCard({ s, rating, now }: { s: CardListing; rating?: Rating; now:
       <View style={{ padding: 12, gap: 6, flex: 1 }}>
         {/* Five stars and "4.0/5 · 12 reviews", shown only once the merchant has a review. */}
         <RatingSummary rating={rating} size={13} />
-        <Text style={{ fontSize: 17, fontWeight: '700', color: colors.ink, lineHeight: 22, minHeight: 44 }} numberOfLines={2}>{s.title}</Text>
+        <Text style={{ fontSize: 17, fontFamily: fonts.semi, color: colors.ink, lineHeight: 22, minHeight: 44 }} numberOfLines={2}>{s.title}</Text>
         <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
           {s.profiles?.display_name || 'Servly merchant'} · {s.village || s.city}
         </Text>
@@ -70,7 +70,7 @@ export function ListingRow({ title, rows, ratings }: { title: string; rows: Card
   return (
     <View style={{ gap: 10 }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ flex: 1, fontSize: 20, fontWeight: '800', color: colors.ink }}>{title}</Text>
+        <Text style={{ flex: 1, fontSize: 21, fontFamily: fonts.title, color: colors.ink, letterSpacing: -0.3 }}>{title}</Text>
         {Platform.OS === 'web' && rows.length > 1 && (
           <>
             <Pressable onPress={() => step(-1)} accessibilityLabel={`Scroll ${title} left`}
