@@ -10,7 +10,7 @@ only you can do. File paths are inside the `servly-app` folder.
 
 ## 1. Do these first (after this update)
 
-1. **Run the database updates.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run, then `supabase/upgrade-v15-opening-hours.sql` > Run, then `supabase/upgrade-v16-screen-name.sql` > Run.
+1. **Run the database updates.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run, then `supabase/upgrade-v15-opening-hours.sql` > Run, then `supabase/upgrade-v16-screen-name.sql` > Run, then `supabase/upgrade-v17-max-tags.sql` > Run.
    Supabase warns about "destructive operations": those lines replace old rules with stricter ones
    (blocking) and keep payment records when an account is deleted. No data is removed.
 2. **Make yourself an admin** (SQL Editor, change the email):
@@ -132,7 +132,7 @@ npx supabase db push
 **Your current project already has all of these** (you ran them in the SQL Editor). Tell the tool so
 it doesn't run them twice:
 ```bash
-npx supabase migration repair --status applied 20261024000001 20261024000002 20261024000003 20261024000004 20261024000005 20261024000006 20261024000007 20261024000008 20261024000009 20261024000010 20261024000011 20261024000012 20261026000013 20261026000014
+npx supabase migration repair --status applied 20261024000001 20261024000002 20261024000003 20261024000004 20261024000005 20261024000006 20261024000007 20261024000008 20261024000009 20261024000010 20261024000011 20261024000012 20261026000013 20261026000014 20261028000015
 ```
 For future database changes, add a new numbered file to `supabase/migrations/` and run `npx supabase db push`.
 (The `upgrade-v*.sql` files stay for pasting into the SQL Editor, as before.)
