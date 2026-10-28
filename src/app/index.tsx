@@ -117,7 +117,7 @@ export default function Home() {
             {/* The whole box is the text field (so any tap starts typing); the icon sits on top and ignores taps. */}
             <View style={{ marginTop: 6 }}>
               <TextInput style={[ui.field, { paddingLeft: 46, height: 56, borderRadius: 16, borderWidth: 0, backgroundColor: '#fff', fontSize: 17, width: '100%', minWidth: 0 }]}
-                placeholder="What do you need? e.g. barber" placeholderTextColor={colors.muted}
+                placeholder="What do you need? e.g. photographer" placeholderTextColor={colors.muted}
                 value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false} />
               <View pointerEvents="none" style={{ position: 'absolute', left: 16, top: 0, bottom: 0, justifyContent: 'center' }}>
                 <Ionicons name="search" size={21} color={colors.blue} />
