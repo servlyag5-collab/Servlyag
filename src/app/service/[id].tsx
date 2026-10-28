@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -105,69 +105,121 @@ export default function ServiceDetail() {
 
   // The owner, in merchant view, sees a preview: same page as customers, but nothing can be pressed or typed.
   const preview = !!s && merchant && session?.user.id === s.merchant_id;
+  const screen = useWindowDimensions();
+  const wide = screen.width >= 900; // computers: photo banner across the top, then two columns
 
+  if (!s) return (
+    <SafeAreaView style={ui.screen}>
+      <ScrollView contentContainerStyle={ui.page}>
+        <TopBar />
+        {loadErr ? <Text style={ui.error}>{loadErr}</Text> : <ActivityIndicator color={colors.blue} />}
+      </ScrollView>
+    </SafeAreaView>
+  );
+
+  // The pieces of the page (laid out below for phones or computers).
+  const previewBanner = preview && (
+    <View style={[ui.card, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderColor: colors.blue, borderWidth: 2 }]}>
+      <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: colors.ink }}>This is how customers see your listing</Text>
+      <Pressable style={[ui.btn, ui.primary, { height: 44 }]} onPress={() => router.push({ pathname: '/edit/[id]', params: { id } })}>
+        <Text style={[ui.btnText, { color: '#fff' }]}>Edit listing</Text>
+      </Pressable>
+    </View>
+  );
+  const details = (
+    <>
+      <Listing s={s} onBusiness={preview ? undefined : () => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })} />
+      {s.show_hours && <HoursCard hours={s.hours} />}
+      {s.photos?.length > 1 && (
+        <>
+          <Text style={[ui.h2, { marginTop: 8 }]}>Our work</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+            {s.photos.slice(1).map((p) => <Image key={p} source={{ uri: photoUrl(p) }} style={{ width: wide ? 360 : 280, height: wide ? 256 : 200, borderRadius: 14 }} />)}
+          </ScrollView>
+        </>
+      )}
+      {/* Only the newest review here; "Read all N reviews" opens the full list. */}
+      <Reviews merchantId={s.merchant_id} serviceId={id} limit={1} allowWrite={!preview} />
+      {!preview && session?.user.id !== s.merchant_id && (
+        <View style={{ alignItems: 'flex-end' }}><ReportButton targetType="listing" targetId={id} label="Report this listing" /></View>
+      )}
+    </>
+  );
+  const contactForm = (
+    <>
+      <Text style={[ui.h2, { marginTop: 4 }]}>Send a note</Text>
+      {!!convId && !preview && (
+        <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: convId } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Ionicons name="chatbubbles-outline" size={18} color={colors.blue} />
+          <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>Continue your conversation</Text>
+        </Pressable>
+      )}
+      <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Write your note to the merchant" multiline value={body} onChangeText={setBody} editable={!preview} />
+      <TextInput style={ui.field} placeholder="Your phone or WhatsApp number (optional)" keyboardType="phone-pad" value={contact} onChangeText={setContact} editable={!preview} />
+      {!!msg && <Text style={ui.error}>{msg}</Text>}
+      {!session && <Text style={ui.muted}>You'll create a free account first, then your note is sent.</Text>}
+      {/* Call and Send note side by side at the bottom. */}
+      <View style={ui.row}>
+        {!!s.profiles?.public_phone && (
+          <Pressable style={[ui.btn, ui.outline, { flex: 1, flexDirection: 'row', gap: 8 }]} disabled={preview} onPress={() => Linking.openURL(`tel:${s.profiles!.public_phone}`)}>
+            <Ionicons name="call-outline" size={20} color={colors.blue} />
+            <Text style={[ui.btnText, { color: colors.ink }]}>Call</Text>
+          </Pressable>
+        )}
+        <Pressable style={[ui.btn, ui.primary, { flex: 1, flexDirection: 'row', gap: 8 }]} onPress={send} disabled={busy || preview}>
+          {busy ? <ActivityIndicator color="#fff" /> : (
+            <>
+              <Ionicons name="send-outline" size={18} color="#fff" />
+              <Text style={[ui.btnText, { color: '#fff' }]}>{session ? 'Send note' : 'Sign up & send'}</Text>
+            </>
+          )}
+        </Pressable>
+      </View>
+    </>
+  );
+
+  // Computers: the cover photo across the top at its own shape (never stretched or cut), over a soft
+  // blurred copy of itself; then details on the left and "Send a note" on the right.
+  if (wide) {
+    const cover = s.photos?.[0];
+    const bannerH = Math.round(Math.min(560, screen.height * 0.6));
+    return (
+      <SafeAreaView style={ui.screen}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+          <View style={{ paddingHorizontal: 56, paddingVertical: 14 }}><TopBar /></View>
+          {!!cover && (
+            <View style={{ height: bannerH, backgroundColor: colors.harbour, overflow: 'hidden' }}>
+              <Image source={{ uri: photoUrl(cover) }} blurRadius={40} resizeMode="cover"
+                style={{ position: 'absolute', top: -40, left: -40, right: -40, bottom: -40 }} />
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11, 58, 99, 0.35)' }} />
+              <Image source={{ uri: photoUrl(cover) }} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
+            </View>
+          )}
+          <View style={{ paddingHorizontal: 56, paddingTop: 28, flexDirection: 'row', alignItems: 'flex-start', gap: 40 }}>
+            <View style={{ flex: 1.7, minWidth: 0, gap: 14 }}>
+              {previewBanner}
+              {details}
+            </View>
+            <View style={[ui.card, { flex: 1, maxWidth: 480, minWidth: 320, gap: 12, boxShadow: '0px 12px 32px rgba(11, 58, 99, 0.12)' }]}>
+              {contactForm}
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Phones and small screens.
   return (
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
-        {!s ? (loadErr ? <Text style={ui.error}>{loadErr}</Text> : <ActivityIndicator color={colors.blue} />) : (
-          <>
-            {preview && (
-              <View style={[ui.card, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderColor: colors.blue, borderWidth: 2 }]}>
-                <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: colors.ink }}>This is how customers see your listing</Text>
-                <Pressable style={[ui.btn, ui.primary, { height: 44 }]} onPress={() => router.push({ pathname: '/edit/[id]', params: { id } })}>
-                  <Text style={[ui.btnText, { color: '#fff' }]}>Edit listing</Text>
-                </Pressable>
-              </View>
-            )}
-            {/* Photo 1 is the cover (logo or best photo); photos 2-5 show the merchant's work. */}
-            {/* Same 16:10 shape as the Home cards, so the whole cover shows (nothing cut off). */}
-            {s.photos?.length > 0 && <Cover photos={s.photos} title={s.title} width="100%" aspectRatio={1.6} />}
-            <Listing s={s} onBusiness={preview ? undefined : () => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })} />
-            {s.show_hours && <HoursCard hours={s.hours} />}
-            {s.photos?.length > 1 && (
-              <>
-                <Text style={[ui.h2, { marginTop: 8 }]}>Our work</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-                  {s.photos.slice(1).map((p) => <Image key={p} source={{ uri: photoUrl(p) }} style={{ width: 280, height: 200, borderRadius: 14 }} />)}
-                </ScrollView>
-              </>
-            )}
-            {/* Only the newest review here; "Read all N reviews" opens the full list. */}
-            <Reviews merchantId={s.merchant_id} serviceId={id} limit={1} allowWrite={!preview} />
-            {!preview && session?.user.id !== s.merchant_id && (
-              <View style={{ alignItems: 'flex-end' }}><ReportButton targetType="listing" targetId={id} label="Report this listing" /></View>
-            )}
-            <Text style={[ui.h2, { marginTop: 4 }]}>Send a note</Text>
-            {!!convId && !preview && (
-              <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: convId } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Ionicons name="chatbubbles-outline" size={18} color={colors.blue} />
-                <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>Continue your conversation</Text>
-              </Pressable>
-            )}
-            <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Write your note to the merchant" multiline value={body} onChangeText={setBody} editable={!preview} />
-            <TextInput style={ui.field} placeholder="Your phone or WhatsApp number (optional)" keyboardType="phone-pad" value={contact} onChangeText={setContact} editable={!preview} />
-            {!!msg && <Text style={ui.error}>{msg}</Text>}
-            {!session && <Text style={ui.muted}>You'll create a free account first, then your note is sent.</Text>}
-            {/* Call and Send note side by side at the bottom. */}
-            <View style={ui.row}>
-              {!!s.profiles?.public_phone && (
-                <Pressable style={[ui.btn, ui.outline, { flex: 1, flexDirection: 'row', gap: 8 }]} disabled={preview} onPress={() => Linking.openURL(`tel:${s.profiles!.public_phone}`)}>
-                  <Ionicons name="call-outline" size={20} color={colors.blue} />
-                  <Text style={[ui.btnText, { color: colors.ink }]}>Call</Text>
-                </Pressable>
-              )}
-              <Pressable style={[ui.btn, ui.primary, { flex: 1, flexDirection: 'row', gap: 8 }]} onPress={send} disabled={busy || preview}>
-                {busy ? <ActivityIndicator color="#fff" /> : (
-                  <>
-                    <Ionicons name="send-outline" size={18} color="#fff" />
-                    <Text style={[ui.btnText, { color: '#fff' }]}>{session ? 'Send note' : 'Sign up & send'}</Text>
-                  </>
-                )}
-              </Pressable>
-            </View>
-          </>
-        )}
+        {previewBanner}
+        {/* Photo 1 is the cover (logo or best photo); photos 2-5 show the merchant's work. */}
+        {/* Same 16:10 shape as the Home cards, so the whole cover shows (nothing cut off). */}
+        {s.photos?.length > 0 && <Cover photos={s.photos} title={s.title} width="100%" aspectRatio={1.6} />}
+        {details}
+        {contactForm}
       </ScrollView>
     </SafeAreaView>
   );

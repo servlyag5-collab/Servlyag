@@ -93,21 +93,3 @@ export function ListingRow({ title, rows, ratings }: { title: string; rows: Card
   );
 }
 
-// Computers (wide screens): a heading and the cards in a grid, 3 or 4 across, filling the width.
-export function ListingGrid({ title, rows, ratings }: { title: string; rows: CardListing[]; ratings: Record<string, Rating> }) {
-  const [width, setWidth] = useState(0);
-  const now = useNow();
-  const gap = 20;
-  const cols = width >= 1080 ? 4 : 3;
-  const cardW = width ? Math.floor((width - gap * (cols - 1)) / cols) : 0;
-  return (
-    <View style={{ gap: 14 }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      <Text style={{ fontSize: 26, fontFamily: fonts.title, color: colors.ink, letterSpacing: -0.4 }}>{title}</Text>
-      {cardW > 0 && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap }}>
-          {rows.map((s) => <ListingCard key={s.id} s={s} rating={ratings[s.id]} now={now} width={cardW} />)}
-        </View>
-      )}
-    </View>
-  );
-}

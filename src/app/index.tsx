@@ -3,7 +3,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View,
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ListingGrid, ListingRow, type CardListing } from '../components/ListingRow';
+import { ListingRow, type CardListing } from '../components/ListingRow';
 import { LegalLinks } from '../components/LegalLinks';
 import { MenuButton } from '../components/Menu';
 import { PlanBanner } from '../components/PlanBanner';
@@ -80,7 +80,7 @@ export default function Home() {
   const filtered = !!(query.q || query.city || query.village); // the results shown are a search, not everything
   const screenW = useWindowDimensions().width;
   const narrow = screenW < 430; // phones: smaller headline and sun, so they never overlap
-  const wide = screenW >= 900;  // computers: full-width hero, one-line search, listings in a grid
+  const wide = screenW >= 900;  // computers: full-width hero, one-line search, content from the left edge
 
   // The pieces of the page (laid out below for phones or computers).
   const topBar = (
@@ -129,12 +129,10 @@ export default function Home() {
               <Text style={ui.muted}>No services found. Try different words or clear the filters.</Text>
             </View>
           )}
-          {/* By tier (Business, then Growth, then Starter), newest first: swipe rows on phones, a grid on computers. */}
+          {/* Swipeable rows by tier (Business, then Growth, then Starter), newest first. On computers they run across the whole screen with ‹ › arrows. */}
           {rows && ROWS.map((r) => {
             const list = rows.filter((s) => r.match(s.priority));
-            return list.length > 0 && (wide
-              ? <ListingGrid key={r.title} title={r.title} rows={list} ratings={ratings} />
-              : <ListingRow key={r.title} title={r.title} rows={list} ratings={ratings} />);
+            return list.length > 0 && <ListingRow key={r.title} title={r.title} rows={list} ratings={ratings} />;
           })}
           {hasMore && (
             <Pressable style={[ui.btn, ui.outline]} onPress={() => run(query, false, true)} disabled={busy}>
@@ -146,9 +144,9 @@ export default function Home() {
   );
   const legal = <View style={{ marginTop: 16 }}><LegalLinks /></View>;
 
-  // Computers: the hero runs edge to edge; everything else sits in a centred column up to 1200 px wide.
+  // Computers: everything runs edge to edge. Content starts at the left (people read left to right); the ☰ sits far right.
   if (wide) {
-    const column = { width: '100%' as const, maxWidth: 1200, alignSelf: 'center' as const, paddingHorizontal: 32 };
+    const column = { width: '100%' as const, paddingHorizontal: 56 };
     return (
       <SafeAreaView style={ui.screen}>
         <ScrollView ref={sc} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
