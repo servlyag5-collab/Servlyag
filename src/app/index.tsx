@@ -3,7 +3,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View,
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ListingRow, type CardListing } from '../components/ListingRow';
+import { CARD_W, GAP, ListingRow, type CardListing } from '../components/ListingRow';
 import { LegalLinks } from '../components/LegalLinks';
 import { MenuButton } from '../components/Menu';
 import { PlanBanner } from '../components/PlanBanner';
@@ -108,7 +108,9 @@ export default function Home() {
     <>
         {/* For businesses: a quiet invitation under the hero. */}
         <Pressable onPress={() => (session ? router.push('/offer') : router.push({ pathname: '/login', params: { mode: 'up' } }))}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 18, backgroundColor: '#EAF3FB' }}>
+          style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 18, backgroundColor: '#EAF3FB' },
+            // Computers: ends exactly where the second listing card below ends.
+            wide && { alignSelf: 'flex-start', width: CARD_W * 2 + GAP }]}>
           <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center' }}>
             <Ionicons name="storefront" size={20} color="#fff" />
           </View>

@@ -15,8 +15,8 @@ export type CardListing = {
   show_hours?: boolean; hours?: unknown;
 };
 
-const CARD_W = 240;
-const GAP = 12;
+export const CARD_W = 240; // listing card width (Home rows)
+export const GAP = 12;     // space between cards
 
 // One listing card: cover on top, five-star rating, two-line title, business name, price bottom right.
 function ListingCard({ s, rating, now, width = CARD_W }: { s: CardListing; rating?: Rating; now: Date; width?: number }) {
