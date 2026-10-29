@@ -12,7 +12,7 @@ import { customerName } from '../lib/names';
 import { colors, ui } from '../lib/theme';
 
 type Row = Conversation & {
-  services: { title: string; photos: string[] } | null;
+  services: { title: string; photos: string[]; photo_focus: unknown } | null;
   customer: { display_name: string; screen_name: string } | null;
   merchant: { display_name: string } | null;
 };
@@ -36,7 +36,7 @@ export default function Messages() {
   const load = useCallback(() => {
     if (!uid) return;
     supabase.from('conversations')
-      .select('*,services(title,photos),customer:profiles!customer_id(display_name,screen_name),merchant:profiles!merchant_id(display_name)')
+      .select('*,services(title,photos,photo_focus),customer:profiles!customer_id(display_name,screen_name),merchant:profiles!merchant_id(display_name)')
       .eq(col, uid).neq('last_message', '').order('last_message_at', { ascending: false })
       .then(({ data, error }) => { setErr(error?.message ?? ''); setRows((data as unknown as Row[]) ?? []); });
   }, [uid, col]);
@@ -68,7 +68,7 @@ export default function Messages() {
           return (
             <Pressable key={c.id} onPress={() => router.push({ pathname: '/chat/[id]', params: { id: c.id } })}
               style={[ui.card, { flexDirection: 'row', gap: 12, padding: 14, alignItems: 'center' }, unread && { borderColor: colors.blue, borderWidth: 2 }]}>
-              <Cover photos={c.services?.photos} title={c.services?.title ?? 'S'} width={56} height={56} radius={12} />
+              <Cover photos={c.services?.photos} focus={c.services?.photo_focus} title={c.services?.title ?? 'S'} width={56} height={56} radius={12} />
               <View style={{ flex: 1, gap: 2 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Text style={{ flex: 1, fontSize: 17, fontWeight: '800', color: colors.ink }} numberOfLines={1}>{other}</Text>

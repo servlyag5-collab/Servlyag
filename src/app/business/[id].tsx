@@ -10,7 +10,7 @@ import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
 type P = { display_name: string; bio: string; public_phone: string | null };
-type Svc = { id: string; title: string; photos: string[]; price: number | null; price_from: boolean; city: string; village: string | null };
+type Svc = { id: string; title: string; photos: string[]; photo_focus: unknown; price: number | null; price_from: boolean; city: string; village: string | null };
 
 export default function Business() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,7 +19,7 @@ export default function Business() {
 
   useEffect(() => {
     supabase.from('profiles').select('display_name,bio,public_phone').eq('id', id).single().then(({ data }) => setP(data as P));
-    supabase.from('services').select('id,title,photos,price,price_from,city,village').eq('merchant_id', id).eq('active', true)
+    supabase.from('services').select('id,title,photos,photo_focus,price,price_from,city,village').eq('merchant_id', id).eq('active', true)
       .order('created_at', { ascending: false }).then(({ data }) => setRows((data as Svc[]) ?? []));
   }, [id]);
 
@@ -39,7 +39,7 @@ export default function Business() {
             <Text style={[ui.h2, { marginTop: 12 }]}>Services</Text>
             {rows.map((s) => (
               <Pressable key={s.id} style={[ui.card, { flexDirection: 'row', gap: 14, padding: 14, alignItems: 'center' }]} onPress={() => router.push({ pathname: '/service/[id]', params: { id: s.id } })}>
-                <Cover photos={s.photos} title={s.title} width={72} height={72} radius={12} />
+                <Cover photos={s.photos} focus={s.photo_focus} title={s.title} width={72} height={72} radius={12} />
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{s.title}</Text>
                   <Text style={ui.muted}>{s.village ? `${s.village}, ` : ''}{s.city} · {formatPrice(s.price, s.price_from)}</Text>

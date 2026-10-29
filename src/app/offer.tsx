@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverTag } from '../components/Cover';
+import { PhotoFramer } from '../components/PhotoFramer';
+import { cleanFocus, focusOf, position, type FocusMap } from '../lib/focus';
 import { WideSplit } from '../components/WideSplit';
 import { PlacePicker } from '../components/PlacePicker';
 import { PARISHES, VILLAGES } from '../lib/places';
@@ -34,6 +37,8 @@ export default function Offer() {
   const [hours, setHours] = useState<Hours>(DEFAULT_HOURS);
   const [gate, setGate] = useState<Gate | null>(null);
   const [photos, setPhotos] = useState<ImagePicker.ImagePickerAsset[]>([]);
+  const [focus, setFocus] = useState<FocusMap>({}); // chosen part of each photo, by its uri until uploaded
+  const [framing, setFraming] = useState<string | null>(null); // uri of the photo being positioned
   const [addonPrice, setAddonPrice] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -97,13 +102,14 @@ export default function Offer() {
     if (error) { setBusy(false); return setErr(error.message); }
     if (photos.length) {
       const paths: string[] = [];
+      const byPath: FocusMap = {};
       for (const [i, a] of photos.entries()) {
         const small = await shrinkPhoto(a); // resized + compressed before upload
         const path = `${user!.id}/${svc.id}/${i}.${small.ext}`;
         const up = await supabase.storage.from('service-photos').upload(path, small.buf, { contentType: small.contentType });
-        if (!up.error) paths.push(path);
+        if (!up.error) { paths.push(path); if (focus[a.uri]) byPath[path] = focus[a.uri]; }
       }
-      if (paths.length) await supabase.from('services').update({ photos: paths }).eq('id', svc.id);
+      if (paths.length) await supabase.from('services').update({ photos: paths, photo_focus: cleanFocus(byPath, paths) }).eq('id', svc.id);
     }
     setBusy(false);
     // Having a listing unlocks merchant view; show it in Account.
@@ -161,14 +167,18 @@ export default function Offer() {
         <HoursEditor show={showHours} onShow={setShowHours} hours={hours} onChange={setHours} />
 
         <Text style={[ui.h2, { marginTop: 8 }]}>Photos (optional, up to 5)</Text>
-        <Text style={ui.muted}>Your first photo is the cover: use your logo or your best photo. It shows in search results. The other 4 show your work on the listing page.</Text>
+        <Text style={ui.muted}>Your first photo is the cover: use your logo or your best photo. It shows in search results. The other 4 show your work on the listing page. Tap a photo to choose which part shows; tap × to remove it.</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {photos.map((a, i) => (
-            <Pressable key={a.uri} onPress={() => setPhotos(photos.filter((_, j) => j !== i))}>
-              <Image source={{ uri: a.uri }} style={{ width: 96, height: 96, borderRadius: 10 }} />
-              <Ionicons name="close-circle" size={22} color={colors.red} style={{ position: 'absolute', top: 2, right: 2 }} />
+            <View key={a.uri}>
+              <Pressable onPress={() => setFraming(a.uri)} accessibilityLabel="Position photo">
+                <Image source={{ uri: a.uri }} contentFit="cover" contentPosition={position(focusOf(focus, a.uri))} style={{ width: 96, height: 96, borderRadius: 10 }} />
+              </Pressable>
+              <Pressable onPress={() => setPhotos(photos.filter((_, j) => j !== i))} hitSlop={6} style={{ position: 'absolute', top: 2, right: 2 }} accessibilityLabel="Remove photo">
+                <Ionicons name="close-circle" size={22} color={colors.red} />
+              </Pressable>
               {i === 0 && <CoverTag />}
-            </Pressable>
+            </View>
           ))}
           {photos.length < 5 && (
             <Pressable onPress={pick} style={[ui.field, { width: 96, height: 96, alignItems: 'center', justifyContent: 'center' }]}>
@@ -191,6 +201,8 @@ export default function Offer() {
         )}
         </WideSplit>
       </ScrollView>
+      <PhotoFramer uri={framing} focus={focusOf(focus, framing ?? undefined)} onClose={() => setFraming(null)}
+        onDone={(f) => { setFocus((m) => ({ ...m, [framing!]: f })); setFraming(null); }} />
     </SafeAreaView>
   );
 }

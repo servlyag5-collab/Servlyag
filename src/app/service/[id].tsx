@@ -3,7 +3,10 @@ import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInp
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image as Photo } from 'expo-image';
 import { Cover, photoUrl } from '../../components/Cover';
+import { PhotoViewer } from '../../components/PhotoViewer';
+import { focusOf, position } from '../../lib/focus';
 import { HoursCard } from '../../components/HoursCard';
 import { TopBar } from '../../components/Menu';
 import { ReportButton } from '../../components/ReportButton';
@@ -15,7 +18,7 @@ import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 
-type S = { photos: string[]; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; show_hours: boolean; hours: unknown; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null } | null };
+type S = { photos: string[]; photo_focus: unknown; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; show_hours: boolean; hours: unknown; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null } | null };
 
 // The page structure comes ONLY from the merchant's subscription tier (basic | plus | premium).
 // Merchants cannot choose or change it. Edit the three layouts here.
@@ -71,9 +74,10 @@ export default function ServiceDetail() {
   const [loadErr, setLoadErr] = useState('');
   const [convId, setConvId] = useState<string | null>(null); // my existing conversation about this listing
   const sendAfterLogin = useRef(false);
+  const [viewer, setViewer] = useState<number | null>(null); // full-screen photo open (its number), or null
 
   useEffect(() => {
-    supabase.from('services').select('photos,merchant_id,title,description,price,price_from,show_hours,hours,city,village,profiles(display_name,tier_id,public_phone)').eq('id', id).single()
+    supabase.from('services').select('photos,photo_focus,merchant_id,title,description,price,price_from,show_hours,hours,city,village,profiles(display_name,tier_id,public_phone)').eq('id', id).single()
       .then(({ data, error }) => { if (!data) setLoadErr(error?.message ?? 'This listing could not be found.'); setS(data as unknown as S); });
   }, [id]);
 
@@ -130,11 +134,18 @@ export default function ServiceDetail() {
     <>
       <Listing s={s} onBusiness={preview ? undefined : () => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })} />
       {s.show_hours && <HoursCard hours={s.hours} />}
+      {/* Tap any photo: the whole photo full screen; swipe between them, × to close. */}
+      <PhotoViewer urls={(s.photos ?? []).map(photoUrl)} start={viewer} onClose={() => setViewer(null)} />
       {s.photos?.length > 1 && (
         <>
           <Text style={[ui.h2, { marginTop: 8 }]}>Our work</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-            {s.photos.slice(1).map((p) => <Image key={p} source={{ uri: photoUrl(p) }} style={{ width: wide ? 360 : 280, height: wide ? 256 : 200, borderRadius: 14 }} />)}
+            {s.photos.slice(1).map((p, i) => (
+              <Pressable key={p} onPress={() => setViewer(i + 1)} accessibilityLabel={`Open photo ${i + 2} full screen`}>
+                <Photo source={{ uri: photoUrl(p) }} contentFit="cover" contentPosition={position(focusOf(s.photo_focus, p))} transition={150}
+                  style={{ width: wide ? 360 : 280, height: wide ? 225 : 175, borderRadius: 14, backgroundColor: colors.field }} />
+              </Pressable>
+            ))}
           </ScrollView>
         </>
       )}
@@ -192,7 +203,9 @@ export default function ServiceDetail() {
               <Image source={{ uri: photoUrl(cover) }} blurRadius={40} resizeMode="cover"
                 style={{ position: 'absolute', top: -40, left: -40, right: -40, bottom: -40 }} />
               <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11, 58, 99, 0.35)' }} />
-              <Image source={{ uri: photoUrl(cover) }} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
+              <Pressable onPress={() => setViewer(0)} accessibilityLabel="Open photos full screen" style={{ width: '100%', height: '100%' }}>
+                <Image source={{ uri: photoUrl(cover) }} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
+              </Pressable>
             </View>
           )}
           <View style={{ paddingHorizontal: 56, paddingTop: 28, flexDirection: 'row', alignItems: 'flex-start', gap: 40 }}>
@@ -216,8 +229,12 @@ export default function ServiceDetail() {
         <TopBar />
         {previewBanner}
         {/* Photo 1 is the cover (logo or best photo); photos 2-5 show the merchant's work. */}
-        {/* Same 16:10 shape as the Home cards, so the whole cover shows (nothing cut off). */}
-        {s.photos?.length > 0 && <Cover photos={s.photos} title={s.title} width="100%" aspectRatio={1.6} />}
+        {/* Same 16:10 shape as the Home cards, showing the part the merchant chose; tap for the whole photo. */}
+        {s.photos?.length > 0 && (
+          <Pressable onPress={() => setViewer(0)} accessibilityLabel="Open photos full screen">
+            <Cover photos={s.photos} focus={s.photo_focus} title={s.title} width="100%" aspectRatio={1.6} />
+          </Pressable>
+        )}
         {details}
         {contactForm}
       </ScrollView>

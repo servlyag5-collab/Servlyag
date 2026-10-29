@@ -19,6 +19,7 @@ import { colors, flag, fonts, ui } from '../lib/theme';
 type Row = CardListing & { priority: number };
 const EMPTY = { q: '', city: '', village: '' };
 const PAGE = 30; // results loaded at a time
+const LIVE_WAIT = 300; // search as you type: milliseconds after the last key press before searching
 // City / Village boxes inside the dark hero: see-through white with white text.
 // Search boxes in the computer search bar: light grey, no border.
 const wideField = { height: 56, borderRadius: 14, borderWidth: 0, backgroundColor: colors.field, fontSize: 17, width: '100%' as const, minWidth: 0 };
@@ -41,14 +42,26 @@ export default function Home() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [ratings, setRatings] = useState<Record<string, Rating>>({});
   const [busy, setBusy] = useState(false);
+  const [looking, setLooking] = useState(false); // a new search is loading (spinner in the search box)
   const [err, setErr] = useState('');
   const [hasMore, setHasMore] = useState(false);
   const [query, setQuery] = useState(EMPTY); // the search the results belong to (for "Show more")
   const sc = useRef<ScrollViewInstance>(null);
   const resultsY = useRef(0);
+  const latest = useRef(0); // only the newest search may show its results (older ones can arrive late)
+  const started = useRef(false);
   const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
 
   useEffect(() => { run(EMPTY, false); }, []);
+
+  // Search as you type: a moment after the last key press (or a Parish/Village pick), the results update.
+  // One letter is too short to search, so it shows everything; deleting letters widens the results again.
+  useEffect(() => {
+    if (!started.current) { started.current = true; return; } // the first load is above
+    const x = f.q.trim().length < 2 ? { ...f, q: '' } : f;
+    const t = setTimeout(() => run(x, false), LIVE_WAIT);
+    return () => clearTimeout(t);
+  }, [f.q, f.city, f.village]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-runs when someone logs in or out, so the header always matches.
   useEffect(() => {
@@ -60,14 +73,18 @@ export default function Home() {
   // Search in the database (search_services): name, description and hidden tags, tolerant of small
   // spelling mistakes; Business first, then Growth, then Starter. Loads PAGE results at a time.
   async function run(x: typeof EMPTY, scroll: boolean, more = false) {
+    const me = ++latest.current;
     setErr('');
     setBusy(true);
+    if (!more) setLooking(true);
     const from = more ? (rows?.length ?? 0) : 0;
     const { data, error } = await supabase
       .rpc('search_services', { p_q: x.q.replace(/[%_\\]/g, ' ').trim(), p_city: x.city.trim(), p_village: x.village.trim() })
-      .select('id,merchant_id,title,photos,price,price_from,show_hours,hours,priority,city,village,profiles(display_name)')
+      .select('id,merchant_id,title,photos,photo_focus,price,price_from,show_hours,hours,priority,city,village,profiles(display_name)')
       .range(from, from + PAGE - 1);
+    if (me !== latest.current) return; // a newer search has started; ignore this one
     setBusy(false);
+    setLooking(false);
     if (error) return setErr('Something went wrong. Please try again.');
     const page = (data as unknown as Row[]) ?? [];
     const list = more ? [...(rows ?? []), ...page] : page;
@@ -78,7 +95,7 @@ export default function Home() {
     if (scroll) setTimeout(() => sc.current?.scrollTo({ y: resultsY.current, animated: true }), 60);
   }
   const search = () => run(f, true);
-  const clear = () => { setF(EMPTY); run(EMPTY, false); };
+  const clear = () => setF(EMPTY); // the live search above then shows everything again
   const filtered = !!(query.q || query.city || query.village); // the results shown are a search, not everything
   const screenW = useWindowDimensions().width;
   const narrow = screenW < 430; // phones: smaller headline and sun, so they never overlap
@@ -130,7 +147,7 @@ export default function Home() {
           {rows && <Text style={ui.muted}>{rows.length} {rows.length === 1 ? 'service' : 'services'} found</Text>}
           {rows?.length === 0 && (
             <View style={[ui.card, { borderColor: colors.red, borderWidth: 2 }]}>
-              <Text style={ui.muted}>No services found. Try different words or clear the filters.</Text>
+              <Text style={ui.muted}>No services found. Check the spelling, or delete a few letters to see more.</Text>
             </View>
           )}
           {/* Swipeable rows by tier (Business, then Growth, then Starter), newest first. On computers they run across the whole screen with ‹ › arrows. */}
@@ -175,11 +192,12 @@ export default function Home() {
               <View style={{ marginTop: 14, flexDirection: 'row', gap: 10, backgroundColor: '#fff', borderRadius: 20, padding: 8, maxWidth: 1000,
                 boxShadow: '0px 18px 40px rgba(0, 0, 0, 0.25)' }}>
                 <View style={{ flex: 2, minWidth: 0 }}>
-                  <TextInput style={[ui.field, wideField, { paddingLeft: 46 }]} placeholder="What do you need? e.g. photographer" placeholderTextColor={colors.muted}
+                  <TextInput style={[ui.field, wideField, { paddingLeft: 46, paddingRight: 44 }]} placeholder="What do you need? e.g. photographer" placeholderTextColor={colors.muted}
                     value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false} />
                   <View pointerEvents="none" style={{ position: 'absolute', left: 16, top: 0, bottom: 0, justifyContent: 'center' }}>
                     <Ionicons name="search" size={21} color={colors.blue} />
                   </View>
+                  {looking && <ActivityIndicator color={colors.blue} pointerEvents="none" style={{ position: 'absolute', right: 16, top: 0, bottom: 0 }} />}
                 </View>
                 {/* Parish and village pick from lists (src/lib/places.ts), or use what they type. */}
                 <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Parish" placeholder="Parish" value={f.city} onChange={set('city')} options={PARISHES} boxStyle={wideField} /></View>
@@ -233,12 +251,13 @@ export default function Home() {
             </Text>
             {/* The whole box is the text field (so any tap starts typing); the icon sits on top and ignores taps. */}
             <View style={{ marginTop: 6 }}>
-              <TextInput style={[ui.field, { paddingLeft: 46, height: 56, borderRadius: 16, borderWidth: 0, backgroundColor: '#fff', fontSize: 17, width: '100%', minWidth: 0 }]}
+              <TextInput style={[ui.field, { paddingLeft: 46, paddingRight: 44, height: 56, borderRadius: 16, borderWidth: 0, backgroundColor: '#fff', fontSize: 17, width: '100%', minWidth: 0 }]}
                 placeholder="What do you need? e.g. photographer" placeholderTextColor={colors.muted}
                 value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false} />
               <View pointerEvents="none" style={{ position: 'absolute', left: 16, top: 0, bottom: 0, justifyContent: 'center' }}>
                 <Ionicons name="search" size={21} color={colors.blue} />
               </View>
+              {looking && <ActivityIndicator color={colors.blue} pointerEvents="none" style={{ position: 'absolute', right: 16, top: 0, bottom: 0 }} />}
             </View>
             <View style={ui.row}>
               {/* Parish and village pick from lists (src/lib/places.ts), or use what they type. */}

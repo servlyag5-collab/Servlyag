@@ -10,7 +10,7 @@ import { Cover } from './Cover';
 import { RatingSummary } from './Stars';
 
 export type CardListing = {
-  id: string; merchant_id: string; title: string; photos: string[]; price: number | null; price_from: boolean;
+  id: string; merchant_id: string; title: string; photos: string[]; photo_focus?: unknown; price: number | null; price_from: boolean;
   city: string; village: string | null; profiles: { display_name: string } | null;
   show_hours?: boolean; hours?: unknown;
 };
@@ -25,7 +25,7 @@ function ListingCard({ s, rating, now, width = CARD_W }: { s: CardListing; ratin
   return (
     <Pressable onPress={() => router.push({ pathname: '/service/[id]', params: { id: s.id } })}
       style={{ width, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
-      <Cover photos={s.photos} title={s.title} width={width} height={Math.round(width / 1.6)} radius={0} />
+      <Cover photos={s.photos} focus={s.photo_focus} title={s.title} width={width} height={Math.round(width / 1.6)} radius={0} />
       <View style={{ padding: 12, gap: 6, flex: 1 }}>
         {/* Five stars and "4.0/5 · 12 reviews", shown only once the merchant has a review. */}
         <RatingSummary rating={rating} size={13} />

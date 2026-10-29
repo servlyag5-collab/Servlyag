@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverTag, photoUrl } from '../../components/Cover';
+import { PhotoFramer } from '../../components/PhotoFramer';
+import { cleanFocus, focusOf, position, type FocusMap } from '../../lib/focus';
 import { WideSplit } from '../../components/WideSplit';
 import { PlacePicker } from '../../components/PlacePicker';
 import { PARISHES, VILLAGES } from '../../lib/places';
@@ -24,6 +27,7 @@ import { colors, ui } from '../../lib/theme';
 // One photo in the order shown: already saved (path) or newly picked (asset). The first is the cover.
 type Photo = { path?: string; asset?: ImagePicker.ImagePickerAsset };
 const keyOf = (p: Photo) => p.path ?? p.asset!.uri;
+const uriOf = (p: Photo) => (p.path ? photoUrl(p.path) : p.asset!.uri);
 
 // Edit one of my listings: business details, service fields and photos (max 5).
 export default function EditListing() {
@@ -39,6 +43,8 @@ export default function EditListing() {
   const [hours, setHours] = useState<Hours>(DEFAULT_HOURS);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [removed, setRemoved] = useState<string[]>([]); // saved photos to delete on Save
+  const [focus, setFocus] = useState<FocusMap>({}); // chosen part of each photo, by keyOf(photo)
+  const [framing, setFraming] = useState<Photo | null>(null); // the photo being positioned
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -48,7 +54,7 @@ export default function EditListing() {
   useEffect(() => {
     if (!uid) return;
     Promise.all([
-      supabase.from('services').select('title,description,tags,price,price_from,show_hours,hours,city,village,photos').eq('id', id).eq('merchant_id', uid).single(),
+      supabase.from('services').select('title,description,tags,price,price_from,show_hours,hours,city,village,photos,photo_focus').eq('id', id).eq('merchant_id', uid).single(),
       supabase.from('profiles').select('display_name,bio,show_phone').eq('id', uid).single(),
       supabase.rpc('my_phone'), // the real number is private; only its owner can read it
     ]).then(([s, p, ph]) => {
@@ -60,7 +66,9 @@ export default function EditListing() {
       setPriceFrom(!!s.data.price_from);
       setShowHours(!!s.data.show_hours);
       setHours(normalizeHours(s.data.hours));
-      setPhotos(((s.data.photos ?? []) as string[]).map((path) => ({ path })));
+      const saved = (s.data.photos ?? []) as string[];
+      setPhotos(saved.map((path) => ({ path })));
+      setFocus(Object.fromEntries(saved.map((path) => [path, focusOf(s.data.photo_focus, path)])));
       if (p.data) {
         setB({ name: p.data.display_name, bio: p.data.bio, phone: (ph.data as string | null) ?? '' });
         setShowPhone(p.data.show_phone);
@@ -97,13 +105,14 @@ export default function EditListing() {
 
     // Keep the order shown (first = cover). New photos get a unique name so they never clash.
     const paths: string[] = [];
+    const byPath: FocusMap = {};
     for (const [i, p] of photos.entries()) {
-      if (p.path) { paths.push(p.path); continue; }
+      if (p.path) { paths.push(p.path); if (focus[p.path]) byPath[p.path] = focus[p.path]; continue; }
       const a = p.asset!;
       const small = await shrinkPhoto(a); // resized + compressed before upload
       const path = `${uid}/${id}/${Date.now()}-${i}.${small.ext}`;
       const r = await supabase.storage.from('service-photos').upload(path, small.buf, { contentType: small.contentType });
-      if (!r.error) paths.push(path);
+      if (!r.error) { paths.push(path); if (focus[a.uri]) byPath[path] = focus[a.uri]; }
     }
 
     const { error } = await supabase.from('services').update({
@@ -117,6 +126,7 @@ export default function EditListing() {
       city: f.city.trim(),
       village: f.village.trim() || null,
       photos: paths,
+      photo_focus: cleanFocus(byPath, paths),
     }).eq('id', id);
     if (error) { setBusy(false); return setErr(error.message); }
 
@@ -153,12 +163,14 @@ export default function EditListing() {
             <HoursEditor show={showHours} onShow={setShowHours} hours={hours} onChange={setHours} />
 
             <Text style={[ui.h2, { marginTop: 8 }]}>Photos ({count} of 5)</Text>
-            <Text style={ui.muted}>The cover (your logo or best photo) shows in search results. The other photos show your work on the listing page. Tap × to remove, or Make cover to move a photo to the front. Changes are saved when you tap Save.</Text>
+            <Text style={ui.muted}>The cover (your logo or best photo) shows in search results. The other photos show your work on the listing page. Tap a photo to choose which part shows, × to remove it, or Make cover to move it to the front. Changes are saved when you tap Save.</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {photos.map((p, i) => (
                 <View key={keyOf(p)} style={{ width: 96, gap: 4 }}>
                   <View>
-                    <Image source={{ uri: p.path ? photoUrl(p.path) : p.asset!.uri }} style={{ width: 96, height: 96, borderRadius: 10 }} />
+                    <Pressable onPress={() => setFraming(p)} accessibilityLabel="Position photo">
+                      <Image source={{ uri: uriOf(p) }} contentFit="cover" contentPosition={position(focusOf(focus, keyOf(p)))} style={{ width: 96, height: 96, borderRadius: 10 }} />
+                    </Pressable>
                     <Pressable onPress={() => remove(p)} hitSlop={6} style={{ position: 'absolute', top: 2, right: 2 }} accessibilityLabel="Remove photo">
                       <Ionicons name="close-circle" size={22} color={colors.red} />
                     </Pressable>
@@ -186,6 +198,8 @@ export default function EditListing() {
         )}
         </WideSplit>
       </ScrollView>
+      <PhotoFramer uri={framing ? uriOf(framing) : null} focus={focusOf(focus, framing ? keyOf(framing) : undefined)} onClose={() => setFraming(null)}
+        onDone={(f) => { setFocus((m) => ({ ...m, [keyOf(framing!)]: f })); setFraming(null); }} />
     </SafeAreaView>
   );
 }
