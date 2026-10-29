@@ -11,6 +11,7 @@ import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { customerName } from '../../lib/names';
 import { colors, ui } from '../../lib/theme';
+import { PinLoader } from '../../components/PinLoader';
 
 type Conv = { merchant_id: string; services: { title: string } | null; customer_as_business: boolean; customer: { display_name: string; screen_name: string } | null };
 
@@ -56,7 +57,7 @@ export default function BookCustomer() {
         <TopBar />
         <WideSplit>
         <Text style={ui.h1}>Book this customer</Text>
-        {(!c || allowed === null) ? <ActivityIndicator color={colors.blue} /> : !iAmMerchant ? (
+        {(!c || allowed === null) ? <PinLoader /> : !iAmMerchant ? (
           <Text style={ui.muted}>Only the merchant can book from this chat.</Text>
         ) : !allowed ? (
           <View style={ui.card}>

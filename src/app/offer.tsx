@@ -22,6 +22,7 @@ import { setMode } from '../lib/mode';
 import { shrinkPhoto } from '../lib/photos';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
+import { PinLoader } from '../components/PinLoader';
 
 type Plan = { name: string; max_services: number | null; booking_included: boolean };
 // plan = the paid tier (the database counts listings against it); chosen = the tier picked on the Plan screen.
@@ -53,7 +54,7 @@ export default function Offer() {
         supabase.from('profiles')
           .select('display_name,bio,show_phone,plan_expires_at,requested_tier,plan:tiers!tier_id(name,max_services,booking_included),chosen:tiers!requested_tier(name,max_services,booking_included)')
           .eq('id', uid).single(),
-        supabase.from('services').select('id', { count: 'exact', head: true }).eq('merchant_id', uid).eq('active', true),
+        supabase.from('services').select('id', { count: 'exact', head: true }).eq('merchant_id', uid).eq('active', true).eq('paused', false), // paused listings don't use a slot
         supabase.rpc('my_phone'), // the real number is private; only its owner can read it
       ]);
       if (!p) return;
@@ -123,7 +124,7 @@ export default function Offer() {
         <TopBar />
         <WideSplit>
         <Text style={ui.h1}>Offer a service</Text>
-        {!gate ? <ActivityIndicator color={colors.blue} /> : (
+        {!gate ? <PinLoader /> : (
           <>
         <View style={ui.card}>
           <Text style={ui.h2}>{gate.active ? `Your plan: ${gate.plan?.name}` : `Your chosen plan: ${(gate.chosen ?? gate.plan)?.name}`}</Text>

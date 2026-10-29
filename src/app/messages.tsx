@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../components/Cover';
@@ -10,6 +10,7 @@ import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { customerName } from '../lib/names';
 import { colors, ui } from '../lib/theme';
+import { PinLoader } from '../components/PinLoader';
 
 type Row = Conversation & {
   services: { title: string; photos: string[]; photo_focus: unknown } | null;
@@ -57,7 +58,7 @@ export default function Messages() {
         <TopBar />
         <Text style={ui.h1}>Messages</Text>
         <Text style={ui.muted}>{merchant ? 'Conversations with customers about your listings.' : 'Your conversations with merchants.'}</Text>
-        {!rows && <ActivityIndicator color={colors.blue} />}
+        {!rows && <PinLoader />}
         {!!err && <Text style={ui.error}>{err}</Text>}
         {!err && rows?.length === 0 && (
           <Text style={ui.muted}>{merchant ? 'No messages yet. When a customer writes about one of your services, it shows up here.' : 'No messages yet. Open a listing and send a note to start a conversation.'}</Text>

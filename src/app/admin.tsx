@@ -7,6 +7,7 @@ import { TopBar } from '../components/Menu';
 import { bookingDay } from '../lib/bookings';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
+import { PinLoader } from '../components/PinLoader';
 
 // The owner's dashboard (admins only; add yourself with the SQL at the top of upgrade-v14-launch-ready.sql).
 // Merchants: activate/renew plans and switch the booking app. Support: reply to requests. Reports: review and act.
@@ -32,7 +33,7 @@ export default function Admin() {
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
         <Text style={ui.h1}>Admin</Text>
-        {allowed === null ? <ActivityIndicator color={colors.blue} /> : !allowed ? (
+        {allowed === null ? <PinLoader /> : !allowed ? (
           <Text style={ui.muted}>This page is for Servly admins only.</Text>
         ) : (
           <>
@@ -71,7 +72,7 @@ function Merchants() {
         <TextInput style={[ui.field, { flex: 1 }]} placeholder="Search name or email" autoCapitalize="none" value={q} onChangeText={setQ} onSubmitEditing={() => load()} />
         <Pressable style={[ui.btn, ui.primary]} onPress={() => load()}><Ionicons name="search" size={20} color="#fff" /></Pressable>
       </View>
-      {!rows && !err && <ActivityIndicator color={colors.blue} />}
+      {!rows && !err && <PinLoader />}
       {!!err && <Text style={ui.error}>{err}</Text>}
       {rows?.length === 0 && <Text style={ui.muted}>No matches.</Text>}
       {rows?.map((m) => <MerchantCard key={m.id} m={m} onChanged={() => load()} />)}
@@ -137,7 +138,7 @@ function Support() {
   useFocusEffect(load);
   return (
     <View style={{ gap: 12 }}>
-      {!rows && !err && <ActivityIndicator color={colors.blue} />}
+      {!rows && !err && <PinLoader />}
       {!!err && <Text style={ui.error}>{err}</Text>}
       {rows?.length === 0 && <Text style={ui.muted}>No support requests yet.</Text>}
       {rows?.map((t) => <TicketCard key={t.id} t={t} onChanged={load} />)}
@@ -181,7 +182,7 @@ function Reports() {
   useFocusEffect(load);
   return (
     <View style={{ gap: 12 }}>
-      {!rows && !err && <ActivityIndicator color={colors.blue} />}
+      {!rows && !err && <PinLoader />}
       {!!err && <Text style={ui.error}>{err}</Text>}
       {rows?.length === 0 && <Text style={ui.muted}>No reports. 🎉</Text>}
       {rows?.map((r) => <ReportCard key={r.id} r={r} onChanged={load} />)}

@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { colors, ui, WIDE } from '../lib/theme';
 import { ReportButton } from './ReportButton';
 import { RatingSummary, Stars } from './Stars';
+import { PinLoader } from './PinLoader';
 
 // Long text shows its first 4 lines with "Read more" (and "Show less" once opened).
 const LONG = 180; // characters; longer than this (or more than 3 line breaks) gets the button
@@ -128,7 +129,7 @@ export function Reviews({ merchantId, serviceId, limit, allowWrite = true }: {
       <Text style={[ui.h2, { marginTop: 8 }]}>Reviews</Text>
       {!!err && <Text style={ui.error}>{err}</Text>}
       {total > 0 ? <RatingSummary rating={rating} size={18} /> : rows && !err && <Text style={ui.muted}>No reviews yet.</Text>}
-      {!rows && <ActivityIndicator color={colors.blue} />}
+      {!rows && <PinLoader size={30} />}
       {/* Computers: reviews in two columns; phones: one under the other. */}
       {WIDE ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>

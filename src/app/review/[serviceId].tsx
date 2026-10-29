@@ -11,6 +11,7 @@ import { canReview } from '../../lib/reviews';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
+import { PinLoader } from '../../components/PinLoader';
 
 const WORDS = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 type Svc = { title: string; merchant_id: string; profiles: { display_name: string } | null };
@@ -70,7 +71,7 @@ export default function WriteReview() {
             <Text style={{ fontSize: 15, fontWeight: '700', color: colors.blue }}>{svc.profiles?.display_name || 'Servly merchant'}</Text>
           </View>
         )}
-        {state === 'loading' && <ActivityIndicator color={colors.blue} />}
+        {state === 'loading' && <PinLoader />}
         {state === 'own' && <Text style={ui.muted}>You can't review your own listing.</Text>}
         {state === 'not-customer' && (
           <Text style={ui.muted}>Reviews come from real customers. Send a note about this listing first, then you can leave a review.</Text>

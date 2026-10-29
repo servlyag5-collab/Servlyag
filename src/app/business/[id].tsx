@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../../components/Cover';
@@ -8,6 +8,7 @@ import { Reviews } from '../../components/Reviews';
 import { formatPrice } from '../../lib/price';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
+import { PinLoader } from '../../components/PinLoader';
 
 type P = { display_name: string; bio: string; public_phone: string | null };
 type Svc = { id: string; title: string; photos: string[]; photo_focus: unknown; price: number | null; price_from: boolean; city: string; village: string | null };
@@ -19,7 +20,7 @@ export default function Business() {
 
   useEffect(() => {
     supabase.from('profiles').select('display_name,bio,public_phone').eq('id', id).single().then(({ data }) => setP(data as P));
-    supabase.from('services').select('id,title,photos,photo_focus,price,price_from,city,village').eq('merchant_id', id).eq('active', true)
+    supabase.from('services').select('id,title,photos,photo_focus,price,price_from,city,village').eq('merchant_id', id).eq('active', true).eq('paused', false)
       .order('created_at', { ascending: false }).then(({ data }) => setRows((data as Svc[]) ?? []));
   }, [id]);
 
@@ -27,7 +28,7 @@ export default function Business() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page}>
         <TopBar />
-        {!p ? <ActivityIndicator color={colors.blue} /> : (
+        {!p ? <PinLoader /> : (
           <>
             <Text style={ui.h1}>{p.display_name || 'Servly merchant'}</Text>
             {!!p.bio && <Text style={ui.muted}>{p.bio}</Text>}

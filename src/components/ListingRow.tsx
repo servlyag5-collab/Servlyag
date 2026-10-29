@@ -27,8 +27,9 @@ function ListingCard({ s, rating, now, width = CARD_W }: { s: CardListing; ratin
       style={{ width, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
       <Cover photos={s.photos} focus={s.photo_focus} title={s.title} width={width} height={Math.round(width / 1.6)} radius={0} />
       <View style={{ padding: 12, gap: 6, flex: 1 }}>
-        {/* Five stars and "4.0/5 · 12 reviews", shown only once the merchant has a review. */}
-        <RatingSummary rating={rating} size={13} />
+        {/* Five stars and "4.0/5 · 12 reviews", shown only once the merchant has a review. The space is kept
+            either way, so every card is the same height and stacked cards line up across columns. */}
+        <View style={{ minHeight: 17, justifyContent: 'center' }}><RatingSummary rating={rating} size={13} /></View>
         <Text style={{ fontSize: 17, fontFamily: fonts.semi, color: colors.ink, lineHeight: 22, minHeight: 44 }} numberOfLines={2}>{s.title}</Text>
         <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
           {s.profiles?.display_name || 'Servly merchant'} · {s.village || s.city}
@@ -52,8 +53,10 @@ function ListingCard({ s, rating, now, width = CARD_W }: { s: CardListing; ratin
   );
 }
 
-// A heading and a row of cards you swipe left and right. On computers, ‹ › buttons scroll it too.
-export function ListingRow({ title, rows, ratings }: { title: string; rows: CardListing[]; ratings: Record<string, Rating> }) {
+// A heading and cards you swipe left and right. On computers, ‹ › buttons scroll it too.
+// `layers` = how many cards are stacked in each column. Cards fill each column top to bottom, then the
+// next column, so in their order (Business first, then Growth, then Starter) they run down, then across.
+export function ListingRow({ title, rows, ratings, layers = 1 }: { title: string; rows: CardListing[]; ratings: Record<string, Rating>; layers?: number }) {
   const sc = useRef<ScrollViewInstance>(null);
   const x = useRef(0);
   const [width, setWidth] = useState(0);
@@ -63,7 +66,7 @@ export function ListingRow({ title, rows, ratings }: { title: string; rows: Card
     const card = CARD_W + GAP;
     const perPage = Math.max(1, Math.floor(width / card));
     const at = Math.round(x.current / card);
-    const max = Math.max(0, rows.length - perPage);
+    const max = Math.max(0, Math.ceil(rows.length / layers) - perPage);
     x.current = Math.min(max, Math.max(0, at + dir * perPage)) * card;
     sc.current?.scrollTo({ x: x.current, animated: true });
   };
@@ -87,7 +90,11 @@ export function ListingRow({ title, rows, ratings }: { title: string; rows: Card
       <ScrollView ref={sc} horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast"
         snapToInterval={CARD_W + GAP} snapToAlignment="start" contentContainerStyle={{ gap: GAP, paddingRight: 16 }}
         onScroll={(e) => { x.current = e.nativeEvent.contentOffset.x; }} scrollEventThrottle={32}>
-        {rows.map((s) => <ListingCard key={s.id} s={s} rating={ratings[s.id]} now={now} />)}
+        {Array.from({ length: Math.ceil(rows.length / layers) }, (_, c) => (
+          <View key={c} style={{ gap: GAP }}>
+            {rows.slice(c * layers, c * layers + layers).map((s) => <ListingCard key={s.id} s={s} rating={ratings[s.id]} now={now} />)}
+          </View>
+        ))}
       </ScrollView>
     </View>
   );

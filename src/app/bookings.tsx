@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BookingCard } from '../components/BookingCard';
@@ -11,6 +11,7 @@ import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { customerName } from '../lib/names';
 import { colors, ui } from '../lib/theme';
+import { PinLoader } from '../components/PinLoader';
 
 type Row = Booking & {
   services: { title: string } | null;
@@ -87,7 +88,7 @@ export default function Bookings() {
             {!merchant && pending > 0 && tab === 'upcoming' && (
               <Text style={{ fontWeight: '700', color: '#B07C00' }}>{pending} booking{pending === 1 ? '' : 's'} waiting for you to confirm.</Text>
             )}
-            {!rows && !err && <ActivityIndicator color={colors.blue} />}
+            {!rows && !err && <PinLoader />}
             {!!err && <Text style={ui.error}>{err}</Text>}
             {rows && !err && list.length === 0 && (
               <Text style={ui.muted}>{tab === 'upcoming' ? 'No upcoming bookings.' : 'No past bookings yet.'}</Text>

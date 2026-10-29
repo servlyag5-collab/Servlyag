@@ -17,6 +17,7 @@ import { formatPrice } from '../../lib/price';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
+import { PinLoader } from '../../components/PinLoader';
 
 type S = { photos: string[]; photo_focus: unknown; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; show_hours: boolean; hours: unknown; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null } | null };
 
@@ -116,7 +117,7 @@ export default function ServiceDetail() {
     <SafeAreaView style={ui.screen}>
       <ScrollView contentContainerStyle={ui.page}>
         <TopBar />
-        {loadErr ? <Text style={ui.error}>{loadErr}</Text> : <ActivityIndicator color={colors.blue} />}
+        {loadErr ? <Text style={ui.error}>{loadErr}</Text> : <PinLoader />}
       </ScrollView>
     </SafeAreaView>
   );

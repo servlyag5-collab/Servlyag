@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,11 +16,12 @@ import { downloadReceipt, money, receiptNumber, type Payment } from '../lib/rece
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
+import { PinLoader } from '../components/PinLoader';
 
-type Me = { display_name: string; screen_name: string; bio: string; show_phone: boolean; plan_expires_at: string | null; tiers: { name: string } | null };
+type Me = { display_name: string; screen_name: string; bio: string; show_phone: boolean; plan_expires_at: string | null; tiers: { name: string; max_services: number | null } | null };
 const label = { fontSize: 14, fontWeight: '700' as const, color: colors.ink, marginBottom: -4 };
 
-type Svc = { id: string; title: string; photos: string[]; photo_focus: unknown; price: number | null; price_from: boolean; city: string; village: string | null; active: boolean };
+type Svc = { id: string; title: string; photos: string[]; photo_focus: unknown; price: number | null; price_from: boolean; city: string; village: string | null; active: boolean; paused: boolean };
 
 export default function Account() {
   const session = useSession();
@@ -39,13 +40,17 @@ export default function Account() {
   const [confirmText, setConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [delErr, setDelErr] = useState('');
+  const [moving, setMoving] = useState<{ next_tier_name: string | null; next_tier_at: string | null } | null>(null); // a waiting move to a smaller plan
+  const [askRestore, setAskRestore] = useState<string | null>(null); // paused listing waiting for "Yes, bring it back"
+  const [restoreErr, setRestoreErr] = useState('');
+  const [tick, setTick] = useState(0); // reloads the page after bringing a listing back
   const setBiz = (k: keyof typeof b) => (v: string) => { setB((p) => ({ ...p, [k]: v })); setMsg(''); };
 
   useFocusEffect(useCallback(() => {
     if (!uid) return;
     // The real phone number is private: only my_phone() returns it, and only to its owner.
     Promise.all([
-      supabase.from('profiles').select('display_name,screen_name,bio,show_phone,plan_expires_at,tiers!tier_id(name)').eq('id', uid).single(),
+      supabase.from('profiles').select('display_name,screen_name,bio,show_phone,plan_expires_at,tiers!tier_id(name,max_services)').eq('id', uid).single(),
       supabase.rpc('my_phone'),
     ]).then(([{ data, error }, ph]) => {
       if (!data) return setLoadErr(error?.message ?? 'Could not load your account.');
@@ -55,13 +60,26 @@ export default function Account() {
       setShowPhone(p.show_phone);
       setB({ screen: p.screen_name, name: p.display_name, bio: p.bio, phone: (ph.data as string | null) ?? '' });
     });
-    supabase.from('services').select('id,title,photos,photo_focus,price,price_from,city,village,active').eq('merchant_id', uid)
+    supabase.rpc('my_plan_change').maybeSingle().then(({ data }) => {
+      const c = data as { next_tier_name: string | null; next_tier_at: string | null } | null;
+      setMoving(c?.next_tier_at ? c : null);
+    });
+    supabase.from('services').select('id,title,photos,photo_focus,price,price_from,city,village,active,paused').eq('merchant_id', uid)
       .order('created_at', { ascending: false })
       .then(({ data }) => setRows((data as Svc[]) ?? []));
     // Every plan payment (logged by activate_plan) has a receipt.
     supabase.from('payments').select('*,tiers(name)').eq('merchant_id', uid).order('paid_at', { ascending: false })
       .then(({ data, error }) => { setPayErr(error?.message ?? ''); setPays((data as Payment[]) ?? []); });
-  }, [uid]));
+  }, [uid, tick]));
+
+  // Bring back one paused listing (only while the plan has a free slot; the database checks again).
+  async function restore(id: string) {
+    setRestoreErr('');
+    const { error } = await supabase.rpc('restore_listing', { p_service: id });
+    setAskRestore(null);
+    if (error) return setRestoreErr(error.message);
+    setTick((n) => n + 1);
+  }
 
   async function getReceipt(p: Payment) {
     setPayErr('');
@@ -95,6 +113,11 @@ export default function Account() {
   }
 
   const active = !!me?.plan_expires_at && new Date(me.plan_expires_at) > new Date();
+  // Paused listings (v20) come back only into a free slot of the current plan, and not while a move down is waiting.
+  const limit = me?.tiers?.max_services ?? null;
+  const liveCount = rows?.filter((s) => s.active && !s.paused).length ?? 0;
+  const pausedCount = rows?.filter((s) => s.paused).length ?? 0;
+  const canRestore = active && !moving && (limit === null || liveCount < limit);
 
   return (
     <SafeAreaView style={ui.screen}>
@@ -104,7 +127,7 @@ export default function Account() {
         <Text style={ui.h1}>Account</Text>
         <Text style={ui.muted}>{session?.user.email}</Text>
         <PlanBanner />
-        {!me ? (loadErr ? <Text style={ui.error}>{loadErr}</Text> : <ActivityIndicator color={colors.blue} />) : (
+        {!me ? (loadErr ? <Text style={ui.error}>{loadErr}</Text> : <PinLoader />) : (
           <>
             <View style={ui.card}>
               <Text style={ui.h2}>Your details</Text>
@@ -139,7 +162,7 @@ export default function Account() {
 
                 <View style={ui.card}>
                   <Text style={ui.h2}>Receipts</Text>
-                  {!pays && <ActivityIndicator color={colors.blue} />}
+                  {!pays && <PinLoader size={30} />}
                   {pays?.length === 0 && <Text style={ui.muted}>No payments yet. A receipt appears here each time your plan is paid.</Text>}
                   {pays?.map((p) => (
                     <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6, borderTopWidth: 1, borderColor: colors.border }}>
@@ -158,8 +181,27 @@ export default function Account() {
                 </View>
 
                 <Text style={[ui.h2, { marginTop: 8 }]}>Your listings</Text>
-                {!rows && <ActivityIndicator color={colors.blue} />}
+                {!rows && <PinLoader size={30} />}
                 {rows?.length === 0 && <Text style={ui.muted}>You have no listings yet.</Text>}
+                {!!moving && (
+                  <View style={[ui.card, { borderColor: colors.gold, borderWidth: 2 }]}>
+                    <Text style={ui.muted}>
+                      Your plan moves to {moving.next_tier_name} on {new Date(moving.next_tier_at!).toLocaleDateString()}. The listings you didn't keep will be paused then.
+                    </Text>
+                  </View>
+                )}
+                {pausedCount > 0 && (
+                  <View style={[ui.card, { backgroundColor: '#FDF3D0', borderColor: colors.gold }]}>
+                    <Text style={{ fontSize: 16, color: colors.ink, lineHeight: 22 }}>
+                      {pausedCount === 1 ? '1 listing is' : `${pausedCount} listings are`} paused because of your plan: hidden from customers, but saved.{' '}
+                      {canRestore ? `You have ${limit === null ? 'room' : `${limit - liveCount} free slot${limit - liveCount === 1 ? '' : 's'}`}: tap Bring back on the one you want live.` : 'Upgrade your plan to bring them back.'}
+                    </Text>
+                    {!canRestore && active && !moving && (
+                      <Pressable style={[ui.btn, ui.outline]} onPress={() => router.push('/plan')}><Text style={[ui.btnText, { color: colors.ink }]}>See plans</Text></Pressable>
+                    )}
+                  </View>
+                )}
+                {!!restoreErr && <Text style={ui.error}>{restoreErr}</Text>}
                 {rows?.map((s) => (
                   <View key={s.id} style={ui.card}>
                     <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
@@ -167,8 +209,8 @@ export default function Account() {
                       <View style={{ flex: 1, gap: 4 }}>
                         <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{s.title}</Text>
                         <Text style={ui.muted}>{s.village ? `${s.village}, ` : ''}{s.city} · {formatPrice(s.price, s.price_from)}</Text>
-                        <Text style={{ fontWeight: '700', color: s.active && active ? colors.blue : colors.muted }}>
-                          {s.active && active ? 'Visible to customers' : 'Hidden from customers'}
+                        <Text style={{ fontWeight: '700', color: s.active && !s.paused && active ? colors.blue : colors.muted }}>
+                          {s.paused ? 'Paused (plan limit)' : s.active && active ? 'Visible to customers' : 'Hidden from customers'}
                         </Text>
                       </View>
                     </View>
@@ -180,6 +222,20 @@ export default function Account() {
                         <Text style={[ui.btnText, { color: '#fff' }]}>Edit</Text>
                       </Pressable>
                     </View>
+                    {/* Bring back: asks once, because the choice is locked until the next plan change. */}
+                    {s.paused && canRestore && (askRestore === s.id ? (
+                      <View style={{ gap: 8 }}>
+                        <Text style={ui.muted}>Bring back "{s.title}"? It uses {limit === null ? 'a' : 'your free'} slot, and you can't swap it for another paused listing later.</Text>
+                        <View style={ui.row}>
+                          <Pressable style={[ui.btn, ui.outline, { flex: 1 }]} onPress={() => setAskRestore(null)}><Text style={ui.btnText}>Cancel</Text></Pressable>
+                          <Pressable style={[ui.btn, ui.primary, { flex: 1.4 }]} onPress={() => restore(s.id)}><Text style={[ui.btnText, { color: '#fff' }]}>Yes, bring it back</Text></Pressable>
+                        </View>
+                      </View>
+                    ) : (
+                      <Pressable style={[ui.btn, { backgroundColor: colors.gold }]} onPress={() => setAskRestore(s.id)}>
+                        <Text style={[ui.btnText, { color: colors.ink }]}>Bring back</Text>
+                      </Pressable>
+                    ))}
                   </View>
                 ))}
                 <Pressable style={[ui.btn, ui.primary]} onPress={() => router.push('/offer')}><Text style={[ui.btnText, { color: '#fff' }]}>Offer a service</Text></Pressable>
@@ -226,7 +282,8 @@ export default function Account() {
                 </Pressable>
               )}
             </View>
-            <LegalLinks />
+            {/* Refund policy: merchants only in the apps (it's about plan payments); always on the website. */}
+            <LegalLinks refund={Platform.OS === 'web' || merchant} />
           </>
         )}
         </WideSplit>

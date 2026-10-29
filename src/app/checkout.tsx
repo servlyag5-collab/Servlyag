@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WideSplit } from '../components/WideSplit';
@@ -7,6 +7,7 @@ import { TopBar } from '../components/Menu';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
+import { PinLoader } from '../components/PinLoader';
 
 type T = { id: string; name: string; monthly_price: number; booking_included: boolean };
 const PAY_URL = process.env.EXPO_PUBLIC_PAY_URL; // your payment provider's page (set once you pick a provider)
@@ -38,7 +39,7 @@ export default function Checkout() {
         <TopBar />
         <WideSplit>
         <Text style={ui.h1}>Checkout</Text>
-        {!t ? <ActivityIndicator color={colors.blue} /> : (
+        {!t ? <PinLoader /> : (
           <>
             <View style={ui.card}>
               <Text style={ui.h2}>Your order</Text>

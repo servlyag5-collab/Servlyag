@@ -4,7 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CARD_W, GAP, ListingRow, type CardListing } from '../components/ListingRow';
+import { splitRows } from '../lib/rows';
 import { LegalLinks } from '../components/LegalLinks';
+import { SunGlow } from '../components/SunGlow';
 import { MenuButton } from '../components/Menu';
 import { PlacePicker } from '../components/PlacePicker';
 import { PlanBanner } from '../components/PlanBanner';
@@ -26,12 +28,6 @@ const wideField = { height: 56, borderRadius: 14, borderWidth: 0, backgroundColo
 const heroField = { backgroundColor: 'rgba(255, 255, 255, 0.12)', borderColor: 'rgba(255, 255, 255, 0.22)', color: '#fff', borderRadius: 14, minWidth: 0 };
 const LOGO_W = 240;             // width of the logo at the top of Home
 const LOGO_RATIO = 549 / 2066;  // logo.png height / width
-// Home rows, by search priority (from the merchant's tier: Business 2, Growth 1, Starter 0).
-const ROWS = [
-  { title: 'Top businesses', match: (p: number) => p >= 2 },
-  { title: 'Popular picks', match: (p: number) => p === 1 },
-  { title: 'More local services', match: (p: number) => p <= 0 },
-];
 
 export default function Home() {
   const session = useSession();
@@ -150,11 +146,9 @@ export default function Home() {
               <Text style={ui.muted}>No services found. Check the spelling, or delete a few letters to see more.</Text>
             </View>
           )}
-          {/* Swipeable rows by tier (Business, then Growth, then Starter), newest first. On computers they run across the whole screen with ‹ › arrows. */}
-          {rows && ROWS.map((r) => {
-            const list = rows.filter((s) => r.match(s.priority));
-            return list.length > 0 && <ListingRow key={r.title} title={r.title} rows={list} ratings={ratings} />;
-          })}
+          {/* Two swipe rows (see splitRows): the highest-paying plan in these results is "Popular picks", the rest
+              "More local services". The headings never name a tier and are never empty. */}
+          {rows && splitRows(rows).map((r) => <ListingRow key={r.title} title={r.title} rows={r.list} ratings={ratings} />)}
           {hasMore && (
             <Pressable style={[ui.btn, ui.outline]} onPress={() => run(query, false, true)} disabled={busy}>
               {busy ? <ActivityIndicator color={colors.blue} /> : <Text style={[ui.btnText, { color: colors.ink }]}>Show more services</Text>}
@@ -178,7 +172,8 @@ export default function Home() {
 
           {/* Full-width hero: big headline left, the flag's gold sun rising on the right, one-line search. */}
           <View style={{ backgroundColor: colors.harbour, overflow: 'hidden' }}>
-            <View pointerEvents="none" style={{ position: 'absolute', right: -120, top: -150, width: 560, height: 560, borderRadius: 280, backgroundColor: 'rgba(252, 209, 22, 0.14)' }} />
+            {/* The sun's faded glow breathes a few times when the page opens, then rests. */}
+            <SunGlow style={{ position: 'absolute', right: -120, top: -150, width: 560, height: 560, borderRadius: 280, backgroundColor: 'rgba(252, 209, 22, 0.14)' }} />
             <View pointerEvents="none" style={{ position: 'absolute', right: -40, top: -70, width: 380, height: 380, borderRadius: 190, backgroundColor: colors.gold }} />
             <View style={[column, { paddingTop: 64, paddingBottom: 56, gap: 18 }]}>
               {!!session && !!name && <Text style={{ color: '#BFD8EE', fontSize: 17, fontWeight: '600' }} numberOfLines={1}>Welcome back, {name}</Text>}
@@ -239,7 +234,8 @@ export default function Home() {
         {/* Hero: harbour blue with the flag's gold sun rising in the corner, the tagline as the headline,
             and the search right inside it (searching is what most people come for). Flag ribbon along the bottom. */}
         <View style={{ backgroundColor: colors.harbour, borderRadius: 28, overflow: 'hidden', marginTop: 4, boxShadow: '0px 14px 32px rgba(11, 58, 99, 0.28)' }}>
-          <View pointerEvents="none" style={{ position: 'absolute', right: narrow ? -70 : -70, top: narrow ? -80 : -70, width: narrow ? 190 : 230, height: narrow ? 190 : 230, borderRadius: 115, backgroundColor: 'rgba(252, 209, 22, 0.16)' }} />
+          {/* The sun's faded glow breathes a few times when the page opens, then rests. */}
+          <SunGlow style={{ position: 'absolute', right: -70, top: narrow ? -80 : -70, width: narrow ? 190 : 230, height: narrow ? 190 : 230, borderRadius: 115, backgroundColor: 'rgba(252, 209, 22, 0.16)' }} />
           <View pointerEvents="none" style={{ position: 'absolute', right: narrow ? -46 : -34, top: narrow ? -52 : -34, width: narrow ? 120 : 150, height: narrow ? 120 : 150, borderRadius: 75, backgroundColor: colors.gold }} />
           <View style={{ padding: 22, paddingTop: 26, gap: 14 }}>
             {!!session && !!name && <Text style={{ color: '#BFD8EE', fontSize: 15, fontWeight: '600', maxWidth: '68%' }} numberOfLines={1}>Welcome back, {name}</Text>}

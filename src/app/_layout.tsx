@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { BricolageGrotesque_600SemiBold, BricolageGrotesque_700Bold, BricolageGrotesque_800ExtraBold, useFonts } from '@expo-google-fonts/bricolage-grotesque';
 import { StatusBar } from 'expo-status-bar';
@@ -7,6 +7,7 @@ import { Splash } from '../components/Splash';
 import { registerForPush, useNotificationTaps } from '../lib/push';
 import { useSession } from '../lib/session';
 import { colors } from '../lib/theme';
+import { PinLoader } from '../components/PinLoader';
 
 let splashPlayed = false; // the opening animation plays once per app launch
 
@@ -33,7 +34,7 @@ export default function RootLayout() {
     <>
       <StatusBar style="dark" />
       {loading ? (
-        !splash && <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.bg }}><ActivityIndicator color={colors.blue} /></View>
+        !splash && <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.bg }}><PinLoader size={60} /></View>
       ) : (
         // Guests can browse and search. An account is needed to send a note, offer a service, or see Inbox and Plan.
         <Stack screenOptions={{ headerShown: false }}>

@@ -8,6 +8,7 @@ import { channelName } from '../lib/chat';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
+import { PinLoader } from '../components/PinLoader';
 
 type Ticket = { id: string; topic: string; subject: string; body: string; status: 'open' | 'resolved'; reply: string | null; replied_at: string | null; created_at: string };
 const TOPICS = [
@@ -85,7 +86,7 @@ export default function Support() {
         </View>
 
         <Text style={[ui.h2, { marginTop: 8 }]}>Your requests</Text>
-        {!rows && !loadErr && <ActivityIndicator color={colors.blue} />}
+        {!rows && !loadErr && <PinLoader />}
         {!!loadErr && <Text style={ui.error}>{loadErr}</Text>}
         {!loadErr && rows?.length === 0 && <Text style={ui.muted}>No requests yet.</Text>}
         {rows?.map((t) => (

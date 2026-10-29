@@ -23,6 +23,7 @@ import { shrinkPhoto } from '../../lib/photos';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
+import { PinLoader } from '../../components/PinLoader';
 
 // One photo in the order shown: already saved (path) or newly picked (asset). The first is the cover.
 type Photo = { path?: string; asset?: ImagePicker.ImagePickerAsset };
@@ -142,7 +143,7 @@ export default function EditListing() {
         <WideSplit>
         <Text style={ui.h1}>Edit listing</Text>
         {!merchant ? <Text style={ui.muted}>Switch to merchant view (in the ☰ menu) to edit your listings.</Text>
-          : !loaded ? (err ? <Text style={ui.error}>{err}</Text> : <ActivityIndicator color={colors.blue} />) : (
+          : !loaded ? (err ? <Text style={ui.error}>{err}</Text> : <PinLoader />) : (
           <>
             <Text style={ui.h2}>Your business</Text>
             <Text style={ui.muted}>These details show on all your listings.</Text>

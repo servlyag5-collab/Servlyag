@@ -12,6 +12,7 @@ import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { customerName } from '../../lib/names';
 import { colors, ui, SIDE, WIDE } from '../../lib/theme';
+import { PinLoader } from '../../components/PinLoader';
 
 type Conv = Conversation & {
   services: { title: string } | null;
@@ -169,7 +170,7 @@ export default function Chat() {
 
         <ScrollView ref={sc} style={{ flex: 1 }} contentContainerStyle={[bar, { paddingVertical: 16, gap: 8 }]}>
           {!!err && !c && <Text style={ui.error}>{err}</Text>}
-          {!rows && !err && <ActivityIndicator color={colors.blue} />}
+          {!rows && !err && <PinLoader />}
           {rows?.length === 0 && <Text style={[ui.muted, { textAlign: 'center' }]}>No messages yet. Say hello!</Text>}
           {rows?.map((m) => {
             const mine = m.sender_id === uid;

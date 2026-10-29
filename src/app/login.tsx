@@ -4,6 +4,7 @@ import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LegalLinks } from '../components/LegalLinks';
+import { PasswordInput } from '../components/PasswordInput';
 import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
@@ -68,7 +69,7 @@ export default function Login() {
           )}
           <TextInput style={ui.field} placeholder="Email" autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={email} onChangeText={setEmail} />
           {mode !== 'reset' && (
-            <TextInput style={ui.field} placeholder="Password" secureTextEntry autoCapitalize="none" autoCorrect={false}
+            <PasswordInput placeholder="Password"
               autoComplete={mode === 'up' ? 'new-password' : 'current-password'} value={pw} onChangeText={setPw} onSubmitEditing={go} />
           )}
           {mode === 'in' && (

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { PasswordInput } from '../components/PasswordInput';
 import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
+import { PinLoader } from '../components/PinLoader';
 
 // Read the values Supabase adds to the reset link (after # or ?): tokens, a code, or an error.
 function linkParams(url: string | null) {
@@ -67,7 +69,7 @@ export default function ResetPassword() {
         <WideSplit>
         <View style={ui.card}>
           <Text style={ui.h2}>Set a new password</Text>
-          {state === 'checking' && <ActivityIndicator color={colors.blue} />}
+          {state === 'checking' && <PinLoader />}
           {state === 'invalid' && (
             <>
               <Text style={ui.error}>{why}</Text>
@@ -79,9 +81,9 @@ export default function ResetPassword() {
           )}
           {state === 'ready' && (
             <>
-              <TextInput style={ui.field} placeholder="New password" secureTextEntry autoCapitalize="none" autoCorrect={false}
+              <PasswordInput placeholder="New password"
                 autoComplete="new-password" value={pw} onChangeText={(v) => { setPw(v); setMsg(''); }} />
-              <TextInput style={ui.field} placeholder="Type it again" secureTextEntry autoCapitalize="none" autoCorrect={false}
+              <PasswordInput placeholder="Type it again"
                 autoComplete="new-password" value={pw2} onChangeText={(v) => { setPw2(v); setMsg(''); }} onSubmitEditing={save} />
               {!!msg && <Text style={ui.error}>{msg}</Text>}
               <Pressable style={[ui.btn, ui.primary]} onPress={save} disabled={busy}>
