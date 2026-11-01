@@ -51,11 +51,13 @@ Deno.serve(async (req) => {
   const { data: seen } = await db.from('payments').select('id').eq('provider', provider).eq('provider_ref', p.reference).maybeSingle();
   if (seen) return json({ ok: true, duplicate: true });
 
-  // 3. The amount must match the plan price (+ the booking add-on if chosen).
+  // 3. The amount must match the plan price (+ the booking add-on if chosen), minus a promo code's
+  //    discount on the plan price (v23, e.g. LAUNCH50 for the first 2 months).
   const { data: tier } = await db.from('tiers').select('monthly_price,booking_included').eq('id', p.tier).single();
   const { data: addon } = await db.from('addons').select('monthly_price').eq('id', 'booking').single();
   if (!tier) return json({ error: 'Unknown tier' }, 400);
-  const expected = Number(tier.monthly_price) + (p.booking && !tier.booking_included ? Number(addon?.monthly_price ?? 0) : 0);
+  const { data: discount } = await db.rpc('next_promo_discount', { p_user: p.merchant, p_tier: p.tier });
+  const expected = Number(tier.monthly_price) - Number(discount ?? 0) + (p.booking && !tier.booking_included ? Number(addon?.monthly_price ?? 0) : 0);
   if (Math.abs(p.amount - expected) > 0.01) return json({ error: `Amount ${p.amount} does not match ${expected}` }, 400);
 
   // 4. Activate: adds one month, sets the tier, switches on booking if paid, logs the payment (receipt).

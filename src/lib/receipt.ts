@@ -9,6 +9,7 @@ export const SELLER = { name: 'Servly AG', address: 'St. Mary\'s, Antigua and Ba
 export type Payment = {
   id: string; tier_id: string; amount: number; currency: string; booking_addon: boolean;
   provider: string; provider_ref: string | null; paid_at: string; tiers: { name: string } | null;
+  discount?: number; promo_code?: string | null; // v23: a promo code's discount on the plan price
 };
 
 export const receiptNumber = (p: Payment) => `SRV-${new Date(p.paid_at).getFullYear()}-${p.id.slice(0, 8).toUpperCase()}`;
@@ -40,7 +41,8 @@ function receiptHtml(p: Payment, business: string, email: string) {
   <div class="muted" style="margin-top:24px">Billed to<br><b style="color:${colors.ink}">${esc(business || 'Servly merchant')}</b>${email ? `<br>${esc(email)}` : ''}</div>
   <table>
     ${row(`${esc(p.tiers?.name ?? p.tier_id)} plan, 1 month`, '')}
-    ${p.booking_addon ? row('Booking app add-on, 1 month', '') : ''}
+    ${p.booking_addon ? row('Bookings upgrade, 1 month', '') : ''}
+    ${Number(p.discount ?? 0) > 0 ? row(`Promo code ${esc(p.promo_code ?? '')}`, `&minus;${p.currency} ${Number(p.discount).toFixed(2)}`) : ''}
     ${row('Payment method', method + (p.provider_ref ? ` (${esc(p.provider_ref)})` : ''))}
     <tr class="total"><td>Total paid</td><td style="text-align:right">${money(p)}</td></tr>
   </table>

@@ -62,7 +62,7 @@ export const TERMS: Section[] = [
     'You must give accurate information, keep your password private, and be at least 16 years old. You are responsible for activity on your account.',
   ] },
   { heading: 'Merchant plans', body: [
-    'Merchants pay a monthly subscription (Starter, Growth or Business) and may add the booking app. Prices are shown in the app in Eastern Caribbean dollars (XCD). Each payment covers one month; listings are hidden when a plan ends until it is renewed.',
+    'Merchants pay a monthly subscription (Starter, Growth or Business) and may upgrade to bookings (the booking app). Prices are shown in the app in Eastern Caribbean dollars (XCD). Each payment covers one month; listings are hidden when a plan ends until it is renewed.',
     'Plans renew monthly until cancelled. How to cancel, and when payments can be refunded, is explained in our Refund and Cancellation Policy, which is part of these terms.',
   ] },
   { heading: 'Bookings', body: [
@@ -94,7 +94,7 @@ export const TERMS: Section[] = [
 // has started; cancel through Contact support; billing mistakes reported within 30 days are refunded.
 export const REFUNDS: Section[] = [
   { heading: 'About this policy', body: [
-    'This policy covers payments made to Servly AG: monthly merchant plans (Starter, Growth and Business) and the booking app add-on. Prices are in Eastern Caribbean dollars (XCD).',
+    'This policy covers payments made to Servly AG: monthly merchant plans (Starter, Growth and Business) and the bookings upgrade (the booking app). Prices are in Eastern Caribbean dollars (XCD).',
     'Servly does not take payment for the services merchants offer. If you paid a merchant for a haircut, a delivery or any other service, refunds for that service are between you and the merchant.',
   ] },
   { heading: 'How monthly plans work', body: [

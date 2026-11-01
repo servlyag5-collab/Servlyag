@@ -15,6 +15,7 @@ import { formatPrice } from '../lib/price';
 import { downloadReceipt, money, receiptNumber, type Payment } from '../lib/receipt';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
+import { myTrialEnd, planStatus } from '../lib/trial';
 import { colors, ui } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
 
@@ -41,6 +42,7 @@ export default function Account() {
   const [deleting, setDeleting] = useState(false);
   const [delErr, setDelErr] = useState('');
   const [moving, setMoving] = useState<{ next_tier_name: string | null; next_tier_at: string | null } | null>(null); // a waiting move to a smaller plan
+  const [trialEnd, setTrialEnd] = useState<string | null>(null); // a running Founding Merchant free trial
   const [askRestore, setAskRestore] = useState<string | null>(null); // paused listing waiting for "Yes, bring it back"
   const [restoreErr, setRestoreErr] = useState('');
   const [tick, setTick] = useState(0); // reloads the page after bringing a listing back
@@ -60,6 +62,7 @@ export default function Account() {
       setShowPhone(p.show_phone);
       setB({ screen: p.screen_name, name: p.display_name, bio: p.bio, phone: (ph.data as string | null) ?? '' });
     });
+    myTrialEnd(uid).then(setTrialEnd);
     supabase.rpc('my_plan_change').maybeSingle().then(({ data }) => {
       const c = data as { next_tier_name: string | null; next_tier_at: string | null } | null;
       setMoving(c?.next_tier_at ? c : null);
@@ -155,7 +158,7 @@ export default function Account() {
                 <View style={ui.card}>
                   <Text style={ui.h2}>Your plan</Text>
                   <Text style={{ fontSize: 16, fontWeight: '700', color: active ? colors.blue : colors.red }}>
-                    {active ? `${me.tiers?.name} · active until ${new Date(me.plan_expires_at!).toLocaleDateString()}` : 'No active plan. Customers cannot see your listings yet.'}
+                    {active ? planStatus(me.tiers?.name, me.plan_expires_at!, trialEnd) : 'No active plan. Customers cannot see your listings yet.'}
                   </Text>
                   <Pressable style={[ui.btn, ui.outline]} onPress={() => router.push('/plan')}><Text style={[ui.btnText, { color: colors.ink }]}>See plans</Text></Pressable>
                 </View>
@@ -168,7 +171,7 @@ export default function Account() {
                     <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6, borderTopWidth: 1, borderColor: colors.border }}>
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text style={{ fontSize: 16, fontWeight: '800', color: colors.ink }}>{new Date(p.paid_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</Text>
-                        <Text style={{ color: colors.muted, fontSize: 14 }}>{p.tiers?.name ?? p.tier_id}{p.booking_addon ? ' + booking app' : ''} · {money(p)}</Text>
+                        <Text style={{ color: colors.muted, fontSize: 14 }}>{p.tiers?.name ?? p.tier_id}{p.booking_addon ? ' + bookings' : ''}{p.promo_code ? ` · ${p.promo_code}` : ''} · {money(p)}</Text>
                         <Text style={{ color: colors.muted, fontSize: 12 }}>{receiptNumber(p)}</Text>
                       </View>
                       <Pressable style={[ui.btn, ui.outline, { height: 44, flexDirection: 'row', gap: 6 }]} onPress={() => getReceipt(p)}>

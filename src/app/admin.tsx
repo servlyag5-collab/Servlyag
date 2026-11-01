@@ -10,9 +10,13 @@ import { colors, ui } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
 
 // The owner's dashboard (admins only; add yourself with the SQL at the top of upgrade-v14-launch-ready.sql).
-// Merchants: activate/renew plans and switch the booking app. Support: reply to requests. Reports: review and act.
+// Merchants: activate/renew plans, start Founding Merchant free trials (v22) and switch the booking app. Support: reply to requests. Reports: review and act.
+// Promos: launch promo codes (v23) with places used, and on/off.
 type Merchant = { id: string; display_name: string; email: string; tier_id: string; plan_expires_at: string | null;
-  requested_tier: string | null; booking_requested: boolean; listings: number; has_booking: boolean };
+  requested_tier: string | null; booking_requested: boolean; listings: number; has_booking: boolean;
+  trial_ends_at: string | null; // when their free trial ends (null = never had one)
+  promo: string | null };       // e.g. "LAUNCH50: next payment 50% off the plan (1 of 2)"
+type PromoCode = { code: string; percent_off: number; months: number; max_uses: number; active: boolean; paid: number; holding: number };
 type Ticket = { id: string; topic: string; subject: string; body: string; status: string; reply: string | null; created_at: string; profiles: { display_name: string } | null };
 type Report = { id: string; target_type: 'listing' | 'review' | 'user'; target_id: string; reason: string; details: string; status: string;
   created_at: string; reporter: { display_name: string } | null };
@@ -25,7 +29,7 @@ const chipText = (on: boolean) => ({ fontWeight: '700' as const, color: on ? '#f
 
 export default function Admin() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<'merchants' | 'support' | 'reports'>('merchants');
+  const [tab, setTab] = useState<'merchants' | 'support' | 'reports' | 'promos'>('merchants');
   useFocusEffect(useCallback(() => { supabase.rpc('is_admin').then(({ data }) => setAllowed(!!data)); }, []));
 
   return (
@@ -38,7 +42,7 @@ export default function Admin() {
         ) : (
           <>
             <View style={{ flexDirection: 'row', backgroundColor: colors.field, borderRadius: 12, padding: 4, gap: 4 }}>
-              {(['merchants', 'support', 'reports'] as const).map((t) => (
+              {(['merchants', 'support', 'reports', 'promos'] as const).map((t) => (
                 <Pressable key={t} onPress={() => setTab(t)}
                   style={{ flex: 1, height: 40, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: tab === t ? colors.blue : 'transparent' }}>
                   <Text style={{ fontWeight: '800', color: tab === t ? '#fff' : colors.muted }}>{t[0].toUpperCase() + t.slice(1)}</Text>
@@ -48,6 +52,7 @@ export default function Admin() {
             {tab === 'merchants' && <Merchants />}
             {tab === 'support' && <Support />}
             {tab === 'reports' && <Reports />}
+            {tab === 'promos' && <Promos />}
           </>
         )}
       </ScrollView>
@@ -55,7 +60,7 @@ export default function Admin() {
   );
 }
 
-// ---- Merchants: find, activate/renew a plan, booking app on/off ------------------------------------
+// ---- Merchants: find, activate/renew a plan, free trial, booking app on/off ------------------------------------
 function Merchants() {
   const [q, setQ] = useState('');
   const [rows, setRows] = useState<Merchant[] | null>(null);
@@ -67,7 +72,7 @@ function Merchants() {
 
   return (
     <View style={{ gap: 12 }}>
-      <Text style={ui.muted}>People who chose a plan but haven't been activated are listed first. After a merchant pays, activate their plan here: it adds one month and creates their receipt.</Text>
+      <Text style={ui.muted}>People who chose a plan but haven't been activated are listed first. After a merchant pays, activate their plan here: it adds one month and creates their receipt. Founding Merchants can get a free trial instead: no payment, no receipt, one per merchant.</Text>
       <View style={ui.row}>
         <TextInput style={[ui.field, { flex: 1 }]} placeholder="Search name or email" autoCapitalize="none" value={q} onChangeText={setQ} onSubmitEditing={() => load()} />
         <Pressable style={[ui.btn, ui.primary]} onPress={() => load()}><Ionicons name="search" size={20} color="#fff" /></Pressable>
@@ -83,6 +88,7 @@ function Merchants() {
 function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) {
   const [tier, setTier] = useState(m.requested_tier ?? m.tier_id);
   const [booking, setBooking] = useState(m.booking_requested);
+  const [days, setDays] = useState('90');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const active = !!m.plan_expires_at && new Date(m.plan_expires_at) > new Date();
@@ -95,6 +101,10 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
     if (!error) onChanged();
   }
 
+  const trialDays = Number(days);
+  const trialOk = Number.isInteger(trialDays) && trialDays >= 1 && trialDays <= 365;
+  const onTrial = !!m.trial_ends_at && new Date(m.trial_ends_at) > new Date();
+
   return (
     <View style={[ui.card, { padding: 14, gap: 8 }]}>
       <Text style={{ fontSize: 17, fontWeight: '800', color: colors.ink }}>{m.display_name || 'No name'}</Text>
@@ -103,6 +113,10 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
         {active ? `${tierName(m.tier_id)} · active until ${bookingDay(m.plan_expires_at!)}` : 'No active plan'}
         {m.has_booking ? ' · booking app on' : ''}
       </Text>
+      {!!m.trial_ends_at && (
+        <Text style={{ color: colors.muted }}>Free trial {onTrial ? 'until' : 'ended'} {bookingDay(m.trial_ends_at)}</Text>
+      )}
+      {!!m.promo && <Text style={{ fontWeight: '700', color: colors.blue }}>Promo {m.promo}</Text>}
       {!!m.requested_tier && (
         <Text style={{ fontWeight: '700', color: '#B07C00' }}>Chose {tierName(m.requested_tier)}{m.booking_requested ? ' + booking app' : ''}: waiting for activation</Text>
       )}
@@ -112,7 +126,7 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
         ))}
         <Pressable style={chip(booking)} onPress={() => setBooking(!booking)}><Text style={chipText(booking)}>+ booking app</Text></Pressable>
       </View>
-      {!!msg && <Text style={/^(Plan|Booking)/.test(msg) ? { color: colors.blue, fontWeight: '700' } : ui.error}>{msg}</Text>}
+      {!!msg && <Text style={/^(Plan|Booking|Free trial)/.test(msg) ? { color: colors.blue, fontWeight: '700' } : ui.error}>{msg}</Text>}
       <View style={ui.row}>
         <Pressable style={[ui.btn, ui.primary, { flex: 1, height: 44 }]} disabled={busy}
           onPress={() => act(() => supabase.rpc('admin_activate_plan', { p_user: m.id, p_tier: tier, p_booking: booking }), `Plan activated: ${tierName(tier)} for one month.`)}>
@@ -123,7 +137,58 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
           <Text style={[ui.btnText, { color: colors.ink }]}>Booking {m.has_booking ? 'off' : 'on'}</Text>
         </Pressable>
       </View>
+      {!m.trial_ends_at && !active && (
+        // Founding Merchants: the chosen plan (and booking app, if ticked) free for this many days.
+        <View style={ui.row}>
+          <TextInput style={[ui.field, { width: 70, height: 44, textAlign: 'center' }]} keyboardType="number-pad" maxLength={3}
+            value={days} onChangeText={(v) => setDays(v.replace(/[^0-9]/g, ''))} accessibilityLabel="Free trial days" />
+          <Pressable style={[ui.btn, ui.outline, { flex: 1, height: 44, borderColor: colors.blue }]} disabled={busy || !trialOk}
+            onPress={() => act(() => supabase.rpc('admin_start_free_trial', { p_user: m.id, p_tier: tier, p_days: trialDays, p_booking: booking }),
+              `Free trial started: ${tierName(tier)} for ${trialDays} days.`)}>
+            <Text style={[ui.btnText, { color: trialOk ? colors.blue : colors.muted }]}>{trialOk ? `Start ${trialDays}-day free trial` : 'Free trial: 1 to 365 days'}</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
+  );
+}
+
+// ---- Promos: launch codes, places used, on/off --------------------------------------------------------
+function Promos() {
+  const [rows, setRows] = useState<PromoCode[] | null>(null);
+  const [err, setErr] = useState('');
+  const load = useCallback(() => {
+    supabase.rpc('admin_promo_codes').then(({ data, error }) => { setErr(error?.message ?? ''); setRows((data as PromoCode[]) ?? []); });
+  }, []);
+  useFocusEffect(load);
+  async function toggle(c: PromoCode) {
+    const { error } = await supabase.rpc('admin_set_promo_active', { p_code: c.code, p_active: !c.active });
+    if (error) return setErr(error.message);
+    load();
+  }
+  return (
+    <>
+      <Text style={ui.muted}>
+        Merchants type a code at Checkout. It holds a place for 7 days; the discount is taken when you activate their plan.
+        Places count once paid, or while held. Switch the backup code on when the first one runs out.
+      </Text>
+      {!rows && !err && <PinLoader />}
+      {!!err && <Text style={ui.error}>{err}</Text>}
+      {rows?.map((c) => {
+        const left = c.max_uses - c.paid - c.holding;
+        return (
+          <View key={c.code} style={[ui.card, { padding: 14, gap: 6 }, c.active && { borderColor: colors.blue, borderWidth: 2 }]}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{c.code}</Text>
+            <Text style={{ color: colors.muted }}>{c.percent_off}% off the plan for {c.months} month{c.months === 1 ? '' : 's'}</Text>
+            <Text style={{ fontWeight: '700', color: colors.ink }}>{c.paid} of {c.max_uses} used · {c.holding} waiting for payment · {Math.max(0, left)} left</Text>
+            <Text style={{ fontWeight: '700', color: c.active ? colors.blue : colors.muted }}>{c.active ? 'On: merchants can use it' : 'Off'}</Text>
+            <Pressable style={[ui.btn, c.active ? ui.outline : ui.primary, { height: 44 }]} onPress={() => toggle(c)}>
+              <Text style={[ui.btnText, { color: c.active ? colors.ink : '#fff' }]}>{c.active ? 'Switch off' : 'Switch on'}</Text>
+            </Pressable>
+          </View>
+        );
+      })}
+    </>
   );
 }
 

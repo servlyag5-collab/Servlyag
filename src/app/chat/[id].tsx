@@ -34,7 +34,7 @@ export default function Chat() {
   const [err, setErr] = useState('');
   const sc = useRef<ScrollViewInstance>(null);
   const [bookings, setBookings] = useState<Record<string, Booking>>({});
-  const [canBook, setCanBook] = useState(false); // merchant has the booking app
+  const [canBook, setCanBook] = useState<boolean | null>(null); // merchant has the booking app (null = still checking)
   const [blocked, setBlocked] = useState(false);   // I blocked the other person
   const [askBlock, setAskBlock] = useState(false);
 
@@ -155,6 +155,14 @@ export default function Chat() {
                       style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.blue }}>
                       <Ionicons name="calendar" size={16} color="#fff" />
                       <Text style={{ fontWeight: '700', color: '#fff' }}>Book this customer</Text>
+                    </Pressable>
+                  )}
+                  {/* No bookings yet: a gentle nudge at the moment it's useful (opens the Plan screen). */}
+                  {canBook === false && (
+                    <Pressable onPress={() => router.push('/plan')} accessibilityLabel="Upgrade to bookings to book this customer"
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.blue, backgroundColor: '#EAF3FB' }}>
+                      <Ionicons name="calendar-outline" size={16} color={colors.blue} />
+                      <Text style={{ fontWeight: '700', color: colors.blue }}>Upgrade to book this customer</Text>
                     </Pressable>
                   )}
                   <Pressable onPress={() => send('review_request')} disabled={busy}

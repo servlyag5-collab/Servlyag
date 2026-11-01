@@ -61,8 +61,8 @@ export default function BookCustomer() {
           <Text style={ui.muted}>Only the merchant can book from this chat.</Text>
         ) : !allowed ? (
           <View style={ui.card}>
-            <Text style={ui.h2}>The booking app isn't on yet</Text>
-            <Text style={ui.muted}>It comes with the Business plan, or as an add-on for Starter and Growth. Choose it on the Plan screen.</Text>
+            <Text style={ui.h2}>Upgrade to bookings</Text>
+            <Text style={ui.muted}>Book this customer right here and fill your calendar without back-and-forth messages. Included with Business, or +25 XCD a month on Starter and Growth.</Text>
             <Pressable style={[ui.btn, ui.primary]} onPress={() => router.push('/plan')}><Text style={[ui.btnText, { color: '#fff' }]}>See plans</Text></Pressable>
           </View>
         ) : (

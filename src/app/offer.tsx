@@ -189,7 +189,7 @@ export default function Offer() {
         </View>
 
         <Text style={gate.plan?.booking_included ? { color: colors.blue, fontWeight: '700' } : ui.muted}>
-          {gate.plan?.booking_included ? 'The booking app is included with your plan.' : `Want the booking app (${addonPrice ?? 25} XCD / month)? Tick it on your Plan screen.`}
+          {gate.plan?.booking_included ? 'Bookings are included with your plan: customers can book you right in the app.' : `Want customers to book you right in the app? Upgrade to bookings (+${addonPrice ?? 25} XCD / month) on your Plan screen.`}
         </Text>
 
         {!!err && <Text style={ui.error}>{err}</Text>}

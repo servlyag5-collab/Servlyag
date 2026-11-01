@@ -8,6 +8,7 @@ import { KeepListings, type KeepItem } from '../components/KeepListings';
 import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
+import { myTrialEnd, planStatus } from '../lib/trial';
 import { colors, ui } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
 
@@ -23,23 +24,26 @@ export default function Plan() {
   const [me, setMe] = useState<Me | null>(null);
   const [addon, setAddon] = useState(25);
   const [loadErr, setLoadErr] = useState('');
-  // Which plan card has "Add the booking app" ticked (only one at a time).
+  // Which plan card has "Upgrade to bookings" ticked (only one at a time).
   const [bookingFor, setBookingFor] = useState<string | null>(null);
   const [live, setLive] = useState<KeepItem[]>([]); // my live listings (not paused), oldest first
   const [change, setChange] = useState<Change | null>(null);
+  const [trialEnd, setTrialEnd] = useState<string | null>(null); // a running Founding Merchant free trial
   const [picking, setPicking] = useState<T | null>(null); // smaller plan waiting for "which listings to keep"
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const [t, p, a, s, c] = await Promise.all([
+      const [t, p, a, s, c, tr] = await Promise.all([
         supabase.from('tiers').select('*').order('monthly_price'),
         supabase.from('profiles').select('id,tier_id,plan_expires_at,requested_tier,booking_requested').eq('id', user!.id).single(),
         supabase.from('addons').select('monthly_price').eq('id', 'booking').single(),
         supabase.from('services').select('id,title,photos,photo_focus').eq('merchant_id', user!.id).eq('active', true).eq('paused', false)
           .order('created_at'),
         supabase.rpc('my_plan_change').maybeSingle(),
+        myTrialEnd(user!.id),
       ]);
+      setTrialEnd(tr);
       setLive((s.data as KeepItem[]) ?? []);
       setChange((c.data as Change | null) ?? null);
       if (!p.data) setLoadErr(p.error?.message ?? 'Could not load your plan.');
@@ -91,7 +95,7 @@ export default function Plan() {
         {!me ? (loadErr ? <Text style={ui.error}>{loadErr}</Text> : <PinLoader />) : (
           <>
             <Text style={{ fontSize: 16, color: active ? colors.blue : colors.red, fontWeight: '700' }}>
-              {active ? `${current?.name} · active until ${new Date(me.plan_expires_at!).toLocaleDateString()}` : 'No active plan. Your listings are hidden from customers until you pay.'}
+              {active ? planStatus(current?.name, me.plan_expires_at!, trialEnd) : 'No active plan. Your listings are hidden from customers until you pay.'}
             </Text>
             {!!change?.next_tier && (
               <View style={[ui.card, { borderColor: colors.gold, borderWidth: 2, gap: 6 }]}>
@@ -112,11 +116,19 @@ export default function Plan() {
                   <Text style={ui.muted}>Business profile, customer messaging and call</Text>
                   <Text style={ui.muted}>{t.max_services ?? 'Unlimited'} service listing{t.max_services === 1 ? '' : 's'}</Text>
                   {t.priority_rank > 0 && <Text style={ui.muted}>{t.priority_rank > 1 ? 'Top placement in search' : 'Priority placement in search'}</Text>}
-                  {t.booking_included ? <Text style={ui.muted}>Booking app included</Text> : (
-                    <Pressable style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }} onPress={() => setBookingFor(bookingFor === t.id ? null : t.id)}>
-                      <Ionicons name={withBooking(t) ? 'checkbox' : 'square-outline'} size={26} color={colors.blue} />
-                      <Text style={{ flex: 1, fontSize: 16, color: colors.ink }}>Add the booking app (+{addon} XCD / month)</Text>
-                    </Pressable>
+                  {/* Bookings, worded as an upgrade that names what the merchant gets (not an "add-on"). */}
+                  {t.booking_included ? <Text style={ui.muted}>Bookings included: customers book you right in the app</Text> : (
+                    <>
+                      <Pressable style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }} onPress={() => setBookingFor(bookingFor === t.id ? null : t.id)}
+                        accessibilityRole="checkbox" accessibilityState={{ checked: withBooking(t) }}>
+                        <Ionicons name={withBooking(t) ? 'checkbox' : 'square-outline'} size={26} color={colors.blue} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>Upgrade to bookings: let customers book you</Text>
+                          <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 20 }}>Fill your calendar without back-and-forth messages · +{addon} XCD / month</Text>
+                        </View>
+                      </Pressable>
+                      <Text style={{ fontSize: 13, color: colors.muted, marginLeft: 36 }}>Or get bookings included with Business.</Text>
+                    </>
                   )}
                   <Pressable style={[ui.btn, ui.primary]} onPress={() => choose(t)}>
                     <Text style={[ui.btnText, { color: '#fff' }]}>{isCurrent ? 'Renew' : 'Choose'} {t.name} · {price} XCD</Text>
