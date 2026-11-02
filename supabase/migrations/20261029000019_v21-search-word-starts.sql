@@ -1,3 +1,5 @@
+-- REPLACED BY v24 and v25 (2026-11-02): the owner wants search to find letters inside words and the business
+-- name too. Do NOT run this file; run v24 then v25 instead.
 -- Servly AG v21: search matches the START of words, not letters hidden inside them.
 -- Before: "ac" found "packing", "packages" and "practice" (the letters a-c inside those words).
 -- Now: "ac" finds "AC servicing", "AC installation"; "phot" still finds "photographer";

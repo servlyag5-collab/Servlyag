@@ -24,12 +24,14 @@ const checks = [
   ['v18', 'photo focus points', { get: 'services?select=photo_focus&limit=1' }],
   ['v19', 'search as you type', { rpc: 'search_services', body: { p_q: 'test' } }],
   ['v20', 'plan downgrades and paused listings', { rpc: 'my_plan_change', body: {} }],
-  ['v21', 'word-start search (optional, not run on purpose)', { rpc: 'search_words', body: { p: 'ac' } }],
+  ['v21', 'word-start search (replaced by v24 and v25)', { rpc: 'search_words', body: { p: 'ac' } }],
   ['v22', 'free trials: table', { get: 'free_trials?select=merchant_id&limit=1' }],
   ['v22', 'free trials: admin start', { rpc: 'admin_start_free_trial', body: { p_user: ZERO, p_tier: 'basic' } }],
   ['v23', 'promo codes: table', { get: 'promo_codes?select=code&limit=1' }],
   ['v23', 'promo codes: apply at checkout', { rpc: 'apply_promo_code', body: { p_code: 'X' } }],
   ['v23', 'promo codes: discount on receipts', { get: 'payments?select=discount,promo_code&limit=1' }],
+  ['v24', 'search everywhere (business name, word roots)', { rpc: 'search_stem', body: { w: 'cleaning' } }],
+  ['v25', 'smart search (short words match word starts)', { rpc: 'search_norm', body: { t: 'AC' } }],
 ];
 
 const MISSING = ['PGRST202', 'PGRST205', '42703', '42883', '42P01'];
