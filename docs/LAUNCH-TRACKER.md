@@ -6,7 +6,7 @@ the date, or just tell Claude "mark X as done" and it will update it.
 
 Marks: `[x]` done · `[ ]` to do · `[?]` not sure yet (please confirm) · `[~]` waiting on someone else
 
-Launch date: **not set yet**
+Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 
 ---
 
@@ -29,24 +29,28 @@ Launch date: **not set yet**
 - [ ] Final layouts for the three listing page designs (Starter / Growth / Business are placeholders)
 
 ### Database updates run in Supabase
-- [?] v22 free trials (`supabase/upgrade-v22-free-trials.sql`)
-- [?] v23 promo codes (`supabase/upgrade-v23-promo-codes.sql`)
-- [?] You are an admin (`admins` table, OWNER-GUIDE section 1)
-- Optional, not run (your choice): v21 search word starts
+- [x] All updates up to v25 run (owner confirmed 2026-11-02); `npm run check:db` checks them each day
+- [x] You are an admin (`admins` table, OWNER-GUIDE section 1) (owner confirmed 2026-11-02)
+- v21 is replaced by v24/v25 (no need to run it)
 
 ---
 
 ## Stage 2: Things only you can decide or set up
 
-- [~] **Payment provider.** Not chosen. WiPay, First Atlantic Commerce and Dodo Payments were looked at;
-  each must confirm an Antigua and Barbuda business can charge a monthly fee in XCD.
+- [ ] **Register the business at the Intellectual Property office** (target: this week, by Fri 6 Nov)
+- [ ] **Register with Inland Revenue** (target: this week, by Fri 6 Nov)
+- [ ] **Payment provider: go to ECAB** (after the business is registered). Ask them: can Servly charge
+  merchants a monthly subscription in XCD online (card payments on a website), what do they need from
+  you, what are the fees, can they tell our system automatically when a payment goes through (a
+  "webhook"), and how long setup takes. Earlier options looked at: WiPay, First Atlantic Commerce,
+  Dodo Payments.
 - [ ] Email provider (SMTP) so customers get password-reset and confirmation emails
 - [ ] Supabase paid plan (free projects pause after about a week with no activity)
 - [ ] Lawyer review of Privacy Policy, Terms, Refund Policy (`src/lib/legal.ts`, still DRAFT)
 - [ ] Check Apple and Google rules on charging merchants outside their billing
 - [ ] Support email address on servlyag.com
 - [ ] Point servlyag.com at the Netlify site
-- [ ] Set the launch date
+- [ ] Pick the final launch date: 15 December or 7 January
 
 ---
 
@@ -87,4 +91,7 @@ open support tickets, open reports, promo places left.
 Short dated notes the brief should know about (decisions, things you are waiting on, who you spoke to).
 
 - 2026-10-27: Bundle id `com.servlyag.app` decided. Never change after the first store upload.
-- 2026-11-02: Daily brief assistant set up.
+- 2026-11-02: Daily brief assistant set up; runs every morning at 7:45 (while the Claude app is open). Backed up to GitHub.
+- 2026-11-02: Database confirmed up to date (v25). Payment provider: owner will go to ECAB, after
+  registering the business at the Intellectual Property office and Inland Revenue (aiming for this week).
+  Launch date: 15 December 2026 or 7 January 2027.
