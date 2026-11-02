@@ -3,7 +3,7 @@ import { SELLER } from './receipt';
 // DRAFT legal text for Servly AG. Have a lawyer in Antigua and Barbuda review it before launch.
 // Edit the words here; the Privacy Policy and Terms screens show whatever is in these lists.
 // Each section is a heading and one or more paragraphs.
-export const LEGAL_UPDATED = 'October 2026';
+export const LEGAL_UPDATED = 'November 2026';
 const CONTACT = SELLER.email || 'our support team (Contact support in the app)';
 
 export type Section = { heading: string; body: string[] };
@@ -29,7 +29,7 @@ export const PRIVACY: Section[] = [
   { heading: 'Who can see your information', body: [
     'Public: listings, business names and descriptions, prices, locations, photos, reviews and merchant replies. A merchant\'s phone number is public only if they turn on "Show my phone number to customers".',
     'Only the two people in a conversation can read its messages and bookings.',
-    'Service providers who help us run Servly (hosting and database: Supabase; notifications: Expo; email and payments providers once connected) process data only on our behalf.',
+    'Service providers who help us run Servly (hosting and database: Supabase; notifications: Expo; emails such as password resets: Resend; the payment provider once connected) process data only on our behalf.',
     'We may share information if the law requires it, or to protect the safety of users.',
   ] },
   { heading: 'How long we keep it', body: [

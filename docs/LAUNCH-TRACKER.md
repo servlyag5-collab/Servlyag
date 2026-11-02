@@ -44,7 +44,8 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
   you, what are the fees, can they tell our system automatically when a payment goes through (a
   "webhook"), and how long setup takes. Earlier options looked at: WiPay, First Atlantic Commerce,
   Dodo Payments.
-- [ ] Email provider (SMTP) so customers get password-reset and confirmation emails
+- [x] Email provider (SMTP): Resend, sending as Servly AG <noreply@servlyag.com>; password reset tested end to end (2026-11-02)
+- [ ] Before launch, Supabase > Authentication: change **Site URL** to `https://servlyag.com` (now `http://localhost:8081`) and raise the **email rate limit** (Rate Limits)
 - [ ] Supabase paid plan (free projects pause after about a week with no activity)
 - [ ] Lawyer review of Privacy Policy, Terms, Refund Policy (`src/lib/legal.ts`, still DRAFT)
 - [ ] Check Apple and Google rules on charging merchants outside their billing
@@ -95,3 +96,6 @@ Short dated notes the brief should know about (decisions, things you are waiting
 - 2026-11-02: Database confirmed up to date (v25). Payment provider: owner will go to ECAB, after
   registering the business at the Intellectual Property office and Inland Revenue (aiming for this week).
   Launch date: 15 December 2026 or 7 January 2027.
+- 2026-11-02: Email set up with Resend (domain servlyag.com verified, DNS at GoDaddy). Supabase custom SMTP on.
+  Redirect URLs: localhost 8081/8082/8083 + 127.0.0.1:8081, servlyag://reset-password, exp://**; add the
+  three website ones (servlyag.com, www, Netlify) if not done. Password reset tested and works.
