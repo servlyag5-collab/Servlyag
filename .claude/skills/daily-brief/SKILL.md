@@ -22,7 +22,10 @@ know something, say "not sure, please confirm" instead of guessing. Never invent
    - Otherwise, if the owner pasted the result of that query today, use it.
    - Otherwise, say numbers are not included and how to get them (one line: Supabase > SQL Editor >
      paste `supabase/owner-daily-numbers.sql` > Run > paste the table to Claude).
-6. Today's date, and days until the launch date if one is set.
+6. **Database check:** run `npm run check:db` (read only; it uses the public anon key and changes
+   nothing). It shows OK / NO for each database update (v18 to v23). v21 showing "not run" is
+   expected: the owner chose to leave it out.
+7. Today's date, and days until the launch date if one is set.
 
 ## 2. Write the brief
 
@@ -49,6 +52,10 @@ sections, and keep the whole brief readable in about two minutes:
 ## Business health
 <numbers table, or the one-line note on how to get them>
 <1-3 plain-English observations: plans or trials ending soon, open tickets/reports, money this month>
+Database: <"all updates installed (v18-v23; v21 left out on purpose)", or which one is MISSING and
+          that the owner should run that file in Supabase > SQL Editor>
+          (if a NEW upgrade file exists in supabase/ that the check doesn't cover yet, say so and add
+          one line for it to scripts/check-database.js)
 
 ## Watch out
 - ...   (risks: things blocking launch, unsaved work, Supabase free plan pausing, app-store
