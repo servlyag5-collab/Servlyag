@@ -8,6 +8,7 @@ import { registerForPush, useNotificationTaps } from '../lib/push';
 import { useSession } from '../lib/session';
 import { colors } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
+import { introDone } from '../lib/intro';
 
 let splashPlayed = false; // the opening animation plays once per app launch
 
@@ -21,6 +22,7 @@ if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.pa
 export default function RootLayout() {
   const session = useSession();
   const [splash, setSplash] = useState(!splashPlayed);
+  useEffect(() => { if (splashPlayed) introDone(); }, []);
   // Heading font. If it ever fails to load, the app carries on with the default font.
   const [fontsLoaded, fontError] = useFonts({ BricolageGrotesque_600SemiBold, BricolageGrotesque_700Bold, BricolageGrotesque_800ExtraBold });
   const loading = session === undefined || (!fontsLoaded && !fontError);
@@ -64,7 +66,7 @@ export default function RootLayout() {
           </Stack.Protected>
         </Stack>
       )}
-      {splash && <Splash ready={!loading} onDone={() => { splashPlayed = true; setSplash(false); }} />}
+      {splash && <Splash ready={!loading} onDone={() => { splashPlayed = true; setSplash(false); introDone(); }} />}
     </>
   );
 }

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions, type ScrollViewInstance } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,8 @@ import { CARD_W, GAP, ListingRow, type CardListing } from '../components/Listing
 import { splitRows } from '../lib/rows';
 import { LegalLinks } from '../components/LegalLinks';
 import { SunGlow } from '../components/SunGlow';
+import { FirstTimeGuide, replayGuide, useGuideReplay, useGuideSeen, type GuideStep } from '../components/FirstTimeGuide';
+import { useIntroDone } from '../lib/intro';
 import { MenuButton } from '../components/Menu';
 import { PlacePicker } from '../components/PlacePicker';
 import { PlanBanner } from '../components/PlanBanner';
@@ -44,6 +46,17 @@ export default function Home() {
   const [query, setQuery] = useState(EMPTY); // the search the results belong to (for "Show more")
   const sc = useRef<ScrollViewInstance>(null);
   const resultsY = useRef(0);
+  // First-time guide (phones only, once per device): the parts it points at, and how far Home is scrolled.
+  const guideRoot = useRef<ViewInstance>(null);
+  const searchRef = useRef<ViewInstance>(null);
+  const areaRef = useRef<ViewInstance>(null);
+  const inviteRef = useRef<ViewInstance>(null);
+  const listRef = useRef<ViewInstance>(null);
+  const menuRef = useRef<ViewInstance>(null);
+  const scrollY = useRef(0);
+  const guideSeen = useGuideSeen();
+  const introDone = useIntroDone();
+  const [guideOpen, setGuideOpen] = useState(false);
   const latest = useRef(0); // only the newest search may show its results (older ones can arrive late)
   const started = useRef(false);
   const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
@@ -97,6 +110,22 @@ export default function Home() {
   const narrow = screenW < 430; // phones: smaller headline and sun, so they never overlap
   const wide = screenW >= 900;  // computers: full-width hero, one-line search, content from the left edge
 
+  // Show the guide once the opening animation has finished and the listings have loaded. Phones only: the apps,
+  // and the website on a phone-sized screen (computers get a different Home layout, so no guide there).
+  const showGuide = !wide && guideSeen === false && introDone && !!rows?.length;
+  useEffect(() => { if (showGuide) setGuideOpen(true); }, [showGuide]);
+  // "How to use Servly" (☰ menu, or the link at the bottom for guests) plays it again.
+  useGuideReplay(useCallback(() => { if (!wide) setGuideOpen(true); }, [wide]));
+  const guideSteps: GuideStep[] = [
+    { target: searchRef, title: 'Search for any service', text: 'Type what you need, like "photographer" or "plumber". The listings below change as you type.' },
+    { target: areaRef, title: 'Pick your area', text: 'Choose a parish or village to see services near you. Leave them empty to see all of Antigua and Barbuda.' },
+    { target: inviteRef, title: 'Run a business?', text: 'Tap here to list your own services on Servly, so customers can find you.' },
+    { target: listRef, title: 'Browse the listings', text: 'Swipe each row left and right to see more. Tap a card for photos, prices, opening hours and reviews, then message or call the business.' },
+    session
+      ? { target: menuRef, title: 'Your menu', text: 'Tap ☰ for your Messages, Account and Bookings. If you run a business, switch to Merchant view here.' }
+      : { target: menuRef, title: 'Log in or sign up', text: 'Browsing is free and needs no account. Log in to message businesses, leave reviews or list your own services.' },
+  ];
+
   // The pieces of the page (laid out below for phones or computers).
   const topBar = (
     <>
@@ -110,18 +139,21 @@ export default function Home() {
               <Image source={require('../../assets/logo.png')} style={{ width: LOGO_W, height: LOGO_W * LOGO_RATIO, marginLeft: -LOGO_W * 0.275 }} />
             </View>
           </View>
-          {session ? <MenuButton /> : (
-            <Pressable onPress={() => router.push('/login')} style={[ui.row, { alignItems: 'center', gap: 6 }]}>
-              <Ionicons name="log-in-outline" size={20} color={colors.blue} />
-              <Text style={{ fontWeight: '700', fontSize: 16, color: colors.blue }}>Log in</Text>
-            </Pressable>
-          )}
+          <View ref={menuRef} collapsable={false}>
+            {session ? <MenuButton /> : (
+              <Pressable onPress={() => router.push('/login')} style={[ui.row, { alignItems: 'center', gap: 6 }]}>
+                <Ionicons name="log-in-outline" size={20} color={colors.blue} />
+                <Text style={{ fontWeight: '700', fontSize: 16, color: colors.blue }}>Log in</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
     </>
   );
   const invite = (
     <>
         {/* For businesses: a quiet invitation under the hero. */}
+        <View ref={inviteRef} collapsable={false}>
         <Pressable onPress={() => (session ? router.push('/offer') : router.push({ pathname: '/login', params: { mode: 'up' } }))}
           style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 18, backgroundColor: '#EAF3FB' },
             // Computers: ends exactly where the second listing card below ends.
@@ -135,11 +167,12 @@ export default function Home() {
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.blue} />
         </Pressable>
+        </View>
     </>
   );
   const results = (
     <>
-        <View onLayout={(e) => { resultsY.current = e.nativeEvent.layout.y; }} style={{ gap: 12 }}>
+        <View ref={listRef} collapsable={false} onLayout={(e) => { resultsY.current = e.nativeEvent.layout.y; }} style={{ gap: 12 }}>
           {rows && <Text style={ui.muted}>{rows.length} {rows.length === 1 ? 'service' : 'services'} found</Text>}
           {rows?.length === 0 && (
             <View style={[ui.card, { borderColor: colors.red, borderWidth: 2 }]}>
@@ -226,7 +259,9 @@ export default function Home() {
   // Phones and small screens.
   return (
     <SafeAreaView style={ui.screen}>
-      <ScrollView ref={sc} contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
+      <View ref={guideRoot} collapsable={false} style={{ flex: 1 }}>
+      <ScrollView ref={sc} contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled"
+        onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y; }} scrollEventThrottle={32}>
         {topBar}
 
         {session && <PlanBanner />}
@@ -246,7 +281,7 @@ export default function Home() {
               Find trusted local services across Antigua and Barbuda, and message or call them directly.
             </Text>
             {/* The whole box is the text field (so any tap starts typing); the icon sits on top and ignores taps. */}
-            <View style={{ marginTop: 6 }}>
+            <View ref={searchRef} collapsable={false} style={{ marginTop: 6 }}>
               <TextInput style={[ui.field, { paddingLeft: 46, paddingRight: 44, height: 56, borderRadius: 16, borderWidth: 0, backgroundColor: '#fff', fontSize: 17, width: '100%', minWidth: 0 }]}
                 placeholder="What do you need? e.g. photographer" placeholderTextColor={colors.muted}
                 value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false} />
@@ -255,7 +290,7 @@ export default function Home() {
               </View>
               {looking && <ActivityIndicator color={colors.blue} pointerEvents="none" style={{ position: 'absolute', right: 16, top: 0, bottom: 0 }} />}
             </View>
-            <View style={ui.row}>
+            <View ref={areaRef} collapsable={false} style={ui.row}>
               {/* Parish and village pick from lists (src/lib/places.ts), or use what they type. */}
               <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Parish" placeholder="Parish" value={f.city} onChange={set('city')} options={PARISHES} boxStyle={heroField} textColor="#fff" placeholderColor="#9FBCD6" /></View>
               <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Village" placeholder="Village" value={f.village} onChange={set('village')} options={VILLAGES} boxStyle={heroField} textColor="#fff" placeholderColor="#9FBCD6" /></View>
@@ -278,8 +313,21 @@ export default function Home() {
         {invite}
 
         {results}
+        {/* Guests have no ☰ menu, so the guide's replay link sits here for them (phone-sized screens). */}
+        {!session && (
+          <Pressable onPress={replayGuide} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12 }}>
+            <Ionicons name="help-circle-outline" size={18} color={colors.blue} />
+            <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 15 }}>How to use Servly</Text>
+          </Pressable>
+        )}
         {legal}
       </ScrollView>
+      {guideOpen && (
+        <FirstTimeGuide steps={guideSteps} root={guideRoot}
+          scrollBy={(dy) => sc.current?.scrollTo({ y: Math.max(0, scrollY.current + dy), animated: true })}
+          onClose={() => { setGuideOpen(false); sc.current?.scrollTo({ y: 0, animated: true }); }} />
+      )}
+      </View>
     </SafeAreaView>
   );
 }

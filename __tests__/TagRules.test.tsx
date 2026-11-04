@@ -1,5 +1,6 @@
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null })); // icon fonts can't load in tests
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.setTimeout(20000); // the first render can be slow when every test file runs at once
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { TagRules } from '../src/components/TagRules';

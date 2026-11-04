@@ -18,6 +18,7 @@ export const PRIVACY: Section[] = [
     'Messages and bookings: the notes and messages you exchange with other users, booking dates and times, and any phone number you choose to share in a conversation.',
     'Reviews and reports: star ratings, comments, replies, and reports you send about listings, reviews or users.',
     'Payments (merchants): which plan you paid for, the amount, the date and the payment reference. Card details are handled by the payment provider, never by Servly.',
+    'Call button taps: when anyone taps Call on a listing or business profile, we record which business and listing, and when, to count how many people contacted each business. We do not record who tapped, their phone number, or anything about the call itself.',
     'Device information: if you allow notifications, a notification address for your device so we can send you message and booking alerts.',
   ] },
   { heading: 'How we use it', body: [

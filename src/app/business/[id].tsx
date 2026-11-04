@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../../components/Cover';
 import { TopBar } from '../../components/Menu';
 import { Reviews } from '../../components/Reviews';
+import { callBusiness } from '../../lib/calls';
 import { formatPrice } from '../../lib/price';
+import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
@@ -15,6 +17,7 @@ type Svc = { id: string; title: string; photos: string[]; photo_focus: unknown; 
 
 export default function Business() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const session = useSession();
   const [p, setP] = useState<P | null>(null);
   const [rows, setRows] = useState<Svc[]>([]);
 
@@ -33,7 +36,7 @@ export default function Business() {
             <Text style={ui.h1}>{p.display_name || 'Servly merchant'}</Text>
             {!!p.bio && <Text style={ui.muted}>{p.bio}</Text>}
             {!!p.public_phone && (
-              <Pressable style={[ui.btn, ui.primary]} onPress={() => Linking.openURL(`tel:${p.public_phone}`)}>
+              <Pressable style={[ui.btn, ui.primary]} onPress={() => callBusiness(p.public_phone!, id, null, session?.user.id)}>
                 <Text style={[ui.btnText, { color: '#fff' }]}>Call {p.public_phone}</Text>
               </Pressable>
             )}

@@ -10,7 +10,7 @@ only you can do. File paths are inside the `servly-app` folder.
 
 ## 1. Do these first (after this update)
 
-1. **Run the database updates.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run, then `supabase/upgrade-v15-opening-hours.sql` > Run, then `supabase/upgrade-v16-screen-name.sql` > Run, then `supabase/upgrade-v17-max-tags.sql` > Run, then `supabase/upgrade-v18-photo-focus.sql` > Run, then `supabase/upgrade-v19-search-as-you-type.sql` > Run, then `supabase/upgrade-v20-plan-changes.sql` > Run, then `supabase/upgrade-v22-free-trials.sql` > Run (it works with or without the optional v21), then `supabase/upgrade-v23-promo-codes.sql` > Run, then `supabase/upgrade-v24-search-everywhere.sql` > Run, then `supabase/upgrade-v25-smart-search.sql` > Run.
+1. **Run the database updates.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run, then `supabase/upgrade-v15-opening-hours.sql` > Run, then `supabase/upgrade-v16-screen-name.sql` > Run, then `supabase/upgrade-v17-max-tags.sql` > Run, then `supabase/upgrade-v18-photo-focus.sql` > Run, then `supabase/upgrade-v19-search-as-you-type.sql` > Run, then `supabase/upgrade-v20-plan-changes.sql` > Run, then `supabase/upgrade-v22-free-trials.sql` > Run (it works with or without the optional v21), then `supabase/upgrade-v23-promo-codes.sql` > Run, then `supabase/upgrade-v24-search-everywhere.sql` > Run, then `supabase/upgrade-v25-smart-search.sql` > Run, then `supabase/upgrade-v26-admin-controls.sql` > Run, then `supabase/upgrade-v27-admins-see-all-listings.sql` > Run, then `supabase/upgrade-v28-free-bookings.sql` > Run, then `supabase/upgrade-v29-call-taps.sql` > Run.
    *Do not run* `supabase/upgrade-v21-search-word-starts.sql` again: it made search match only the start of words, and v24/v25 replace it. To check which updates are installed, run `npm run check:db`.
    Supabase warns about "destructive operations": those lines replace old rules with stricter ones
    (blocking) and keep payment records when an account is deleted. No data is removed.
@@ -28,7 +28,7 @@ only you can do. File paths are inside the `servly-app` folder.
 
 | Feature | What it does | Change it in |
 |---|---|---|
-| **Admin dashboard** (☰ > Admin) | Activate/renew plans, start free trials, switch the booking app, answer support, handle reports | `src/app/admin.tsx`; who is an admin: the `admins` table (SQL above) |
+| **Admin dashboard** (☰ > Admin) | Activate/renew plans, start free trials, free bookings, switch the booking app, answer support, handle reports | `src/app/admin.tsx`; who is an admin: the `admins` table (SQL above) |
 | **Delete my account** (Account, bottom) | Deletes the account and everything attached; keeps payment records without the name | Screen: `src/app/account.tsx` (`deleteAccount`); database: `delete_my_account()` in v14 |
 | **Privacy Policy / Terms / Refund and Cancellation Policy** | Draft legal pages (`/privacy`, `/terms`, `/refunds`), linked from sign-up, Account and Home. The Refund Policy link shows on the website for everyone, but in the phone apps only to merchants (Account in merchant view, Plan screen, Checkout next to Pay), since customers never pay Servly. Refund rules: no refund once a month starts, cancel via Contact support, billing mistakes refunded if reported within 30 days | **Wording:** `src/lib/legal.ts` (`PRIVACY`, `TERMS`, `REFUNDS`: headings and paragraphs). Date: `LEGAL_UPDATED`. Have a lawyer review before launch. |
 | **Reports** (listings, reviews, people) | Anyone logged in can report; you see them in Admin > Reports | Reasons list: `REASONS` in `src/components/ReportButton.tsx` (also allowed reasons in the `reports` table, v14) |
@@ -39,6 +39,7 @@ only you can do. File paths are inside the `servly-app` folder.
 | **Free trials** (Founding Merchants) | Admin gives a merchant a plan free for a number of days (default 90). No payment and no receipt; one trial per merchant, only when they have no active plan. Works like a paid plan; a move to a smaller plan waits until it ends; paying during the trial adds the month after it. The merchant sees "free trial until <date>"; if it ends unpaid, listings hide like any ended plan | Button: `MerchantCard` in `src/app/admin.tsx`. Text: `src/lib/trial.ts`. Rules: `start_free_trial()` in `supabase/upgrade-v22-free-trials.sql`. Record of every trial: Table Editor > `free_trials` |
 | **Plan ending warning** | Gold banner 5 days before a plan ends; red once it has ended | Days: `WARN_DAYS` in `src/components/PlanBanner.tsx`; wording in the same file |
 | **Plan ending notification** | Phone notification about 3 days before (9:00 AM Antigua) | `plan_expiry_reminders()` and its schedule in v14 section 7 |
+| **First-time guide** (phones: the apps, and the website on a phone; not on computers) | The first time someone opens the app, Home dims and points at each part in turn (search, area, Run a business?, listings, menu / Log in) with a short card. Next, Back, Skip; shown once per phone. Anyone can replay it: **How to use Servly** at the bottom of the ☰ menu, or (for guests) the link at the bottom of Home | Wording and order: `guideSteps` in `src/app/index.tsx`. Look: `src/components/FirstTimeGuide.tsx`. To see it again on a test phone: delete and reinstall the app (or clear Expo Go's data) |
 | **Search** | Updates as you type (from 2 letters; deleting letters widens the results). Listing name, description, hidden tags and the business name (v24); words of 4+ letters match inside words ("clean" finds "housecleaning") while 2-3 letter words match only word starts ("ac" finds AC servicing, not "packing") (v25); related word forms match ("cleaner" finds "cleaning", "plumber" finds "plumbing"); several words show listings with all of them, or any of them if none has all; forgives small spelling mistakes; 30 results at a time. Results show in two swipe rows: Popular picks (the highest-paying plan in the results: Business, or Growth if there are no Business listings, or Starter), then More local services (the rest, highest-paying first), with no tier names and never an empty row | Wait after typing: `LIVE_WAIT` in `src/app/index.tsx`. Matching: `search_services()`, `search_word_found()` and `search_norm()` in v25, `search_stem()` in v24. Layout: `splitRows` in `src/lib/rows.ts` + `ListingRow`. Results per page: `PAGE` in `src/app/index.tsx`. How forgiving: the `0.45` / `0.4` numbers in `search_services()` (v14 section 6; lower = more forgiving) |
 | **Photo framing + full-screen photos** | Merchants tap a photo on Offer/Edit and drag it to choose which part shows on cards (the whole photo is kept). Customers tap any photo on a listing to see it whole, swipe between photos, × to close | Framing window: `src/components/PhotoFramer.tsx`. Viewer: `src/components/PhotoViewer.tsx`. Focus helpers: `src/lib/focus.ts`. Database: `services.photo_focus` (`supabase/upgrade-v18-photo-focus.sql`) |
 | **Smaller photos** | Photos shrink to max 1600 px wide, JPEG quality 0.7 before upload | `MAX_WIDTH` and `QUALITY` in `src/lib/photos.ts` |
@@ -68,7 +69,24 @@ Everything from earlier (bookings, reviews, receipts, support, prices, tiers, co
 - **Give a Founding Merchant a free trial:** Merchants tab > search them > pick the plan (+ booking app
   if you want it included) > type the number of days (90 is filled in) > **Start free trial**. No receipt is
   made. The button only shows for merchants who never had a trial and have no active plan.
-- **Switch the booking app on/off** for a merchant: Merchants tab > **Booking on / Booking off**.
+- **Free bookings** (no charge; v28): Merchants tab > search them > type the days (30 is filled in) > **Bookings on
+  (no charge)**. They switch off by themselves when the days run out; tap again to add more days, or **Off** to end
+  them now. The card says why a merchant has bookings: included with Business, paid upgrade, free trial, or free
+  until a date. Business plans always include bookings, so there is no switch for them. The **Renew / Activate 1
+  month (paid)** button records a payment and a receipt; tick **+ booking app** first if they paid for bookings too.
+- **Change a plan without charging** (no payment, no receipt; v26): Merchants tab > search them > pick Starter /
+  Growth / Business (+ booking app) > **Change plan to … now (no charge)**. It happens straight away and keeps their
+  end date. Moving down pauses listings over the new limit (their oldest are kept) and says how many.
+- **Give extra time / bring back an expired merchant** (no charge; v26): type the number of days (30 is filled in) >
+  **Extend plan (no charge)**. Days are added from today if the plan has ended, otherwise from its end date.
+- **Turn one listing off or on** (v26): on their card > **Show listings** > **Turn off** / **Turn on**. Each shows Live,
+  Off, Paused (plan limit) or Hidden: plan ended. Turning on also brings back a paused listing, even over the
+  plan's limit (your choice). A listing still only shows while the merchant's plan has time left. Tap a listing's name to open it, even when
+  it is off (v27): a red banner says why customers can't see it.
+- **Call taps** (v29, only you see them for now): each merchant card shows "📞 n call taps this month · n overall", and
+  Show listings shows the same per listing. A tap is counted when anyone (guests too) taps Call on a listing or the
+  business profile. Servly can't see whether the call connected. To show merchants their numbers later, ask for it
+  in an app update: the history is already being kept.
 - **Answer support:** Support tab > type your reply > **Send reply and resolve**. They see it instantly.
 - **Handle a report:** Reports tab > **Open** to look > **Hide listing** if needed > add a note >
   **Mark resolved**. To delete an account or review completely, use Supabase > Table Editor.
@@ -143,7 +161,7 @@ npx supabase db push
 **Your current project already has all of these** (you ran them in the SQL Editor). Tell the tool so
 it doesn't run them twice:
 ```bash
-npx supabase migration repair --status applied 20261024000001 20261024000002 20261024000003 20261024000004 20261024000005 20261024000006 20261024000007 20261024000008 20261024000009 20261024000010 20261024000011 20261024000012 20261026000013 20261026000014 20261028000015 20261029000016 20261029000017 20261029000018 20261031000020 20261101000021
+npx supabase migration repair --status applied 20261024000001 20261024000002 20261024000003 20261024000004 20261024000005 20261024000006 20261024000007 20261024000008 20261024000009 20261024000010 20261024000011 20261024000012 20261026000013 20261026000014 20261028000015 20261029000016 20261029000017 20261029000018 20261031000020 20261101000021 20261102000022 20261102000023 20261102000024
 ```
 For future database changes, add a new numbered file to `supabase/migrations/` and run `npx supabase db push`.
 (The `upgrade-v*.sql` files stay for pasting into the SQL Editor, as before.)

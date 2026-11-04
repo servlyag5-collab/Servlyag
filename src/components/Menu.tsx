@@ -3,6 +3,7 @@ import { Image, Modal, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, usePathname, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { replayGuide } from './FirstTimeGuide';
 import { hasBookingApp } from '../lib/bookings';
 import { isUnread, type Conversation } from '../lib/chat';
 import { forgetThisDevice } from '../lib/push';
@@ -56,12 +57,22 @@ export function MenuButton() {
     if (!merchant && path === '/bookings' && !hasBooking) router.replace('/messages');
   }
 
+  // Back to Home, then the first-time guide plays again (phones and phone-sized browsers; not computers).
+  function howTo() {
+    setOpen(false);
+    if (path !== '/') router.dismissTo('/');
+    setTimeout(replayGuide, path === '/' ? 50 : 450);
+  }
+
+  // Go to Home FIRST, then log out. (Logging out while still on Account, Messages and other
+  // logged-in-only screens made the app fall back to whatever was underneath, such as Log in.)
   async function logOut() {
     setOpen(false);
     setMode('customer');
+    if (router.canDismiss()) router.dismissAll();
+    router.replace('/');
     await forgetThisDevice();
     await supabase.auth.signOut();
-    router.replace('/');
   }
 
   const items: Item[] = [
@@ -112,6 +123,12 @@ export function MenuButton() {
                 );
               })}
               <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 6 }} />
+              {!WIDE && (
+                <Pressable onPress={howTo} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingVertical: 14, borderRadius: 14 }}>
+                  <Ionicons name="help-circle-outline" size={22} color={colors.blue} />
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.muted }}>How to use Servly</Text>
+                </Pressable>
+              )}
               <Pressable onPress={logOut} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingVertical: 14, borderRadius: 14 }}>
                 <Ionicons name="log-out-outline" size={22} color={colors.red} />
                 <Text style={{ fontSize: 18, fontWeight: '800', color: colors.red }}>Log out</Text>

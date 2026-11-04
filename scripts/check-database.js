@@ -32,6 +32,10 @@ const checks = [
   ['v23', 'promo codes: discount on receipts', { get: 'payments?select=discount,promo_code&limit=1' }],
   ['v24', 'search everywhere (business name, word roots)', { rpc: 'search_stem', body: { w: 'cleaning' } }],
   ['v25', 'smart search (short words match word starts)', { rpc: 'search_norm', body: { t: 'AC' } }],
+  ['v26', 'admin controls (change plan, add days, listings on/off)', { rpc: 'admin_set_listing_on', body: { p_service: ZERO, p_on: false } }],
+  // v27 only adds a read rule for admins; it can't be seen from outside, so it has no check here.
+  ['v28', 'free bookings (Admin "Bookings on, no charge")', { rpc: 'admin_stop_free_booking', body: { p_user: ZERO } }],
+  ['v29', 'call taps (Admin call counts)', { rpc: 'antigua_month_start', body: {} }],
 ];
 
 const MISSING = ['PGRST202', 'PGRST205', '42703', '42883', '42P01'];

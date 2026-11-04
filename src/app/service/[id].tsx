@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { HoursCard } from '../../components/HoursCard';
 import { TopBar } from '../../components/Menu';
 import { ReportButton } from '../../components/ReportButton';
 import { Reviews } from '../../components/Reviews';
+import { callBusiness } from '../../lib/calls';
 import { findConversation, sendFromListing } from '../../lib/chat';
 import { useMode } from '../../lib/mode';
 import { formatPrice } from '../../lib/price';
@@ -19,7 +20,7 @@ import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
 
-type S = { photos: string[]; photo_focus: unknown; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; show_hours: boolean; hours: unknown; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null } | null };
+type S = { active: boolean; paused: boolean; photos: string[]; photo_focus: unknown; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; show_hours: boolean; hours: unknown; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null; plan_expires_at: string | null } | null };
 
 // The page structure comes ONLY from the merchant's subscription tier (basic | plus | premium).
 // Merchants cannot choose or change it. Edit the three layouts here.
@@ -78,8 +79,13 @@ export default function ServiceDetail() {
   const [viewer, setViewer] = useState<number | null>(null); // full-screen photo open (its number), or null
 
   useEffect(() => {
-    supabase.from('services').select('photos,photo_focus,merchant_id,title,description,price,price_from,show_hours,hours,city,village,profiles(display_name,tier_id,public_phone)').eq('id', id).single()
-      .then(({ data, error }) => { if (!data) setLoadErr(error?.message ?? 'This listing could not be found.'); setS(data as unknown as S); });
+    // Customers only get live listings; the owner and admins (v27) also get turned-off, paused and expired ones.
+    supabase.from('services').select('active,paused,photos,photo_focus,merchant_id,title,description,price,price_from,show_hours,hours,city,village,profiles(display_name,tier_id,public_phone,plan_expires_at)').eq('id', id).maybeSingle()
+      .then(({ data, error }) => {
+        if (error) setLoadErr('Something went wrong loading this listing. Please try again.');
+        else if (!data) setLoadErr('This listing isn\'t available right now. The business may have turned it off, or its plan may have ended.');
+        setS(data as unknown as S);
+      });
   }, [id]);
 
   useFocusEffect(useCallback(() => {
@@ -131,6 +137,17 @@ export default function ServiceDetail() {
       </Pressable>
     </View>
   );
+  // Only the owner and admins can open a listing customers can't see: say why customers can't see it.
+  const ended = !s.profiles?.plan_expires_at || new Date(s.profiles.plan_expires_at) <= new Date();
+  const hiddenWhy = !s.active ? 'Turned off: customers can\'t see this listing.'
+    : s.paused ? 'Paused (over the plan\'s listing limit): customers can\'t see this listing.'
+    : ended ? 'Plan ended: customers can\'t see this listing until the plan is renewed.' : '';
+  const hiddenBanner = !!hiddenWhy && (
+    <View style={[ui.card, { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderColor: colors.red, borderWidth: 2 }]}>
+      <Ionicons name="eye-off-outline" size={22} color={colors.red} />
+      <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: colors.ink }}>{hiddenWhy}</Text>
+    </View>
+  );
   const details = (
     <>
       <Listing s={s} onBusiness={preview ? undefined : () => router.push({ pathname: '/business/[id]', params: { id: s.merchant_id } })} />
@@ -173,7 +190,7 @@ export default function ServiceDetail() {
       {/* Call and Send note side by side at the bottom. */}
       <View style={ui.row}>
         {!!s.profiles?.public_phone && (
-          <Pressable style={[ui.btn, ui.outline, { flex: 1, flexDirection: 'row', gap: 8 }]} disabled={preview} onPress={() => Linking.openURL(`tel:${s.profiles!.public_phone}`)}>
+          <Pressable style={[ui.btn, ui.outline, { flex: 1, flexDirection: 'row', gap: 8 }]} disabled={preview} onPress={() => callBusiness(s.profiles!.public_phone!, s.merchant_id, id, session?.user.id)}>
             <Ionicons name="call-outline" size={20} color={colors.blue} />
             <Text style={[ui.btnText, { color: colors.ink }]}>Call</Text>
           </Pressable>
@@ -212,6 +229,7 @@ export default function ServiceDetail() {
           <View style={{ paddingHorizontal: 56, paddingTop: 28, flexDirection: 'row', alignItems: 'flex-start', gap: 40 }}>
             <View style={{ flex: 1.7, minWidth: 0, gap: 14 }}>
               {previewBanner}
+              {hiddenBanner}
               {details}
             </View>
             <View style={[ui.card, { flex: 1, maxWidth: 480, minWidth: 320, gap: 12, boxShadow: '0px 12px 32px rgba(11, 58, 99, 0.12)' }]}>
@@ -229,6 +247,7 @@ export default function ServiceDetail() {
       <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
         <TopBar />
         {previewBanner}
+        {hiddenBanner}
         {/* Photo 1 is the cover (logo or best photo); photos 2-5 show the merchant's work. */}
         {/* Same 16:10 shape as the Home cards, showing the part the merchant chose; tap for the whole photo. */}
         {s.photos?.length > 0 && (

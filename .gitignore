@@ -40,3 +40,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# daily brief recordings (made again from the brief any time)
+docs/briefs/audio/

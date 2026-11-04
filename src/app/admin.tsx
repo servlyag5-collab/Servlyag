@@ -10,12 +10,17 @@ import { colors, ui } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
 
 // The owner's dashboard (admins only; add yourself with the SQL at the top of upgrade-v14-launch-ready.sql).
-// Merchants: activate/renew plans, start Founding Merchant free trials (v22) and switch the booking app. Support: reply to requests. Reports: review and act.
+// Merchants: activate/renew plans, start Founding Merchant free trials (v22), give free bookings for N days (v28); with v26 also change
+// plan or extend it free of charge, and see each merchant's listings with Turn off / Turn on. Support: reply to requests. Reports: review and act.
 // Promos: launch promo codes (v23) with places used, and on/off.
 type Merchant = { id: string; display_name: string; email: string; tier_id: string; plan_expires_at: string | null;
   requested_tier: string | null; booking_requested: boolean; listings: number; has_booking: boolean;
   trial_ends_at: string | null; // when their free trial ends (null = never had one)
-  promo: string | null };       // e.g. "LAUNCH50: next payment 50% off the plan (1 of 2)"
+  promo: string | null;        // e.g. "LAUNCH50: next payment 50% off the plan (1 of 2)"
+  booking_source: 'business' | 'paid' | 'trial' | 'free' | null; // why they have bookings (v28); null = no bookings
+  free_booking_until: string | null;                             // when the owner's free bookings end (v28)
+  calls_month: number; calls_total: number };                    // Call button taps (v29), owner-only for now
+type AdminListing = { id: string; title: string; active: boolean; paused: boolean; calls_month: number; calls_total: number };
 type PromoCode = { code: string; percent_off: number; months: number; max_uses: number; active: boolean; paid: number; holding: number };
 type Ticket = { id: string; topic: string; subject: string; body: string; status: string; reply: string | null; created_at: string; profiles: { display_name: string } | null };
 type Report = { id: string; target_type: 'listing' | 'review' | 'user'; target_id: string; reason: string; details: string; status: string;
@@ -89,6 +94,9 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
   const [tier, setTier] = useState(m.requested_tier ?? m.tier_id);
   const [booking, setBooking] = useState(m.booking_requested);
   const [days, setDays] = useState('90');
+  const [extendDays, setExtendDays] = useState('30');
+  const [bookDays, setBookDays] = useState('30');
+  const [listings, setListings] = useState<AdminListing[] | null>(null); // loaded when "Show listings" is tapped
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const active = !!m.plan_expires_at && new Date(m.plan_expires_at) > new Date();
@@ -98,8 +106,36 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
     const { error } = await fn();
     setBusy(false);
     setMsg(error ? error.message : done);
-    if (!error) onChanged();
+    if (!error) { onChanged(); if (listings) loadListings(); }
   }
+
+  function loadListings() {
+    supabase.rpc('admin_merchant_listings', { p_user: m.id }).then(({ data, error }) => {
+      if (error) return setMsg(error.message);
+      setListings((data as AdminListing[]) ?? []);
+    });
+  }
+
+  // Free of charge (v26): no payment, no receipt.
+  async function changePlan() {
+    setBusy(true); setMsg('');
+    const { data, error } = await supabase.rpc('admin_change_plan', { p_user: m.id, p_tier: tier, p_booking: booking });
+    setBusy(false);
+    if (error) return setMsg(error.message);
+    const paused = (data as number) ?? 0;
+    setMsg(`Plan changed to ${tierName(tier)}${booking || tier === 'premium' ? ' with bookings' : ''}, no charge.${paused ? ` ${paused} listing${paused === 1 ? '' : 's'} paused (over the limit).` : ''}`);
+    onChanged();
+    if (listings) loadListings();
+  }
+  const bookN = Number(bookDays);
+  const bookOk = Number.isInteger(bookN) && bookN >= 1 && bookN <= 365;
+  const freeBooking = !!m.free_booking_until && new Date(m.free_booking_until) > new Date();
+  const bookingLine = m.booking_source === 'business' ? 'Bookings: included with Business'
+    : m.booking_source === 'paid' ? 'Bookings: paid upgrade'
+    : m.booking_source === 'trial' ? 'Bookings: included in their free trial'
+    : m.booking_source === 'free' ? `Bookings: free until ${bookingDay(m.free_booking_until!)}` : 'Bookings: off';
+  const extendN = Number(extendDays);
+  const extendOk = Number.isInteger(extendN) && extendN >= 1 && extendN <= 365;
 
   const trialDays = Number(days);
   const trialOk = Number.isInteger(trialDays) && trialDays >= 1 && trialDays <= 365;
@@ -111,8 +147,10 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
       <Text style={{ color: colors.muted }}>{m.email} · {m.listings} listing{m.listings === 1 ? '' : 's'}</Text>
       <Text style={{ fontWeight: '700', color: active ? colors.blue : colors.red }}>
         {active ? `${tierName(m.tier_id)} · active until ${bookingDay(m.plan_expires_at!)}` : 'No active plan'}
-        {m.has_booking ? ' · booking app on' : ''}
       </Text>
+      <Text style={{ fontWeight: '700', color: m.booking_source ? colors.blue : colors.muted }}>{bookingLine}</Text>
+      {/* Taps on Call (listing page + business profile). Only the owner sees these for now. */}
+      <Text style={{ color: colors.ink }}>📞 {m.calls_month ?? 0} call tap{m.calls_month === 1 ? '' : 's'} this month · {m.calls_total ?? 0} overall</Text>
       {!!m.trial_ends_at && (
         <Text style={{ color: colors.muted }}>Free trial {onTrial ? 'until' : 'ended'} {bookingDay(m.trial_ends_at)}</Text>
       )}
@@ -126,17 +164,45 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
         ))}
         <Pressable style={chip(booking)} onPress={() => setBooking(!booking)}><Text style={chipText(booking)}>+ booking app</Text></Pressable>
       </View>
-      {!!msg && <Text style={/^(Plan|Booking|Free trial)/.test(msg) ? { color: colors.blue, fontWeight: '700' } : ui.error}>{msg}</Text>}
+      {!!msg && <Text style={/^(Plan|Booking|Free bookings|Free trial|Extended|Listing)/.test(msg) ? { color: colors.blue, fontWeight: '700' } : ui.error}>{msg}</Text>}
       <View style={ui.row}>
         <Pressable style={[ui.btn, ui.primary, { flex: 1, height: 44 }]} disabled={busy}
           onPress={() => act(() => supabase.rpc('admin_activate_plan', { p_user: m.id, p_tier: tier, p_booking: booking }), `Plan activated: ${tierName(tier)} for one month.`)}>
-          {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>{active ? 'Renew 1 month' : 'Activate 1 month'}</Text>}
-        </Pressable>
-        <Pressable style={[ui.btn, ui.outline, { height: 44 }]} disabled={busy}
-          onPress={() => act(() => supabase.rpc('admin_set_booking', { p_user: m.id, p_on: !m.has_booking }), `Booking app switched ${m.has_booking ? 'off' : 'on'}.`)}>
-          <Text style={[ui.btnText, { color: colors.ink }]}>Booking {m.has_booking ? 'off' : 'on'}</Text>
+          {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>{active ? 'Renew 1 month (paid)' : 'Activate 1 month (paid)'}</Text>}
         </Pressable>
       </View>
+      {/* No charge (v26): switch to the plan picked above straight away, or add days to their plan. */}
+      <Pressable style={[ui.btn, ui.outline, { height: 44, borderColor: colors.blue }]} disabled={busy} onPress={changePlan}>
+        <Text style={[ui.btnText, { color: colors.blue }]}>Change plan to {tierName(tier)} now (no charge)</Text>
+      </Pressable>
+      <View style={ui.row}>
+        <TextInput style={[ui.field, { width: 70, height: 44, textAlign: 'center' }]} keyboardType="number-pad" maxLength={3}
+          value={extendDays} onChangeText={(v) => setExtendDays(v.replace(/[^0-9]/g, ''))} accessibilityLabel="Days to add" />
+        <Pressable style={[ui.btn, ui.outline, { flex: 1, height: 44, borderColor: colors.blue }]} disabled={busy || !extendOk}
+          onPress={() => act(() => supabase.rpc('admin_extend_plan', { p_user: m.id, p_days: extendN }), `Extended by ${extendN} day${extendN === 1 ? '' : 's'}, no charge.`)}>
+          <Text style={[ui.btnText, { color: extendOk ? colors.blue : colors.muted }]}>{extendOk ? `Extend plan ${extendN} day${extendN === 1 ? '' : 's'} (no charge)` : 'Extend: 1 to 365 days'}</Text>
+        </Pressable>
+      </View>
+      {/* Free bookings (v28): the booking app for this many days, no charge; it switches off by itself.
+          Business plans include bookings, so there is nothing to switch for them. */}
+      {m.booking_source === 'business' ? (
+        <Text style={ui.muted}>Bookings come with the Business plan, so they can't be switched on or off here.</Text>
+      ) : (
+        <View style={ui.row}>
+          <TextInput style={[ui.field, { width: 70, height: 44, textAlign: 'center' }]} keyboardType="number-pad" maxLength={3}
+            value={bookDays} onChangeText={(v) => setBookDays(v.replace(/[^0-9]/g, ''))} accessibilityLabel="Days of free bookings" />
+          <Pressable style={[ui.btn, ui.outline, { flex: 1, height: 44, borderColor: colors.blue }]} disabled={busy || !bookOk}
+            onPress={() => act(() => supabase.rpc('admin_free_booking', { p_user: m.id, p_days: bookN }), `Free bookings on for ${bookN} more day${bookN === 1 ? '' : 's'}, no charge.`)}>
+            <Text style={[ui.btnText, { color: bookOk ? colors.blue : colors.muted }]}>{bookOk ? `Bookings on ${bookN} day${bookN === 1 ? '' : 's'} (no charge)` : 'Bookings: 1 to 365 days'}</Text>
+          </Pressable>
+          {freeBooking && (
+            <Pressable style={[ui.btn, ui.outline, { height: 44 }]} disabled={busy}
+              onPress={() => act(() => supabase.rpc('admin_stop_free_booking', { p_user: m.id }), 'Free bookings switched off.')}>
+              <Text style={[ui.btnText, { color: colors.ink }]}>Off</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
       {!m.trial_ends_at && !active && (
         // Founding Merchants: the chosen plan (and booking app, if ticked) free for this many days.
         <View style={ui.row}>
@@ -149,6 +215,32 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
           </Pressable>
         </View>
       )}
+
+      {/* The merchant's listings: open one, or turn it off / on (turning on also un-pauses it). */}
+      {m.listings > 0 && (listings === null ? (
+        <Pressable onPress={loadListings} style={{ paddingVertical: 6 }}>
+          <Text style={{ color: colors.blue, fontWeight: '700' }}>Show listings ({m.listings})</Text>
+        </Pressable>
+      ) : (
+        <View style={{ gap: 6, borderTopWidth: 1, borderColor: colors.border, paddingTop: 8 }}>
+          {listings.map((l) => {
+            const live = l.active && !l.paused;
+            const status = !l.active ? 'Off' : l.paused ? 'Paused (plan limit)' : active ? 'Live' : 'Hidden: plan ended';
+            return (
+              <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Pressable style={{ flex: 1 }} onPress={() => router.push({ pathname: '/service/[id]', params: { id: l.id } })}>
+                  <Text style={{ fontWeight: '700', color: colors.ink }} numberOfLines={1}>{l.title}</Text>
+                  <Text style={{ fontSize: 13, color: status === 'Live' ? colors.blue : colors.muted }}>{status} · 📞 {l.calls_month ?? 0} this month, {l.calls_total ?? 0} overall</Text>
+                </Pressable>
+                <Pressable style={[ui.btn, live ? ui.outline : ui.primary, { height: 38, paddingHorizontal: 14 }]} disabled={busy}
+                  onPress={() => act(() => supabase.rpc('admin_set_listing_on', { p_service: l.id, p_on: !live }), `Listing "${l.title}" turned ${live ? 'off' : 'on'}.`)}>
+                  <Text style={[ui.btnText, { color: live ? colors.ink : '#fff', fontSize: 14 }]}>Turn {live ? 'off' : 'on'}</Text>
+                </Pressable>
+              </View>
+            );
+          })}
+        </View>
+      ))}
     </View>
   );
 }

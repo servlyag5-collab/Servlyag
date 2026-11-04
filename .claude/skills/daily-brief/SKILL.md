@@ -23,7 +23,7 @@ know something, say "not sure, please confirm" instead of guessing. Never invent
    - Otherwise, say numbers are not included and how to get them (one line: Supabase > SQL Editor >
      paste `supabase/owner-daily-numbers.sql` > Run > paste the table to Claude).
 6. **Database check:** run `npm run check:db` (read only; it uses the public anon key and changes
-   nothing). It shows OK / NO for each database update (v18 to v25). v21 is replaced by v24/v25, so
+   nothing). It shows OK / NO for each database update from v18 on (v27 has no outside check; ask the owner). v21 is replaced by v24/v25, so
    its line is for information only.
 7. Today's date, and days until the launch date if one is set.
 
@@ -52,7 +52,7 @@ sections, and keep the whole brief readable in about two minutes:
 ## Business health
 <numbers table, or the one-line note on how to get them>
 <1-3 plain-English observations: plans or trials ending soon, open tickets/reports, money this month>
-Database: <"all updates installed (v18-v25)", or which one is MISSING and
+Database: <"all updates installed (v18-<newest>)", or which one is MISSING and
           that the owner should run that file in Supabase > SQL Editor>
           (if a NEW upgrade file exists in supabase/ that the check doesn't cover yet, say so and add
           one line for it to scripts/check-database.js)
@@ -81,3 +81,14 @@ Rules for the brief:
 - When the owner tells you something ("I emailed WiPay", "launch is 1 December", "v23 is run"), update
   `docs/LAUNCH-TRACKER.md` right away and add a dated line to its decisions log.
 - Don't commit to git unless the owner asks.
+
+## 4. Written to be listened to (owner's choice 2026-11-03)
+
+The owner listens to the brief with the Claude app's speech button under your chat reply (they prefer
+that voice to the Windows one). So:
+- Always put the WHOLE brief in your final chat reply, as the last thing you write, so one tap of the
+  speech button reads all of it.
+- Write it to sound right when spoken: short sentences; say "version 28", not "v28"; avoid file paths,
+  code and tables in the chat copy (describe them in words; the saved file can keep paths).
+- Do NOT play it with `scripts/speak-brief.ps1` unless the owner asks (that robotic Windows voice was
+  replaced by the speech button). End with one line: "Tap the speech button below to hear this brief."

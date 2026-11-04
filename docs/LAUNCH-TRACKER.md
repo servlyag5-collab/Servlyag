@@ -29,7 +29,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [ ] Final layouts for the three listing page designs (Starter / Growth / Business are placeholders)
 
 ### Database updates run in Supabase
-- [x] All updates up to v25 run (owner confirmed 2026-11-02); `npm run check:db` checks them each day
+- [x] All updates up to v29 run (v25 on 2026-11-02; v27, v28, v29 owner confirmed 2026-11-03, check passes); `npm run check:db` checks them each day
 - [x] You are an admin (`admins` table, OWNER-GUIDE section 1) (owner confirmed 2026-11-02)
 - v21 is replaced by v24/v25 (no need to run it)
 
