@@ -5,7 +5,7 @@ import { createRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ViewInstance } from 'react-native';
-import { FirstTimeGuide } from '../src/components/FirstTimeGuide';
+import { FirstTimeGuide, MERCHANT_SEEN } from '../src/components/FirstTimeGuide';
 
 const steps = [
   { target: createRef<ViewInstance>(), title: 'Search for any service', text: 'Type what you need.' },
@@ -36,5 +36,18 @@ describe('First-time guide on Home', () => {
     await fireEvent.press(screen.getByText('Skip'));
     expect(onClose).toHaveBeenCalled();
     expect(await AsyncStorage.getItem('servly.guide.seen')).toBe('1');
+  });
+});
+
+describe('Merchant welcome tour on Account', () => {
+  beforeEach(() => AsyncStorage.clear());
+
+  it('is remembered separately from the Home guide', async () => {
+    const onClose = jest.fn();
+    await render(<FirstTimeGuide steps={steps} root={createRef()} scrollBy={() => {}} onClose={onClose} storageKey={MERCHANT_SEEN} />);
+    await fireEvent.press(screen.getByText('Skip'));
+    expect(onClose).toHaveBeenCalled();
+    expect(await AsyncStorage.getItem(MERCHANT_SEEN)).toBe('1');
+    expect(await AsyncStorage.getItem('servly.guide.seen')).toBeNull(); // the Home guide still shows
   });
 });

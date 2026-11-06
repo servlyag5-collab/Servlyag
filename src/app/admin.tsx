@@ -79,7 +79,7 @@ function Merchants() {
     <View style={{ gap: 12 }}>
       <Text style={ui.muted}>People who chose a plan but haven't been activated are listed first. After a merchant pays, activate their plan here: it adds one month and creates their receipt. Founding Merchants can get a free trial instead: no payment, no receipt, one per merchant.</Text>
       <View style={ui.row}>
-        <TextInput style={[ui.field, { flex: 1 }]} placeholder="Search name or email" autoCapitalize="none" value={q} onChangeText={setQ} onSubmitEditing={() => load()} />
+        <TextInput placeholderTextColor={colors.muted} style={[ui.field, { flex: 1 }]} placeholder="Search name or email" autoCapitalize="none" value={q} onChangeText={setQ} onSubmitEditing={() => load()} />
         <Pressable style={[ui.btn, ui.primary]} onPress={() => load()}><Ionicons name="search" size={20} color="#fff" /></Pressable>
       </View>
       {!rows && !err && <PinLoader />}
@@ -319,7 +319,7 @@ function TicketCard({ t, onChanged }: { t: Ticket; onChanged: () => void }) {
       <Text style={{ fontSize: 13, color: colors.muted }}>{t.profiles?.display_name || 'Merchant'} · {t.topic} · {new Date(t.created_at).toLocaleDateString()} · {t.status}</Text>
       <Text style={{ fontSize: 17, fontWeight: '800', color: colors.ink }}>{t.subject}</Text>
       <Text style={[ui.muted, { color: colors.ink }]}>{t.body}</Text>
-      <TextInput style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} multiline placeholder="Your reply" value={reply} onChangeText={setReply} />
+      <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} multiline placeholder="Your reply" value={reply} onChangeText={setReply} />
       {!!msg && <Text style={ui.error}>{msg}</Text>}
       <Pressable style={[ui.btn, ui.primary, { height: 44 }]} onPress={send} disabled={busy || !reply.trim()}>
         {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>{t.reply ? 'Update reply' : 'Send reply and resolve'}</Text>}
@@ -384,7 +384,7 @@ function ReportCard({ r, onChanged }: { r: Report; onChanged: () => void }) {
       </View>
       {r.status === 'open' && (
         <>
-          <TextInput style={ui.field} placeholder="Note (optional): what you did" value={note} onChangeText={setNote} />
+          <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Note (optional): what you did" value={note} onChangeText={setNote} />
           <Pressable style={[ui.btn, ui.primary, { height: 44 }]} disabled={busy}
             onPress={() => run(() => supabase.rpc('admin_resolve_report', { p_report: r.id, p_note: note }))}>
             {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>Mark resolved</Text>}

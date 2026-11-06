@@ -64,7 +64,7 @@ function ReviewItem({ r, uid, showListing, onChanged }: { r: Review; uid?: strin
       )}
       {editing && (
         <View style={{ gap: 8 }}>
-          <TextInput style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} multiline maxLength={1000}
+          <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} multiline maxLength={1000}
             placeholder="Write a public reply (leave empty to remove it)" value={text} onChangeText={setText} />
           {!!err && <Text style={ui.error}>{err}</Text>}
           <View style={ui.row}>

@@ -92,3 +92,9 @@ that voice to the Windows one). So:
   code and tables in the chat copy (describe them in words; the saved file can keep paths).
 - Do NOT play it with `scripts/speak-brief.ps1` unless the owner asks (that robotic Windows voice was
   replaced by the speech button). End with one line: "Tap the speech button below to hear this brief."
+- The speech button reads too fast for the owner to follow (2026-11-06), and its speed can't be set
+  from here. So slow the listening down with the writing: one idea per sentence, sentences of about
+  12 words or fewer, each point in its own short paragraph (the voice pauses between paragraphs),
+  numbers said simply ("about 200 dollars"), and the whole spoken brief no longer than about
+  2 minutes (roughly 300 words). Leave detail in the saved file.
+- The bank is ACB (Antigua Commercial Bank); say "ACB", never "ECAB".

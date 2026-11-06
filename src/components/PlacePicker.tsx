@@ -29,7 +29,7 @@ export function PlacePicker({ label, value, onChange, options, placeholder, boxS
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(20,33,43,0.35)', justifyContent: 'center', padding: 16 }} onPress={() => setOpen(false)}>
           <Pressable style={[ui.card, { width: '100%', maxWidth: 440, maxHeight: '80%', alignSelf: 'center', padding: 14, gap: 10 }]}>
             <Text style={{ fontFamily: fonts.title, fontSize: 20, color: colors.ink, paddingHorizontal: 4 }}>{label}</Text>
-            <TextInput style={ui.field} placeholder="Search or type a place" value={q} onChangeText={setQ} autoFocus autoCorrect={false} />
+            <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Search or type a place" value={q} onChangeText={setQ} autoFocus autoCorrect={false} />
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 2 }}>
               {/* Not in the list? Use what they typed. */}
               {!!typed && !exact && (

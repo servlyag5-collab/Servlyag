@@ -100,7 +100,7 @@ export default function Checkout() {
               <View style={[ui.card, { gap: 8 }]}>
                 <Text style={{ fontWeight: '800', fontSize: 16, color: colors.ink }}>Have a promo code?</Text>
                 <View style={ui.row}>
-                  <TextInput style={[ui.field, { flex: 1, minWidth: 0 }]} placeholder="e.g. LAUNCH50" autoCapitalize="characters" autoCorrect={false}
+                  <TextInput placeholderTextColor={colors.muted} style={[ui.field, { flex: 1, minWidth: 0 }]} placeholder="e.g. LAUNCH50" autoCapitalize="characters" autoCorrect={false}
                     value={code} onChangeText={(v) => { setCode(v); setPromoErr(''); }} onSubmitEditing={applyCode} />
                   <Pressable style={[ui.btn, ui.outline, { borderColor: colors.blue }]} onPress={applyCode} disabled={promoBusy || !code.trim()}>
                     {promoBusy ? <ActivityIndicator color={colors.blue} /> : <Text style={[ui.btnText, { color: colors.blue }]}>Apply</Text>}

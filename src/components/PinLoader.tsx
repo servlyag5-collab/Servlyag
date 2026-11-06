@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Image, Platform, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Image, Platform, View, useWindowDimensions } from 'react-native';
 
 const LOGO = require('../../assets/logo.png');
 const RATIO = 549 / 2066; // logo.png height / width
@@ -8,7 +8,11 @@ const native = Platform.OS !== 'web'; // the web can't run animations on the nat
 
 // Servly's loading sign: the blue pin turning like a coin while a page loads. A soft shadow under it
 // narrows as the pin turns edge-on. People who ask their phone to reduce motion get a still pin.
+// A whole page loading (the normal size and up) puts the pin in the middle of the screen; the small section
+// loaders (size 30: reviews, receipts, listings on Account) stay where they are.
 export function PinLoader({ size = 44 }: { size?: number }) {
+  const page = size >= 40;
+  const screenH = useWindowDimensions().height;
   const turn = useRef(new Animated.Value(0)).current;
   const [still, setStill] = useState(false);
 
@@ -28,7 +32,8 @@ export function PinLoader({ size = 44 }: { size?: number }) {
   const shadow = turn.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: [1, 0.35, 1, 0.35, 1] });
 
   return (
-    <View accessibilityRole="progressbar" accessibilityLabel="Loading" style={{ alignSelf: 'center', alignItems: 'center', paddingVertical: 12, gap: 4 }}>
+    <View accessibilityRole="progressbar" accessibilityLabel="Loading"
+      style={[{ alignSelf: 'center', alignItems: 'center', paddingVertical: 12, gap: 4 }, page && { minHeight: Math.round(screenH * 0.7), justifyContent: 'center' }]}>
       <Animated.View style={{ width: pinW, height: size, overflow: 'hidden', transform: still ? [] : [{ perspective: 400 }, { rotateY }] }}>
         <Image source={LOGO} style={{ width: logoW, height: size }} />
       </Animated.View>

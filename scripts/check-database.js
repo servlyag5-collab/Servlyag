@@ -36,6 +36,7 @@ const checks = [
   // v27 only adds a read rule for admins; it can't be seen from outside, so it has no check here.
   ['v28', 'free bookings (Admin "Bookings on, no charge")', { rpc: 'admin_stop_free_booking', body: { p_user: ZERO } }],
   ['v29', 'call taps (Admin call counts)', { rpc: 'antigua_month_start', body: {} }],
+  ['v30', 'ranked search + suggestions (best match first)', { rpc: 'search_suggestions', body: { p_q: 'test' } }],
 ];
 
 const MISSING = ['PGRST202', 'PGRST205', '42703', '42883', '42P01'];

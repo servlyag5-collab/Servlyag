@@ -147,15 +147,15 @@ export default function EditListing() {
           <>
             <Text style={ui.h2}>Your business</Text>
             <Text style={ui.muted}>These details show on all your listings.</Text>
-            <TextInput style={ui.field} placeholder="Business name" value={b.name} onChangeText={setBiz('name')} />
-            <TextInput style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="About your business (optional)" multiline value={b.bio} onChangeText={setBiz('bio')} />
-            <TextInput style={ui.field} placeholder="Phone or WhatsApp number" keyboardType="phone-pad" value={b.phone} onChangeText={setBiz('phone')} />
+            <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Business name" value={b.name} onChangeText={setBiz('name')} />
+            <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="About your business (optional)" multiline value={b.bio} onChangeText={setBiz('bio')} />
+            <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Phone or WhatsApp number" keyboardType="phone-pad" value={b.phone} onChangeText={setBiz('phone')} />
             <PhoneToggle value={showPhone} onChange={setShowPhone} />
 
             <Text style={[ui.h2, { marginTop: 8 }]}>The service</Text>
-            <TextInput style={ui.field} placeholder="Service name" value={f.title} onChangeText={set('title')} />
-            <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Describe what you offer" multiline value={f.description} onChangeText={set('description')} />
-            <TextInput style={ui.field} placeholder="Search tags, separated by commas" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
+            <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Service name" value={f.title} onChangeText={set('title')} />
+            <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Describe what you offer" multiline value={f.description} onChangeText={set('description')} />
+            <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Search tags, separated by commas" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
             <TagRules count={parseTags(f.tags).length} />
             <PriceInput value={f.price} onChange={set('price')} from={priceFrom} onFromChange={setPriceFrom} />
             {/* Pick a parish and village from the lists (src/lib/places.ts), or type one that isn't listed. */}

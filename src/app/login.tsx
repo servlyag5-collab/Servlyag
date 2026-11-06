@@ -63,11 +63,11 @@ export default function Login() {
           {/* Your name (saved as screen_name) shows on reviews and messages sent as a customer. A business name is asked for later, on Offer a service. */}
           {mode === 'up' && (
             <>
-              <TextInput style={ui.field} placeholder="Name" maxLength={40} autoComplete="name" value={name} onChangeText={setName} />
+              <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Name" maxLength={40} autoComplete="name" value={name} onChangeText={setName} />
               <Text style={[ui.muted, { fontSize: 13, lineHeight: 18, marginTop: -6 }]}>Shown on your reviews and messages. You can change it later in Account.</Text>
             </>
           )}
-          <TextInput style={ui.field} placeholder="Email" autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={email} onChangeText={setEmail} />
+          <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Email" autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={email} onChangeText={setEmail} />
           {mode !== 'reset' && (
             <PasswordInput placeholder="Password"
               autoComplete={mode === 'up' ? 'new-password' : 'current-password'} value={pw} onChangeText={setPw} onSubmitEditing={go} />

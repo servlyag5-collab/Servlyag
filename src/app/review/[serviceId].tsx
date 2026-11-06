@@ -83,7 +83,7 @@ export default function WriteReview() {
               <Stars value={rating} size={40} onChange={(v) => { setRating(v); setMsg(''); }} />
               <Text style={{ color: colors.muted, fontWeight: '700', minHeight: 20 }}>{WORDS[rating]}</Text>
             </View>
-            <TextInput style={[ui.field, { height: 120, paddingTop: 14, textAlignVertical: 'top' }]} multiline maxLength={1000}
+            <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 120, paddingTop: 14, textAlignVertical: 'top' }]} multiline maxLength={1000}
               placeholder="Tell others about the service (optional)" value={comment} onChangeText={setComment} />
             <Text style={[ui.muted, { fontSize: 14 }]}>Your review shows as <Text style={{ fontWeight: '800', color: colors.ink }}>{customerName(me, asBusiness, 'you')}</Text>.</Text>
             <Text style={[ui.muted, { fontSize: 14 }]}>You can review each listing once. You can come back and edit your review any time.</Text>

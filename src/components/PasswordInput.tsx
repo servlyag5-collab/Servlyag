@@ -9,7 +9,7 @@ export function PasswordInput(props: Omit<TextInputProps, 'secureTextEntry'>) {
   const [show, setShow] = useState(false);
   return (
     <View>
-      <TextInput {...props} style={[ui.field, { paddingRight: 52 }, props.style]} secureTextEntry={!show}
+      <TextInput placeholderTextColor={colors.muted} {...props} style={[ui.field, { paddingRight: 52 }, props.style]} secureTextEntry={!show}
         autoCapitalize="none" autoCorrect={false} />
       <Pressable onPress={() => setShow(!show)} hitSlop={8} accessibilityRole="button"
         accessibilityLabel={show ? 'Hide password' : 'Show password'}

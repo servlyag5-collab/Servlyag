@@ -63,7 +63,7 @@ export function ReportButton({ targetType, targetId, label = 'Report' }: {
                     );
                   })}
                 </View>
-                <TextInput style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} multiline maxLength={1000}
+                <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} multiline maxLength={1000}
                   placeholder="Anything else we should know? (optional)" value={details} onChangeText={setDetails} />
                 {!!msg && <Text style={ui.error}>{msg}</Text>}
                 <View style={ui.row}>

@@ -75,9 +75,9 @@ export default function BookCustomer() {
               <DateTimePicker value={when} onChange={(v) => { setWhen(v); setMsg(''); }} />
             </View>
             <View style={ui.card}>
-              <TextInput style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} multiline maxLength={500}
+              <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]} multiline maxLength={500}
                 placeholder="Note for the customer (optional), e.g. Wash, cut and style" value={note} onChangeText={setNote} />
-              <TextInput style={ui.field} placeholder="Price in EC$ (optional)" keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
+              <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Price in EC$ (optional)" keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
             </View>
             {ready && (
               <View style={[ui.card, { borderColor: colors.blue, borderWidth: 2 }]}>

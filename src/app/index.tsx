@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions, type ScrollViewInstance, type ViewInstance } from 'react-native';
+import { ActivityIndicator, Image, Keyboard, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { CARD_W, GAP, ListingRow, type CardListing } from '../components/Listing
 import { splitRows } from '../lib/rows';
 import { LegalLinks } from '../components/LegalLinks';
 import { SunGlow } from '../components/SunGlow';
+import { SearchSuggestions } from '../components/SearchSuggestions';
 import { FirstTimeGuide, replayGuide, useGuideReplay, useGuideSeen, type GuideStep } from '../components/FirstTimeGuide';
 import { useIntroDone } from '../lib/intro';
 import { MenuButton } from '../components/Menu';
@@ -60,6 +61,9 @@ export default function Home() {
   const latest = useRef(0); // only the newest search may show its results (older ones can arrive late)
   const started = useRef(false);
   const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  // Suggestions under the search box show while it's being typed in (hidden a moment after leaving it, so a tap still lands).
+  const [typing, setTyping] = useState(false);
+  const pickSuggestion = (text: string) => { setF((p) => ({ ...p, q: text })); setTyping(false); Keyboard.dismiss(); };
 
   useEffect(() => { run(EMPTY, false); }, []);
 
@@ -103,7 +107,7 @@ export default function Home() {
     fetchListingRatings(list.map((r) => r.id)).then(setRatings);
     if (scroll) setTimeout(() => sc.current?.scrollTo({ y: resultsY.current, animated: true }), 60);
   }
-  const search = () => run(f, true);
+  const search = () => { setTyping(false); run(f, true); };
   const clear = () => setF(EMPTY); // the live search above then shows everything again
   const filtered = !!(query.q || query.city || query.village); // the results shown are a search, not everything
   const screenW = useWindowDimensions().width;
@@ -221,7 +225,8 @@ export default function Home() {
                 boxShadow: '0px 18px 40px rgba(0, 0, 0, 0.25)' }}>
                 <View style={{ flex: 2, minWidth: 0 }}>
                   <TextInput style={[ui.field, wideField, { paddingLeft: 46, paddingRight: 44 }]} placeholder="What do you need? e.g. photographer" placeholderTextColor={colors.muted}
-                    value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false} />
+                    value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false}
+                    onFocus={() => setTyping(true)} onBlur={() => setTimeout(() => setTyping(false), 200)} />
                   <View pointerEvents="none" style={{ position: 'absolute', left: 16, top: 0, bottom: 0, justifyContent: 'center' }}>
                     <Ionicons name="search" size={21} color={colors.blue} />
                   </View>
@@ -234,6 +239,7 @@ export default function Home() {
                   {busy ? <ActivityIndicator color={colors.ink} /> : <Text style={{ fontFamily: fonts.title, fontSize: 18, color: colors.ink }}>Search services</Text>}
                 </Pressable>
               </View>
+              <View style={{ maxWidth: 640 }}><SearchSuggestions q={f.q} show={typing} onSearch={pickSuggestion} /></View>
               {!!err && <Text style={{ color: '#FFD3D8', fontSize: 15 }}>{err}</Text>}
               {filtered && (
                 <Pressable onPress={clear} disabled={busy} style={{ alignSelf: 'flex-start' }}>
@@ -284,12 +290,14 @@ export default function Home() {
             <View ref={searchRef} collapsable={false} style={{ marginTop: 6 }}>
               <TextInput style={[ui.field, { paddingLeft: 46, paddingRight: 44, height: 56, borderRadius: 16, borderWidth: 0, backgroundColor: '#fff', fontSize: 17, width: '100%', minWidth: 0 }]}
                 placeholder="What do you need? e.g. photographer" placeholderTextColor={colors.muted}
-                value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false} />
+                value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false}
+                    onFocus={() => setTyping(true)} onBlur={() => setTimeout(() => setTyping(false), 200)} />
               <View pointerEvents="none" style={{ position: 'absolute', left: 16, top: 0, bottom: 0, justifyContent: 'center' }}>
                 <Ionicons name="search" size={21} color={colors.blue} />
               </View>
               {looking && <ActivityIndicator color={colors.blue} pointerEvents="none" style={{ position: 'absolute', right: 16, top: 0, bottom: 0 }} />}
             </View>
+            <SearchSuggestions q={f.q} show={typing} onSearch={pickSuggestion} />
             <View ref={areaRef} collapsable={false} style={ui.row}>
               {/* Parish and village pick from lists (src/lib/places.ts), or use what they type. */}
               <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Parish" placeholder="Parish" value={f.city} onChange={set('city')} options={PARISHES} boxStyle={heroField} textColor="#fff" placeholderColor="#9FBCD6" /></View>

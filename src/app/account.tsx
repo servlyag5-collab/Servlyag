@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, View, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,8 +16,10 @@ import { downloadReceipt, money, receiptNumber, type Payment } from '../lib/rece
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { myTrialEnd, planStatus } from '../lib/trial';
-import { colors, ui } from '../lib/theme';
+import { colors, ui, WIDE } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
+import { FirstTimeGuide, MERCHANT_SEEN, useGuideSeen, useMerchantGuideReplay, type GuideStep } from '../components/FirstTimeGuide';
+import { useLogoTipOpen } from '../components/LogoTip';
 
 type Me = { display_name: string; screen_name: string; bio: string; show_phone: boolean; plan_expires_at: string | null; tiers: { name: string; max_services: number | null } | null };
 const label = { fontSize: 14, fontWeight: '700' as const, color: colors.ink, marginBottom: -4 };
@@ -46,6 +48,18 @@ export default function Account() {
   const [askRestore, setAskRestore] = useState<string | null>(null); // paused listing waiting for "Yes, bring it back"
   const [restoreErr, setRestoreErr] = useState('');
   const [tick, setTick] = useState(0); // reloads the page after bringing a listing back
+  // Merchant welcome tour: once per device, the first time Account opens in Merchant view (publishing a first
+  // listing lands here). Phones only. It waits for the page to load and for the logo tip to close.
+  const tourRoot = useRef<ViewInstance>(null);
+  const sc = useRef<ScrollViewInstance>(null);
+  const scrollY = useRef(0);
+  const planRef = useRef<ViewInstance>(null);
+  const receiptsRef = useRef<ViewInstance>(null);
+  const listingRef = useRef<ViewInstance>(null);
+  const menuRef = useRef<ViewInstance>(null);
+  const tourSeen = useGuideSeen(MERCHANT_SEEN);
+  const logoTipOpen = useLogoTipOpen();
+  const [tourOpen, setTourOpen] = useState(false);
   const setBiz = (k: keyof typeof b) => (v: string) => { setB((p) => ({ ...p, [k]: v })); setMsg(''); };
 
   useFocusEffect(useCallback(() => {
@@ -122,10 +136,26 @@ export default function Account() {
   const pausedCount = rows?.filter((s) => s.paused).length ?? 0;
   const canRestore = active && !moving && (limit === null || liveCount < limit);
 
+  const tourReady = !WIDE && merchant && !!me && !!rows?.length && !!pays && !logoTipOpen;
+  useEffect(() => {
+    if (!tourReady || tourSeen !== false) return;
+    const t = setTimeout(() => setTourOpen(true), 1200); // let the page settle (and the logo tip go first)
+    return () => clearTimeout(t);
+  }, [tourReady, tourSeen]);
+  useMerchantGuideReplay(useCallback(() => { if (!WIDE) setTourOpen(true); }, []));
+  const tourSteps: GuideStep[] = [
+    { target: planRef, title: 'Welcome to Servly', text: 'Your business is on Servly. This is your plan and when it renews. Customers can see your listings while your plan is active.' },
+    { target: receiptsRef, title: 'Your receipts', text: 'Every payment gets a receipt here. Tap Download to save it as a PDF.' },
+    { target: listingRef, title: 'Your listings', text: 'Tap View to see your listing the way customers do. Tap Edit to change details, prices, opening hours and photos.' },
+    { target: menuRef, title: 'Messages and help', text: 'Tap ☰ for Messages, where notes from customers arrive. Contact support is there too, and so is this tour (How to use Servly).' },
+  ];
+
   return (
     <SafeAreaView style={ui.screen}>
-      <ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
-        <TopBar />
+      <View ref={tourRoot} collapsable={false} style={{ flex: 1 }}>
+      <ScrollView ref={sc} contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled"
+        onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y; }} scrollEventThrottle={32}>
+        <TopBar menuRef={menuRef} />
         <WideSplit>
         <Text style={ui.h1}>Account</Text>
         <Text style={ui.muted}>{session?.user.email}</Text>
@@ -135,17 +165,17 @@ export default function Account() {
             <View style={ui.card}>
               <Text style={ui.h2}>Your details</Text>
               <Text style={label}>Name</Text>
-              <TextInput style={ui.field} placeholder="Name" maxLength={40} value={b.screen} onChangeText={setBiz('screen')} />
+              <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Name" maxLength={40} value={b.screen} onChangeText={setBiz('screen')} />
               <Text style={[ui.muted, { fontSize: 13, lineHeight: 18 }]}>Shown on your reviews and messages when you use Servly as a customer.</Text>
               {rows && rows.length > 0 && (
                 <>
                   <Text style={label}>Business name</Text>
-                  <TextInput style={ui.field} placeholder="Business name" value={b.name} onChangeText={setBiz('name')} />
+                  <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Business name" value={b.name} onChangeText={setBiz('name')} />
                   <Text style={[ui.muted, { fontSize: 13, lineHeight: 18 }]}>Shown on your listings, and on messages and reviews you send in Merchant view.</Text>
                 </>
               )}
-              <TextInput style={[ui.field, { height: 96, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="About you or your business" multiline value={b.bio} onChangeText={setBiz('bio')} />
-              <TextInput style={ui.field} placeholder="Phone or WhatsApp number" keyboardType="phone-pad" value={b.phone} onChangeText={setBiz('phone')} />
+              <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 96, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="About you or your business" multiline value={b.bio} onChangeText={setBiz('bio')} />
+              <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Phone or WhatsApp number" keyboardType="phone-pad" value={b.phone} onChangeText={setBiz('phone')} />
               {rows && rows.length > 0 && <PhoneToggle value={showPhone} onChange={(v) => { setShowPhone(v); setMsg(''); }} />}
               {!!msg && <Text style={msg === 'Saved.' ? { color: colors.blue, fontWeight: '700' } : ui.error}>{msg}</Text>}
               <Pressable style={[ui.btn, ui.primary]} onPress={save} disabled={busy}>
@@ -155,7 +185,7 @@ export default function Account() {
 
             {merchant ? (
               <>
-                <View style={ui.card}>
+                <View ref={planRef} collapsable={false} style={ui.card}>
                   <Text style={ui.h2}>Your plan</Text>
                   <Text style={{ fontSize: 16, fontWeight: '700', color: active ? colors.blue : colors.red }}>
                     {active ? planStatus(me.tiers?.name, me.plan_expires_at!, trialEnd) : 'No active plan. Customers cannot see your listings yet.'}
@@ -163,7 +193,7 @@ export default function Account() {
                   <Pressable style={[ui.btn, ui.outline]} onPress={() => router.push('/plan')}><Text style={[ui.btnText, { color: colors.ink }]}>See plans</Text></Pressable>
                 </View>
 
-                <View style={ui.card}>
+                <View ref={receiptsRef} collapsable={false} style={ui.card}>
                   <Text style={ui.h2}>Receipts</Text>
                   {!pays && <PinLoader size={30} />}
                   {pays?.length === 0 && <Text style={ui.muted}>No payments yet. A receipt appears here each time your plan is paid.</Text>}
@@ -205,8 +235,8 @@ export default function Account() {
                   </View>
                 )}
                 {!!restoreErr && <Text style={ui.error}>{restoreErr}</Text>}
-                {rows?.map((s) => (
-                  <View key={s.id} style={ui.card}>
+                {rows?.map((s, n) => (
+                  <View key={s.id} ref={n === 0 ? listingRef : undefined} collapsable={false} style={ui.card}>
                     <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
                       <Cover photos={s.photos} focus={s.photo_focus} title={s.title} width={72} height={72} radius={12} />
                       <View style={{ flex: 1, gap: 4 }}>
@@ -267,7 +297,7 @@ export default function Account() {
               {askDelete ? (
                 <>
                   <Text style={{ fontWeight: '700', color: colors.ink }}>Type DELETE to confirm.</Text>
-                  <TextInput style={ui.field} value={confirmText} onChangeText={setConfirmText} autoCapitalize="characters" placeholder="DELETE" />
+                  <TextInput placeholderTextColor={colors.muted} style={ui.field} value={confirmText} onChangeText={setConfirmText} autoCapitalize="characters" placeholder="DELETE" />
                   {!!delErr && <Text style={ui.error}>{delErr}</Text>}
                   <View style={ui.row}>
                     <Pressable style={[ui.btn, ui.outline, { flex: 1 }]} onPress={() => { setAskDelete(false); setConfirmText(''); }}>
@@ -291,6 +321,12 @@ export default function Account() {
         )}
         </WideSplit>
       </ScrollView>
+      {tourOpen && (
+        <FirstTimeGuide steps={tourSteps} root={tourRoot} storageKey={MERCHANT_SEEN}
+          scrollBy={(dy) => sc.current?.scrollTo({ y: Math.max(0, scrollY.current + dy), animated: true })}
+          onClose={() => { setTourOpen(false); sc.current?.scrollTo({ y: 0, animated: true }); }} />
+      )}
+      </View>
     </SafeAreaView>
   );
 }

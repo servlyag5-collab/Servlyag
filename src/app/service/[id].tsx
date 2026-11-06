@@ -183,8 +183,8 @@ export default function ServiceDetail() {
           <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 16 }}>Continue your conversation</Text>
         </Pressable>
       )}
-      <TextInput style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Write your note to the merchant" multiline value={body} onChangeText={setBody} editable={!preview} />
-      <TextInput style={ui.field} placeholder="Your phone or WhatsApp number (optional)" keyboardType="phone-pad" value={contact} onChangeText={setContact} editable={!preview} />
+      <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Write your note to the merchant" multiline value={body} onChangeText={setBody} editable={!preview} />
+      <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Your phone or WhatsApp number (optional)" keyboardType="phone-pad" value={contact} onChangeText={setContact} editable={!preview} />
       {!!msg && <Text style={ui.error}>{msg}</Text>}
       {!session && <Text style={ui.muted}>You'll create a free account first, then your note is sent.</Text>}
       {/* Call and Send note side by side at the bottom. */}

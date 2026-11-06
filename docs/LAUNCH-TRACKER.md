@@ -29,7 +29,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [ ] Final layouts for the three listing page designs (Starter / Growth / Business are placeholders)
 
 ### Database updates run in Supabase
-- [x] All updates up to v29 run (v25 on 2026-11-02; v27, v28, v29 owner confirmed 2026-11-03, check passes); `npm run check:db` checks them each day
+- [x] All updates up to v30 run (v25 on 2026-11-02; v27-v29 on 2026-11-03; v30 on 2026-11-06; check passes); `npm run check:db` checks them each day
 - [x] You are an admin (`admins` table, OWNER-GUIDE section 1) (owner confirmed 2026-11-02)
 - v21 is replaced by v24/v25 (no need to run it)
 
@@ -37,20 +37,26 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 
 ## Stage 2: Things only you can decide or set up
 
-- [ ] **Register the business at the Intellectual Property office** (target: this week, by Fri 6 Nov)
-- [ ] **Register with Inland Revenue** (target: this week, by Fri 6 Nov)
-- [ ] **Payment provider: go to ECAB** (after the business is registered). Ask them: can Servly charge
-  merchants a monthly subscription in XCD online (card payments on a website), what do they need from
-  you, what are the fees, can they tell our system automatically when a payment goes through (a
-  "webhook"), and how long setup takes. Earlier options looked at: WiPay, First Atlantic Commerce,
-  Dodo Payments.
+- [x] **Business registered** (owner, by 2026-11-06)
+- [ ] **Register with Inland Revenue** (not done yet, owner 2026-11-06)
+- [x] **Went to ACB** (2026-11-06). Payments will run through ACB using **CyberSource**. Fees: 75 USD
+  (about 202.50 XCD) a month + 4% of every payment. Full list and gaps: `docs/ACB-REQUIREMENTS.md`
+- [ ] **Website ready for ACB's review** (see `docs/ACB-REQUIREMENTS.md`): live servlyag.com, full
+  address, support email + phone, public pricing page, delivery + security + restrictions wording, card logos
+- [x] Business address: Old Road Village, St. Mary's Parish, Antigua (2026-11-06)
+- [x] Support email: servlyag5@gmail.com (2026-11-06)
+- [ ] **Support phone number**: owner getting a separate business number (not the personal one)
+- [ ] **Ask ACB the follow-up questions** (XCD, monthly charges, webhooks, test account, when the fee starts)
+- [ ] **CyberSource test (sandbox) account** for the developer, then build the payment connection
 - [x] Email provider (SMTP): Resend, sending as Servly AG <noreply@servlyag.com>; password reset tested end to end (2026-11-02)
 - [ ] Before launch, Supabase > Authentication: change **Site URL** to `https://servlyag.com` (now `http://localhost:8081`) and raise the **email rate limit** (Rate Limits)
 - [ ] Supabase paid plan (free projects pause after about a week with no activity)
-- [ ] Lawyer review of Privacy Policy, Terms, Refund Policy (`src/lib/legal.ts`, still DRAFT)
+- [ ] Lawyer review of Privacy Policy, Terms, Refund Policy (`src/lib/legal.ts`, still DRAFT).
+  Asked the lawyer about the consultation fee (2026-11-06): **$409** (EC or US dollars: please confirm)
 - [ ] Check Apple and Google rules on charging merchants outside their billing
-- [ ] Support email address on servlyag.com
-- [ ] Point servlyag.com at the Netlify site
+- [ ] Show the support email (servlyag5@gmail.com) on servlyag.com
+- [ ] Point servlyag.com at the Netlify site and make it public. Owner's decision 2026-11-06: NOT yet;
+  only when going back to the bank (ACB needs it live for its review)
 - [ ] Pick the final launch date: 15 December or 7 January
 
 ---
@@ -93,9 +99,19 @@ Short dated notes the brief should know about (decisions, things you are waiting
 
 - 2026-10-27: Bundle id `com.servlyag.app` decided. Never change after the first store upload.
 - 2026-11-02: Daily brief assistant set up; runs every morning at 7:45 (while the Claude app is open). Backed up to GitHub.
-- 2026-11-02: Database confirmed up to date (v25). Payment provider: owner will go to ECAB, after
+- 2026-11-02: Database confirmed up to date (v25). Payment provider: owner will go to ACB, after
   registering the business at the Intellectual Property office and Inland Revenue (aiming for this week).
   Launch date: 15 December 2026 or 7 January 2027.
 - 2026-11-02: Email set up with Resend (domain servlyag.com verified, DNS at GoDaddy). Supabase custom SMTP on.
   Redirect URLs: localhost 8081/8082/8083 + 127.0.0.1:8081, servlyag://reset-password, exp://**; add the
   three website ones (servlyag.com, www, Netlify) if not done. Password reset tested and works.
+- 2026-11-06: Business registered. Visited ACB: payments via ACB + CyberSource; 75 USD/month + 4% per
+  payment, taken at month end. ACB sent a website checklist and developer links (docs/ACB-REQUIREMENTS.md).
+  The bank needs servlyag.com live and public for its review (earlier plan: Private until store submission).
+- 2026-11-06 (later): The bank is **ACB (Antigua Commercial Bank)**, not ECAB (ECAB doesn't offer this
+  service; earlier notes corrected). Inland Revenue: not registered yet. Lawyer: asked about the
+  consultation fee. Address: Old Road Village, St. Mary's Parish, Antigua. Support email:
+  servlyag5@gmail.com. Support phone: waiting for a separate business number. servlyag.com stays private
+  until the owner goes back to the bank. Owner running v30 today.
+- 2026-11-06 (later): Address corrected to **Old Road Village**, St. Mary's Parish. Lawyer consultation
+  fee: $409. v30 run and checked. New printouts for the lawyer and ACB made (docs/print).

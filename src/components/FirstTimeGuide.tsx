@@ -2,8 +2,11 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { AccessibilityInfo, Animated, Pressable, Text, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, fonts } from '../lib/theme';
+import { resetLogoTip } from './LogoTip';
+import { Spotlight } from './Spotlight';
 
 const SEEN = 'servly.guide.seen'; // saved on this device once the guide is finished or skipped
+export const MERCHANT_SEEN = 'servly.merchantGuide.seen'; // the merchant welcome tour on Account
 const PAD = 8;                    // space around the spotlighted part
 const MAX_HOLE = 360;             // tall parts (the listings) are only lit at the top
 
@@ -12,7 +15,7 @@ export type GuideStep = { target: RefObject<ViewInstance | null>; title: string;
 // "How to use Servly" (☰ menu, and a link on Home for guests) shows the guide again: Home listens with
 // useGuideReplay and opens it when replayGuide() is called.
 const replayers = new Set<() => void>();
-export function replayGuide() { replayers.forEach((open) => open()); }
+export function replayGuide() { resetLogoTip(); replayers.forEach((open) => open()); }
 export function useGuideReplay(open: () => void) {
   useEffect(() => {
     replayers.add(open);
@@ -20,10 +23,20 @@ export function useGuideReplay(open: () => void) {
   }, [open]);
 }
 
-// Has this device already seen the guide? (null while checking)
-export function useGuideSeen() {
+// The merchant welcome tour (Account, Merchant view) has its own replay: "How to use Servly" in Merchant view.
+const merchantReplayers = new Set<() => void>();
+export function replayMerchantGuide() { merchantReplayers.forEach((open) => open()); }
+export function useMerchantGuideReplay(open: () => void) {
+  useEffect(() => {
+    merchantReplayers.add(open);
+    return () => { merchantReplayers.delete(open); };
+  }, [open]);
+}
+
+// Has this device already seen the guide? (null while checking) `key`: which guide (Home by default).
+export function useGuideSeen(key = SEEN) {
   const [seen, setSeen] = useState<boolean | null>(null);
-  useEffect(() => { AsyncStorage.getItem(SEEN).then((v) => setSeen(v === '1')).catch(() => setSeen(true)); }, []);
+  useEffect(() => { AsyncStorage.getItem(key).then((v) => setSeen(v === '1')).catch(() => setSeen(true)); }, [key]);
   return seen;
 }
 
@@ -31,8 +44,9 @@ export function useGuideSeen() {
 // and a card underneath says what it does. Next / Back / Skip; "Got it" on the last step. It is remembered
 // on the device, so it only ever shows once. `root` is the view the guide covers (the targets live inside it);
 // `scrollBy(dy)` scrolls Home by dy so the next part comes into view.
-export function FirstTimeGuide({ steps, root, scrollBy, onClose }: {
+export function FirstTimeGuide({ steps, root, scrollBy, onClose, storageKey = SEEN }: {
   steps: GuideStep[]; root: RefObject<ViewInstance | null>; scrollBy: (dy: number) => void; onClose: () => void;
+  storageKey?: string; // where "seen" is saved (the Home guide, or the merchant welcome tour)
 }) {
   const [H, setH] = useState(useWindowDimensions().height); // height of the area the guide covers
   const [i, setI] = useState(0);
@@ -45,7 +59,11 @@ export function FirstTimeGuide({ steps, root, scrollBy, onClose }: {
     const measure = (then: (r: { x: number; y: number; w: number; h: number }) => void) => {
       const t = steps[i]?.target.current, r = root.current;
       if (!t || !r) return;
-      t.measureLayout(r, (x, y, w, h) => then({ x, y, w, h }), () => {});
+      // Where both sit on the screen right now, then the part's place inside the guide's area.
+      // (measureLayout ignores how far Home is scrolled on Android, so the outline landed too low there.)
+      r.measureInWindow((rx, ry) => {
+        t.measureInWindow((x, y, w, h) => then({ x: x - rx, y: y - ry, w, h }));
+      });
     };
     setHole(null);
     fade.setValue(0);
@@ -67,7 +85,7 @@ export function FirstTimeGuide({ steps, root, scrollBy, onClose }: {
   }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function finish() {
-    AsyncStorage.setItem(SEEN, '1').catch(() => {});
+    AsyncStorage.setItem(storageKey, '1').catch(() => {});
     onClose();
   }
 
@@ -83,10 +101,8 @@ export function FirstTimeGuide({ steps, root, scrollBy, onClose }: {
       {/* The dimmed screen, in four pieces around the lit part (taps on it do nothing). */}
       {hole ? (
         <>
-          <View style={{ position: 'absolute', left: 0, right: 0, top: 0, height: Math.max(0, hole.y), backgroundColor: shade }} />
-          <View style={{ position: 'absolute', left: 0, right: 0, top: hole.y + hole.h, bottom: 0, backgroundColor: shade }} />
-          <View style={{ position: 'absolute', left: 0, width: Math.max(0, hole.x), top: hole.y, height: hole.h, backgroundColor: shade }} />
-          <View style={{ position: 'absolute', left: hole.x + hole.w, right: 0, top: hole.y, height: hole.h, backgroundColor: shade }} />
+          {/* The dim, with a hole whose corners match the gold ring (no square corners showing). */}
+          <Spotlight hole={hole} radius={18} color={shade} />
           <Animated.View pointerEvents="none" style={{ position: 'absolute', left: hole.x, top: hole.y, width: hole.w, height: hole.h,
             borderRadius: 18, borderWidth: 3, borderColor: colors.gold, opacity: fade }} />
           {/* Taps inside the lit part are blocked too, so the guide can't be lost halfway. */}

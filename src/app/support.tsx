@@ -76,8 +76,8 @@ export default function Support() {
               );
             })}
           </View>
-          <TextInput style={ui.field} placeholder="Subject" value={subject} onChangeText={(v) => { setSubject(v); setMsg(''); }} maxLength={120} />
-          <TextInput style={[ui.field, { height: 130, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Tell us what's going on" multiline
+          <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Subject" value={subject} onChangeText={(v) => { setSubject(v); setMsg(''); }} maxLength={120} />
+          <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 130, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Tell us what's going on" multiline
             value={body} onChangeText={(v) => { setBody(v); setMsg(''); }} maxLength={4000} />
           {!!msg && <Text style={msg.startsWith('Sent') ? { color: colors.blue, fontWeight: '700' } : ui.error}>{msg}</Text>}
           <Pressable style={[ui.btn, ui.primary]} onPress={send} disabled={busy}>

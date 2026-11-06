@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react';
-import { Image, Modal, Pressable, Text, View } from 'react-native';
+import { useCallback, useRef, useState, type RefObject } from 'react';
+import { Image, Modal, Pressable, Text, View, type ViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, usePathname, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { replayGuide } from './FirstTimeGuide';
+import { replayGuide, replayMerchantGuide } from './FirstTimeGuide';
+import { LogoTip } from './LogoTip';
 import { hasBookingApp } from '../lib/bookings';
 import { isUnread, type Conversation } from '../lib/chat';
 import { forgetThisDevice } from '../lib/push';
@@ -57,9 +58,15 @@ export function MenuButton() {
     if (!merchant && path === '/bookings' && !hasBooking) router.replace('/messages');
   }
 
-  // Back to Home, then the first-time guide plays again (phones and phone-sized browsers; not computers).
+  // Customer view: back to Home, then the first-time guide plays again. Merchant view: to Account, then the
+  // merchant welcome tour plays again. (Phones and phone-sized browsers; not computers.)
   function howTo() {
     setOpen(false);
+    if (merchant) {
+      if (path !== '/account') router.navigate('/account');
+      setTimeout(replayMerchantGuide, path === '/account' ? 50 : 600);
+      return;
+    }
     if (path !== '/') router.dismissTo('/');
     setTimeout(replayGuide, path === '/' ? 50 : 450);
   }
@@ -146,7 +153,9 @@ const LOGO_RATIO = 549 / 2066;   // logo.png height / width
 
 // "← Back" on the left, a small Servly logo in the middle (tap = Home), the ☰ menu on the right.
 // The two sides take equal space so the logo stays centred, even for guests (no ☰). Used on every inner screen.
-export function TopBar() {
+// `menuRef` lets a page's guide light up the ☰ button (the merchant welcome tour on Account).
+export function TopBar({ menuRef }: { menuRef?: RefObject<ViewInstance | null> } = {}) {
+  const logo = useRef<ViewInstance>(null);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <View style={{ flex: 1, alignItems: 'flex-start' }}>
@@ -157,7 +166,7 @@ export function TopBar() {
       <Pressable onPress={() => router.dismissTo('/')} accessibilityLabel="Servly home">
         {/* Like the Home logo: the whole map pin, then the name cropped just below its flag underline (no slogan),
             centred on the pin's height. */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: BAR_LOGO_W * 0.06 }}>
+        <View ref={logo} collapsable={false} style={{ flexDirection: 'row', alignItems: 'center', gap: BAR_LOGO_W * 0.06 }}>
           <View style={{ width: BAR_LOGO_W * 0.215, height: BAR_LOGO_W * LOGO_RATIO, overflow: 'hidden' }}>
             <Image source={require('../../assets/logo.png')} style={{ width: BAR_LOGO_W, height: BAR_LOGO_W * LOGO_RATIO }} />
           </View>
@@ -167,8 +176,10 @@ export function TopBar() {
         </View>
       </Pressable>
       <View style={{ flex: 1, alignItems: 'flex-end' }}>
-        <MenuButton />
+        <View ref={menuRef} collapsable={false}><MenuButton /></View>
       </View>
+      {/* Once per device, the first inner page after the Home guide: "tap the logo to go Home". */}
+      <LogoTip logo={logo} />
     </View>
   );
 }
