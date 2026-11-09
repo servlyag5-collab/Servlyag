@@ -29,7 +29,8 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [ ] Final layouts for the three listing page designs (Starter / Growth / Business are placeholders)
 
 ### Database updates run in Supabase
-- [x] All updates up to v30 run (v25 on 2026-11-02; v27-v29 on 2026-11-03; v30 on 2026-11-06; check passes); `npm run check:db` checks them each day
+- [x] All updates up to v30 run (v25 on 2026-11-02; v27-v29 on 2026-11-03; v30 on 2026-11-06; check passes)
+- [x] Run v31 (fair turns in search) (database check shows it installed, 2026-11-07)
 - [x] You are an admin (`admins` table, OWNER-GUIDE section 1) (owner confirmed 2026-11-02)
 - v21 is replaced by v24/v25 (no need to run it)
 
@@ -47,7 +48,23 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [x] Support email: servlyag5@gmail.com (2026-11-06)
 - [ ] **Support phone number**: owner getting a separate business number (not the personal one)
 - [ ] **Ask ACB the follow-up questions** (XCD, monthly charges, webhooks, test account, when the fee starts)
-- [ ] **CyberSource test (sandbox) account** for the developer, then build the payment connection
+- [x] CyberSource test (sandbox) account created (2026-11-06); Organization ID servlyag_1793983604
+- [x] CyberSource test profile "Servly Test": keys created (Profile ID, Access Key, Secret Key in password manager), return and notification addresses filled in (2026-11-07)
+- [x] CyberSource confirmed (2026-11-07): profile "Servly Test" active, Secure Acceptance configured, Token Management, Recurring Billing and **XCD** available in the sandbox
+- [x] CyberSource webhook digital signature key created and saved in the password manager; rep confirmed webhook security is ready (2026-11-07)
+- [ ] CyberSource webhook subscription (payment + recurring billing), done with the rep once Claude's notification function is live
+- [ ] CyberSource REST key (Key Management > REST - Shared Secret), for monthly charges
+- [ ] Put the CyberSource keys into Supabase > Edge Functions > Secrets (names in docs/CYBERSOURCE-SETUP.md)
+- [x] Build the first-payment connection (Claude, 2026-11-07: Pay button, secure card page, return page, webhook, database v32; tests pass; not yet online)
+- [x] Run v32 (card payments) in Supabase > SQL Editor (database check shows it installed, 2026-11-07)
+- [ ] Add the CyberSource secrets in Supabase > Edge Functions > Secrets (list in docs/CYBERSOURCE-SETUP.md)
+- [ ] Put the payment functions online (npx supabase login / link / functions deploy), then a test payment with card 4111 1111 1111 1111
+- [ ] Build the automatic monthly charge (Claude, needs the REST key)
+- [ ] CyberSource: set up XCD outlet ID and terminal ID on the test processor (fdiglobal). Test payments fail with reason 150 "xcd_outlet_id, xcd_terminal_id missing" (2026-11-08). Waiting on the CyberSource rep / ACB
+- [ ] Decide how merchants pay in the store apps (options in docs/STORE-BILLING.md, 2026-11-09): website-only payment is likely to be rejected by Apple and Google; the app's Pay button must change before submitting. Owner leaning to option 1 (website + Apple/Google billing), final decision another day; not built yet
+- [x] Password-reset email through Resend works: test arrived 2026-11-09, from "Servly AG" <noreply@servlyag.com>, signed by servlyag.com, encrypted, landed in the inbox (not spam)
+- [ ] Deleting a listing: owner to choose who can delete (merchant, admin, or both); needs a database change
+- [ ] CyberSource: allow saving cards (Payment Tokenization) on the Servly Test profile; then add Supabase secret CYBS_SAVE_CARD = yes
 - [x] Email provider (SMTP): Resend, sending as Servly AG <noreply@servlyag.com>; password reset tested end to end (2026-11-02)
 - [ ] Before launch, Supabase > Authentication: change **Site URL** to `https://servlyag.com` (now `http://localhost:8081`) and raise the **email rate limit** (Rate Limits)
 - [ ] Supabase paid plan (free projects pause after about a week with no activity)
@@ -115,3 +132,14 @@ Short dated notes the brief should know about (decisions, things you are waiting
   until the owner goes back to the bank. Owner running v30 today.
 - 2026-11-06 (later): Address corrected to **Old Road Village**, St. Mary's Parish. Lawyer consultation
   fee: $409. v30 run and checked. New printouts for the lawyer and ACB made (docs/print).
+- 2026-11-06: Search decision: Business plan first, and everyone in a plan takes turns at the front,
+  rotating every 30 minutes; drop-down = 2 spots top plan + 1 spot shared by the other plans. Built as
+  v31 (supabase/upgrade-v31-fair-turns.sql), tested on a practice database. Owner to run it in Supabase.
+- 2026-11-07: Daily check shows v31 (fair turns) installed. Never re-run v30 or older search files after it.
+- 2026-11-07: CyberSource support: test account still in initial setup; they are doing ownership validation
+  and will tell the owner the next steps. Waiting on CyberSource support (since 2026-11-07).
+- 2026-11-07: With the CyberSource rep: test profile "Servly Test" set up, keys generated, return/notification
+  addresses entered, asked for both payment and recurring billing notifications. Waiting on the rep.
+- 2026-11-07: CyberSource confirmed the test profile is active, Secure Acceptance works, and Token Management,
+  Recurring Billing and XCD are available in the sandbox. Next: webhook signature key now; the webhook
+  subscription once the notification function is reachable.

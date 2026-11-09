@@ -5,6 +5,7 @@ import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlagFrame } from '../components/FlagFrame';
 import { KeepListings, type KeepItem } from '../components/KeepListings';
+import { PaymentNotice } from '../components/PaymentNotice';
 import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
@@ -19,7 +20,9 @@ type Me = { id: string; tier_id: string; plan_expires_at: string | null; request
 type Change = { next_tier: string | null; next_tier_name: string | null; next_tier_at: string | null; keep_listings: string[] };
 
 export default function Plan() {
-  const { next } = useLocalSearchParams<{ next?: string }>(); // 'offer' when coming from Offer a service
+  // next = 'offer' when coming from Offer a service; payment/order = back from the card payment page.
+  const { next, payment, order } = useLocalSearchParams<{ next?: string; payment?: string; order?: string }>();
+  const [reload, setReload] = useState(0);
   const [tiers, setTiers] = useState<T[]>([]);
   const [me, setMe] = useState<Me | null>(null);
   const [addon, setAddon] = useState(25);
@@ -51,7 +54,7 @@ export default function Plan() {
       setTiers((t.data as T[]) ?? []); setMe(m); if (a.data) setAddon(a.data.monthly_price);
       if (m?.booking_requested) setBookingFor(m.requested_tier ?? m.tier_id);
     })();
-  }, []);
+  }, [reload]);
 
   const withBooking = (t: T) => !t.booking_included && bookingFor === t.id;
 
@@ -84,6 +87,7 @@ export default function Plan() {
       <ScrollView contentContainerStyle={ui.page}>
         <TopBar />
         <WideSplit>
+        <PaymentNotice status={payment} order={order} onPaid={() => setReload((n) => n + 1)} />
         <Text style={ui.h1}>{next === 'offer' ? 'Choose a plan to start selling' : 'Your plan'}</Text>
         {next === 'offer' && <Text style={ui.muted}>Your plan decides how many services you can list. You'll create your listing right after checkout.</Text>}
         <Text style={[ui.muted, { fontSize: 14, lineHeight: 20 }]}>

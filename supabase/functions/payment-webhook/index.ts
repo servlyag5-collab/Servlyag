@@ -1,69 +1,40 @@
-// Servly AG payment webhook (a Supabase Edge Function).
-// Your payment provider calls this after a merchant pays; it activates their plan for one month
-// and logs the payment (which creates their receipt).
+// Servly AG payment webhook: CyberSource tells Servly about payments here, server to server, so a plan
+// switches on even if the merchant closes the browser before coming back.
+//   https://<project>.supabase.co/functions/v1/payment-webhook
 //
-// Deploy (once you have chosen a provider):
-//   npx supabase login
-//   npx supabase link --project-ref YOUR-PROJECT-REF
-//   npx supabase secrets set PAYMENT_WEBHOOK_SECRET=a-long-random-password PAYMENT_PROVIDER=yourprovider
-//   npx supabase functions deploy payment-webhook --no-verify-jwt
-// Then give the provider this address as the webhook URL:
-//   https://YOUR-PROJECT-REF.supabase.co/functions/v1/payment-webhook
+// It accepts two kinds of message:
+//   * Secure Acceptance "Merchant POST" (form fields, signed with the profile's Secret Key): the result
+//     of a payment made on the hosted payment page. Recorded the same way as payment-return.
+//   * Webhooks (JSON, header v-c-signature, signed with the webhook digital signature key): payment and
+//     Recurring Billing notifications. For now they are checked and logged (the monthly charges are the
+//     next step); CyberSource only needs a 200 answer to finish the subscription.
 //
-// What it expects (adapt `readPayment` below to your provider's format):
-//   POST, header  x-servly-secret: <PAYMENT_WEBHOOK_SECRET>
-//   JSON body     { "merchant": "<merchant user id>", "tier": "basic|plus|premium", "booking": true|false,
-//                   "amount": 125, "reference": "<the provider's payment id>" }
-// The app's Pay button already sends merchant, tier, booking and amount to the provider's page
-// (see EXPO_PUBLIC_PAY_URL); most providers pass these back to the webhook as "metadata".
-
-import { createClient } from 'npm:@supabase/supabase-js@2';
-
-type Payment = { merchant: string; tier: string; booking: boolean; amount: number; reference: string };
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
-
-// >>> PROVIDER-SPECIFIC: change this to read your provider's webhook format, and replace the secret
-// check with the provider's own signature check if it offers one (most do). <<<
-async function readPayment(req: Request): Promise<Payment> {
-  const b = await req.json();
-  return { merchant: String(b.merchant ?? ''), tier: String(b.tier ?? ''), booking: !!b.booking, amount: Number(b.amount), reference: String(b.reference ?? '') };
-}
+// Secrets: CYBS_SECRET_KEY, CYBS_WEBHOOK_SECRET (the digital signature key), CYBS_WEBHOOK_KEY_ID.
+// Deploy without the login check (CyberSource has no Servly login): see supabase/config.toml.
+import { verifyFields, verifyWebhook } from '../_shared/cybersource.ts';
+import { formFields, json, recordAnswer } from '../_shared/record.ts';
 
 Deno.serve(async (req) => {
+  if (req.method === 'GET' || req.method === 'HEAD') return json({ ok: true, service: 'servly payment-webhook' });
   if (req.method !== 'POST') return json({ error: 'Use POST' }, 405);
 
-  // 1. Only your provider knows the secret.
-  const secret = Deno.env.get('PAYMENT_WEBHOOK_SECRET');
-  if (!secret || req.headers.get('x-servly-secret') !== secret) return json({ error: 'Unauthorized' }, 401);
-
-  let p: Payment;
-  try { p = await readPayment(req); } catch { return json({ error: 'Bad request body' }, 400); }
-  if (!p.merchant || !p.reference || !['basic', 'plus', 'premium'].includes(p.tier) || !Number.isFinite(p.amount)) {
-    return json({ error: 'Missing merchant, tier, amount or reference' }, 400);
+  const type = req.headers.get('content-type') ?? '';
+  if (type.includes('application/x-www-form-urlencoded')) {
+    const f = await formFields(req);
+    if (!verifyFields(f, Deno.env.get('CYBS_SECRET_KEY') ?? '')) return json({ error: 'Bad signature' }, 401);
+    const r = await recordAnswer(f);
+    return json({ ok: true, ...r });
   }
 
-  const provider = Deno.env.get('PAYMENT_PROVIDER') ?? 'webhook';
-  const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-
-  // 2. The same payment is never counted twice (providers sometimes resend webhooks).
-  const { data: seen } = await db.from('payments').select('id').eq('provider', provider).eq('provider_ref', p.reference).maybeSingle();
-  if (seen) return json({ ok: true, duplicate: true });
-
-  // 3. The amount must match the plan price (+ the booking add-on if chosen), minus a promo code's
-  //    discount on the plan price (v23, e.g. LAUNCH50 for the first 2 months).
-  const { data: tier } = await db.from('tiers').select('monthly_price,booking_included').eq('id', p.tier).single();
-  const { data: addon } = await db.from('addons').select('monthly_price').eq('id', 'booking').single();
-  if (!tier) return json({ error: 'Unknown tier' }, 400);
-  const { data: discount } = await db.rpc('next_promo_discount', { p_user: p.merchant, p_tier: p.tier });
-  const expected = Number(tier.monthly_price) - Number(discount ?? 0) + (p.booking && !tier.booking_included ? Number(addon?.monthly_price ?? 0) : 0);
-  if (Math.abs(p.amount - expected) > 0.01) return json({ error: `Amount ${p.amount} does not match ${expected}` }, 400);
-
-  // 4. Activate: adds one month, sets the tier, switches on booking if paid, logs the payment (receipt).
-  const { error } = await db.rpc('activate_plan', {
-    p_user: p.merchant, p_tier: p.tier, p_booking: p.booking, p_provider: provider, p_ref: p.reference,
-  });
-  if (error) return json({ error: error.message }, 500);
+  const body = await req.text();
+  const key = Deno.env.get('CYBS_WEBHOOK_SECRET') ?? '';
+  if (!verifyWebhook(req.headers.get('v-c-signature'), body, key, Deno.env.get('CYBS_WEBHOOK_KEY_ID') ?? undefined)) {
+    console.log('payment-webhook: webhook signature check failed');
+    return json({ error: 'Bad signature' }, 401);
+  }
+  let event: { eventType?: string } = {};
+  try { event = JSON.parse(body); } catch { /* keep empty */ }
+  // Logged for now (Supabase > Edge Functions > payment-webhook > Logs). Monthly charges come next.
+  console.log('payment-webhook: event', event.eventType ?? 'unknown', body.slice(0, 2000));
   return json({ ok: true });
 });

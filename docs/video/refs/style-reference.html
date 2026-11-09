@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Servly video style reference</title>
+<style>
+  html,body{margin:0;width:1080px;height:1920px;overflow:hidden}
+  body{background:radial-gradient(ellipse 70% 45% at 50% 50%,#ffffff 0%,#FAFAF7 55%,#EFEDE6 100%);
+       font-family:"Segoe UI",system-ui,sans-serif;position:relative}
+  .card{position:absolute;background:#fff;border-radius:40px;box-shadow:0 24px 60px rgba(20,33,43,.10),0 4px 12px rgba(20,33,43,.06)}
+  /* search pill */
+  .pill{left:150px;top:560px;width:780px;height:120px;border-radius:60px;display:flex;align-items:center;padding:0 44px;box-sizing:border-box;gap:28px}
+  .dot{width:46px;height:46px;border-radius:50%;border:7px solid #0072C6;box-sizing:border-box;position:relative}
+  .dot:after{content:"";position:absolute;width:24px;height:7px;background:#0072C6;border-radius:4px;right:-22px;bottom:-10px;transform:rotate(45deg)}
+  .bar{height:18px;border-radius:9px;background:#E7E5DE}
+  .cursor{width:5px;height:56px;background:#0072C6;border-radius:3px}
+  .tick{margin-left:auto;width:58px;height:58px;border-radius:50%;background:#0072C6;display:flex;align-items:center;justify-content:center}
+  .tick:before{content:"";width:22px;height:12px;border-left:6px solid #fff;border-bottom:6px solid #fff;transform:rotate(-45deg) translate(2px,-3px)}
+  /* business cards row */
+  .biz{top:760px;width:300px;height:420px;display:flex;flex-direction:column;align-items:center;padding-top:60px;box-sizing:border-box;gap:34px}
+  .icon{width:150px;height:150px;border-radius:36px;background:#F3F7FB;display:flex;align-items:center;justify-content:center}
+  .line{width:200px;height:16px;border-radius:8px;background:#E7E5DE}
+  .short{width:130px}
+  .hl{border:5px solid #0072C6;transform:scale(1.06)}
+  .star{position:absolute;top:-26px;right:-26px;width:72px;height:72px;border-radius:50%;background:#FCD116;box-shadow:0 8px 20px rgba(252,209,22,.45)}
+  svg{stroke:#14212B;stroke-width:7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  /* flag ribbon: mostly blue, centred motif white-red-black-gold-black-red-white */
+  .flag{position:absolute;left:150px;top:1290px;width:780px;height:10px;display:flex;border-radius:5px;overflow:hidden}
+  .flag i{display:block;height:100%}
+  /* pin */
+  .pin{position:absolute;left:465px;top:1360px;width:150px;height:190px}
+</style></head>
+<body>
+  <div class="card pill"><div class="dot"></div><div class="bar" style="width:300px"></div><div class="cursor"></div><div class="tick"></div></div>
+
+  <div class="card biz" style="left:40px"><div class="icon"><svg width="90" height="90" viewBox="0 0 90 90"><rect x="10" y="26" width="70" height="48" rx="10"/><circle cx="45" cy="50" r="14"/><path d="M30 26l6-10h18l6 10"/></svg></div><div class="line"></div><div class="line short"></div></div>
+  <div class="card biz hl" style="left:390px"><div class="star"></div><div class="icon"><svg width="90" height="90" viewBox="0 0 90 90"><circle cx="24" cy="66" r="12"/><circle cx="66" cy="66" r="12"/><path d="M33 58L70 14M57 58L20 14"/></svg></div><div class="line"></div><div class="line short"></div></div>
+  <div class="card biz" style="left:740px"><div class="icon"><svg width="90" height="90" viewBox="0 0 90 90"><path d="M60 12a18 18 0 0 0-22 24L14 60a8 8 0 0 0 12 12l24-24a18 18 0 0 0 24-22l-12 12-10-4-4-10z"/></svg></div><div class="line"></div><div class="line short"></div></div>
+
+  <div class="flag">
+    <i style="flex:7;background:#0072C6"></i><i style="flex:.7;background:#fff"></i><i style="flex:.7;background:#CE1126"></i><i style="flex:.7;background:#111111"></i>
+    <i style="flex:1.6;background:#FCD116"></i>
+    <i style="flex:.7;background:#111111"></i><i style="flex:.7;background:#CE1126"></i><i style="flex:.7;background:#fff"></i><i style="flex:7;background:#0072C6"></i>
+  </div>
+  <svg class="pin" viewBox="0 0 150 190" style="stroke:none">
+    <ellipse cx="75" cy="182" rx="34" ry="7" fill="rgba(20,33,43,.12)"/>
+    <path d="M75 6C39 6 12 33 12 68c0 46 63 106 63 106s63-60 63-106C138 33 111 6 75 6z" fill="#0072C6"/>
+    <circle cx="75" cy="66" r="34" fill="#fff"/>
+    <text x="75" y="84" text-anchor="middle" font-family="Segoe UI,sans-serif" font-weight="800" font-size="50" fill="#0072C6">S</text>
+  </svg>
+</body></html>

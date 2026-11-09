@@ -1,0 +1,57 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Servly style C island bright</title>
+<style>
+  html,body{margin:0;width:1080px;height:1920px;overflow:hidden}
+  /* bright Caribbean day: sky blue top, turquoise sea band, warm sand bottom; chunky flat shapes */
+  body{background:linear-gradient(180deg,#BFE3FA 0%,#DDF1FC 46%,#FFF6E3 46%,#FCEBC8 100%);font-family:"Segoe UI",system-ui,sans-serif;position:relative}
+  .sea{position:absolute;left:0;top:820px;width:1080px;height:70px;background:#5CC6D0}
+  .sea2{position:absolute;left:0;top:870px;width:1080px;height:22px;background:#3FAFBE}
+  .sun{position:absolute;left:110px;top:150px;width:200px;height:200px;border-radius:50%;background:#FCD116}
+  .cloud{position:absolute;height:70px;border-radius:35px;background:#fff}
+  .palm{position:absolute;right:60px;top:420px;width:260px;height:430px}
+  .card{position:absolute;background:#fff;border-radius:48px;border:6px solid #14212B;box-shadow:12px 14px 0 #14212B}
+  .pill{left:130px;top:520px;width:820px;height:130px;border-radius:65px;display:flex;align-items:center;padding:0 44px;box-sizing:border-box;gap:28px}
+  .dot{width:50px;height:50px;border-radius:50%;border:8px solid #0072C6;box-sizing:border-box;position:relative}
+  .dot:after{content:"";position:absolute;width:26px;height:8px;background:#0072C6;border-radius:4px;right:-24px;bottom:-11px;transform:rotate(45deg)}
+  .bar{height:20px;border-radius:10px;background:#E9E3D3}
+  .go{margin-left:auto;width:84px;height:84px;border-radius:50%;background:#FCD116;border:6px solid #14212B;box-sizing:border-box;display:flex;align-items:center;justify-content:center}
+  .go:before{content:"";width:22px;height:22px;border-top:7px solid #14212B;border-right:7px solid #14212B;transform:rotate(45deg);margin-right:8px}
+  .biz{top:1000px;width:300px;height:430px;display:flex;flex-direction:column;align-items:center;padding-top:56px;box-sizing:border-box;gap:30px}
+  .icon{width:156px;height:156px;border-radius:40px;display:flex;align-items:center;justify-content:center}
+  .line{width:200px;height:18px;border-radius:9px;background:#E9E3D3}
+  .short{width:130px}
+  .hl{background:#0072C6;transform:rotate(-3deg) scale(1.07)}
+  .hl .line{background:rgba(255,255,255,.55)}
+  .star{position:absolute;top:-40px;right:-34px;width:86px;height:86px}
+  svg.i{stroke:#14212B;stroke-width:8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .flag{position:absolute;left:130px;top:1520px;width:820px;height:22px;display:flex;border-radius:11px;overflow:hidden;border:5px solid #14212B}
+  .flag i{display:block;height:100%}
+  .pin{position:absolute;left:450px;top:1590px;width:180px;height:228px}
+</style></head>
+<body>
+  <div class="sun"></div>
+  <div class="cloud" style="left:380px;top:210px;width:260px"></div><div class="cloud" style="left:460px;top:170px;width:140px;height:90px;border-radius:45px"></div>
+  <div class="cloud" style="left:760px;top:300px;width:200px"></div>
+  <div class="sea"></div><div class="sea2"></div>
+  <svg class="palm" viewBox="0 0 260 430"><path d="M150 430C150 300 140 200 120 120" stroke="#8A5A2B" stroke-width="22" fill="none" stroke-linecap="round"/>
+    <path d="M120 120C80 60 20 70 0 110C50 90 90 100 120 120ZM120 120C140 50 210 40 250 80C200 80 160 95 120 120ZM120 120C100 40 140 0 190 0C150 30 130 70 120 120ZM120 120C60 120 20 170 20 220C60 170 90 140 120 120Z" fill="#2E9E5B"/></svg>
+
+  <div class="card pill"><div class="dot"></div><div class="bar" style="width:420px"></div><div class="go"></div></div>
+
+  <div class="card biz" style="left:40px"><div class="icon" style="background:#FFE9A8"><svg class="i" width="96" height="96" viewBox="0 0 90 90"><rect x="10" y="26" width="70" height="48" rx="10"/><circle cx="45" cy="50" r="14"/><path d="M30 26l6-10h18l6 10"/></svg></div><div class="line"></div><div class="line short"></div></div>
+  <div class="card biz hl" style="left:390px">
+    <svg class="star" viewBox="0 0 100 100"><path d="M50 4l13 30 32 3-24 21 7 32-28-17-28 17 7-32L5 37l32-3z" fill="#FCD116" stroke="#14212B" stroke-width="6" stroke-linejoin="round"/></svg>
+    <div class="icon" style="background:#fff"><svg class="i" width="96" height="96" viewBox="0 0 90 90"><circle cx="24" cy="66" r="12"/><circle cx="66" cy="66" r="12"/><path d="M33 58L70 14M57 58L20 14"/></svg></div><div class="line"></div><div class="line short"></div></div>
+  <div class="card biz" style="left:740px"><div class="icon" style="background:#FFD9DD"><svg class="i" width="96" height="96" viewBox="0 0 90 90"><path d="M60 12a18 18 0 0 0-22 24L14 60a8 8 0 0 0 12 12l24-24a18 18 0 0 0 24-22l-12 12-10-4-4-10z"/></svg></div><div class="line"></div><div class="line short"></div></div>
+
+  <div class="flag">
+    <i style="flex:7;background:#0072C6"></i><i style="flex:.7;background:#fff"></i><i style="flex:.7;background:#CE1126"></i><i style="flex:.7;background:#111111"></i>
+    <i style="flex:1.6;background:#FCD116"></i>
+    <i style="flex:.7;background:#111111"></i><i style="flex:.7;background:#CE1126"></i><i style="flex:.7;background:#fff"></i><i style="flex:7;background:#0072C6"></i>
+  </div>
+  <svg class="pin" viewBox="0 0 150 190">
+    <path d="M75 6C39 6 12 33 12 68c0 46 63 106 63 106s63-60 63-106C138 33 111 6 75 6z" fill="#0072C6" stroke="#14212B" stroke-width="7"/>
+    <circle cx="75" cy="66" r="34" fill="#fff" stroke="#14212B" stroke-width="6"/>
+    <text x="75" y="84" text-anchor="middle" font-family="Segoe UI,sans-serif" font-weight="900" font-size="50" fill="#0072C6">S</text>
+  </svg>
+</body></html>

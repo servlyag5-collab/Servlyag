@@ -10,8 +10,8 @@ only you can do. File paths are inside the `servly-app` folder.
 
 ## 1. Do these first (after this update)
 
-1. **Run the database updates.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run, then `supabase/upgrade-v15-opening-hours.sql` > Run, then `supabase/upgrade-v16-screen-name.sql` > Run, then `supabase/upgrade-v17-max-tags.sql` > Run, then `supabase/upgrade-v18-photo-focus.sql` > Run, then `supabase/upgrade-v19-search-as-you-type.sql` > Run, then `supabase/upgrade-v20-plan-changes.sql` > Run, then `supabase/upgrade-v22-free-trials.sql` > Run (it works with or without the optional v21), then `supabase/upgrade-v23-promo-codes.sql` > Run, then `supabase/upgrade-v24-search-everywhere.sql` > Run, then `supabase/upgrade-v25-smart-search.sql` > Run, then `supabase/upgrade-v26-admin-controls.sql` > Run, then `supabase/upgrade-v27-admins-see-all-listings.sql` > Run, then `supabase/upgrade-v28-free-bookings.sql` > Run, then `supabase/upgrade-v29-call-taps.sql` > Run, then `supabase/upgrade-v30-ranked-search.sql` > Run.
-   **Search: never run v19, v21, v24 or v25 again after v30** (each search update replaces the last one; v30 is the current search).
+1. **Run the database updates.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run, then `supabase/upgrade-v15-opening-hours.sql` > Run, then `supabase/upgrade-v16-screen-name.sql` > Run, then `supabase/upgrade-v17-max-tags.sql` > Run, then `supabase/upgrade-v18-photo-focus.sql` > Run, then `supabase/upgrade-v19-search-as-you-type.sql` > Run, then `supabase/upgrade-v20-plan-changes.sql` > Run, then `supabase/upgrade-v22-free-trials.sql` > Run (it works with or without the optional v21), then `supabase/upgrade-v23-promo-codes.sql` > Run, then `supabase/upgrade-v24-search-everywhere.sql` > Run, then `supabase/upgrade-v25-smart-search.sql` > Run, then `supabase/upgrade-v26-admin-controls.sql` > Run, then `supabase/upgrade-v27-admins-see-all-listings.sql` > Run, then `supabase/upgrade-v28-free-bookings.sql` > Run, then `supabase/upgrade-v29-call-taps.sql` > Run, then `supabase/upgrade-v30-ranked-search.sql` > Run, then `supabase/upgrade-v31-fair-turns.sql` > Run, then `supabase/upgrade-v32-card-payments.sql` > Run.
+   **Search: never run v19, v21, v24, v25 or v30 again after v31** (each search update replaces the last one; v31 is the current search).
    *Do not run* `supabase/upgrade-v21-search-word-starts.sql` again: it made search match only the start of words, and v24/v25 replace it. To check which updates are installed, run `npm run check:db`.
    Supabase warns about "destructive operations": those lines replace old rules with stricter ones
    (blocking) and keep payment records when an account is deleted. No data is removed.
@@ -42,14 +42,14 @@ only you can do. File paths are inside the `servly-app` folder.
 | **Plan ending notification** | Phone notification about 3 days before (9:00 AM Antigua) | `plan_expiry_reminders()` and its schedule in v14 section 7 |
 | **First-time guide** (phones: the apps, and the website on a phone; not on computers) | The first time someone opens the app, Home dims and points at each part in turn (search, area, Run a business?, listings, menu / Log in) with a short card. Then, the first time they open a listing or any other page, a one-time tip lights up the small Servly logo at the top: "tap it to go straight back to Home". Replaying the guide shows that tip again too. Next, Back, Skip; shown once per phone. Anyone can replay it: **How to use Servly** at the bottom of the ☰ menu, or (for guests) the link at the bottom of Home | Wording and order: `guideSteps` in `src/app/index.tsx`. Look: `src/components/FirstTimeGuide.tsx`. To see it again on a test phone: delete and reinstall the app (or clear Expo Go's data) |
 | **Merchant welcome tour** (phones only) | The first time someone opens Account in Merchant view (publishing a first listing takes them there), the screen dims and lights up 4 parts in turn: **Welcome to Servly** (their plan and when it renews), **Your receipts**, **Your listings** (View and Edit), and **Messages and help** (the ☰ menu). Shown once per phone; it waits for the logo tip to close first. In Merchant view, **How to use Servly** in the ☰ menu replays this tour (in Customer view it replays the Home guide). No database change | Wording: `tourSteps` in `src/app/account.tsx` |
-| **Search** | **Best match first (v30):** business name and title matches come first, then tags, then the description; plan order only breaks ties. Typing most of a business's name shows only that business. While typing, a list under the box suggests businesses (tap to open) and services (tap to search). Updates as you type (from 2 letters; deleting letters widens the results). Listing name, description, hidden tags and the business name (v24); words of 4+ letters match inside words ("clean" finds "housecleaning") while 2-3 letter words match only word starts ("ac" finds AC servicing, not "packing") (v25); related word forms match ("cleaner" finds "cleaning", "plumber" finds "plumbing"); several words show listings with all of them, or any of them if none has all; forgives small spelling mistakes; 30 results at a time. Results show in two swipe rows: Popular picks (the highest-paying plan in the results: Business, or Growth if there are no Business listings, or Starter), then More local services (the rest, highest-paying first), with no tier names and never an empty row | Wait after typing: `LIVE_WAIT` in `src/app/index.tsx`. Matching: `search_services()`, `search_word_found()` and `search_norm()` in v25, `search_stem()` in v24. Layout: `splitRows` in `src/lib/rows.ts` + `ListingRow`. Results per page: `PAGE` in `src/app/index.tsx`. How forgiving: the `0.45` / `0.4` numbers in `search_services()` (v14 section 6; lower = more forgiving) |
+| **Search** | **Plan first, everyone takes turns (v31):** matching listings show Business plan first, then Growth, then Starter; inside each plan the order rotates every 30 minutes, so every business gets turns at the front (everyone sees the same order during a half hour). Typing most of a business's name shows only that business. While typing, a list under the box suggests up to 3 businesses (tap to open: one whose name was typed first, then 2 spots for the highest plan that matches and 1 spot that all other plans share in turn) and services (tap to search). (v30 put the best word match first; v31 keeps v30's matching rules and changes only the order.) Updates as you type (from 2 letters; deleting letters widens the results). Listing name, description, hidden tags and the business name (v24); words of 4+ letters match inside words ("clean" finds "housecleaning") while 2-3 letter words match only word starts ("ac" finds AC servicing, not "packing") (v25); related word forms match ("cleaner" finds "cleaning", "plumber" finds "plumbing"); several words show listings with all of them, or any of them if none has all; forgives small spelling mistakes; 30 results at a time. Results show in two swipe rows: Popular picks (the highest-paying plan in the results: Business, or Growth if there are no Business listings, or Starter), then More local services (the rest, highest-paying first), with no tier names and never an empty row | How often the order turns: 30 in `search_turn_minutes()` (v31; change it and run just that function in the SQL Editor). Wait after typing: `LIVE_WAIT` in `src/app/index.tsx`. Matching: `search_services()`, `search_word_found()` and `search_norm()` in v25, `search_stem()` in v24. Layout: `splitRows` in `src/lib/rows.ts` + `ListingRow`. Results per page: `PAGE` in `src/app/index.tsx`. How forgiving: the `0.45` / `0.4` numbers in `search_services()` (v14 section 6; lower = more forgiving) |
 | **Photo framing + full-screen photos** | Merchants tap a photo on Offer/Edit and drag it to choose which part shows on cards (the whole photo is kept). Customers tap any photo on a listing to see it whole, swipe between photos, × to close | Framing window: `src/components/PhotoFramer.tsx`. Viewer: `src/components/PhotoViewer.tsx`. Focus helpers: `src/lib/focus.ts`. Database: `services.photo_focus` (`supabase/upgrade-v18-photo-focus.sql`) |
 | **Smaller photos** | Photos shrink to max 1600 px wide, JPEG quality 0.7 before upload | `MAX_WIDTH` and `QUALITY` in `src/lib/photos.ts` |
 | **Opening hours** (per listing) | "Show opening hours" switch + weekly table on Offer/Edit; "Open now / Closed now" card on the listing (Antigua time) | Starting week: `DEFAULT_HOURS` in `src/lib/hours.ts`. Editor: `src/components/HoursEditor.tsx`. Card: `src/components/HoursCard.tsx`. Small "Open" on Home cards (only while open): `ListingCard` in `src/components/ListingRow.tsx`. Database: `supabase/upgrade-v15-opening-hours.sql`. Demo hours: `supabase/demo-opening-hours.sql` |
 | **Name (screen name)** | The "Name" asked at sign-up; shown on reviews and messages sent in Customer view. In Merchant view the business name is shown instead. Each chat/review remembers which | Sign-up: `src/app/login.tsx`. Account: Name + Business name boxes in `src/app/account.tsx`. Which name to show: `customerName` in `src/lib/names.ts`. Database: `supabase/upgrade-v16-screen-name.sql` |
 | **Business profile link** | Tapping the business name on a listing opens their profile | `Listing` in `src/app/service/[id].tsx` |
 | **Push notifications** | New messages, booking cards, booking reminders, plan ending | App side: `src/lib/push.ts`. What triggers them and their wording: `push_new_message()` and `plan_expiry_reminders()` in v14 section 7 |
-| **Payments (provider-ready)** | Activates a plan automatically when your provider confirms a payment | `supabase/functions/payment-webhook/index.ts` (the part marked PROVIDER-SPECIFIC) |
+| **Card payments (ACB / CyberSource, v32)** | Pay on Checkout opens the secure card page; a paid order switches the plan on and makes the receipt | `supabase/functions/payment-start`, `payment-return`, `payment-webhook`; `src/app/pay.tsx`, `payment-result.tsx`; steps in `docs/CYBERSOURCE-SETUP.md` |
 | **Automated tests** | Check prices, Antigua time, bookings, unread messages, the price box | `__tests__/` folder; run `npm test` |
 | **Migrations** | All database changes, numbered in order, for the Supabase tool | `supabase/migrations/` |
 | **Phone builds** | Settings for test and store builds | `eas.json` |
@@ -129,25 +129,18 @@ They are sent by the database through Expo's free push service. To switch them o
 
 ---
 
-## 6. Payments (when you choose a provider)
+## 6. Payments (ACB, using CyberSource)
 
-1. Set `EXPO_PUBLIC_PAY_URL` in `.env` to the provider's payment page. The Pay button sends
-   `merchant`, `tier`, `booking` and `amount` to it.
-2. In `supabase/functions/payment-webhook/index.ts`, adapt `readPayment` to the provider's webhook
-   format, and use their signature check if they offer one.
-3. Deploy it (needs the Supabase tool, step 7):
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref YOUR-PROJECT-REF
-   npx supabase secrets set PAYMENT_WEBHOOK_SECRET=a-long-random-password PAYMENT_PROVIDER=yourprovider
-   npx supabase functions deploy payment-webhook --no-verify-jwt
-   ```
-4. Give the provider the webhook address: `https://YOUR-PROJECT-REF.supabase.co/functions/v1/payment-webhook`.
+Built 2026-11-07 (database v32). The full switch-on steps, the secret names and the test card are in
+`docs/CYBERSOURCE-SETUP.md` ("Owner: switching it on for testing"). In short: run v32, add the CyberSource
+secrets in Supabase > Edge Functions > Secrets, put the functions online with `npx supabase functions deploy`,
+set `EXPO_PUBLIC_PAY_URL` in `.env`, then pay with a test card.
 
-The webhook checks the secret, ignores payments it has already seen, checks the amount matches the
-plan, then activates the plan (one month + receipt). Remember the app-store rules: Apple and Google
-generally require their own billing for things bought inside an app; taking payment on a website is
-the usual approach. Check the current rules before publishing.
+How it works: Checkout > Pay > Servly works out the price > ACB's secure card page (Servly never sees the
+card number) > back to Servly > the plan switches on for a month and the receipt appears. If a merchant
+closes the page early, CyberSource still tells Servly. Not built yet: the automatic monthly charge.
+Remember the app-store rules: Apple and Google generally require their own billing for things bought
+inside an app; taking payment on a website is the usual approach. Check the current rules before publishing.
 
 ---
 

@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Servly style B harbour night</title>
+<style>
+  html,body{margin:0;width:1080px;height:1920px;overflow:hidden}
+  body{background:linear-gradient(180deg,#0B3A63 0%,#0A3157 60%,#082848 100%);font-family:"Segoe UI",system-ui,sans-serif;position:relative}
+  /* gold sun rising top-right, with soft glow */
+  .glow{position:absolute;right:-260px;top:-260px;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,rgba(252,209,22,.35) 0%,rgba(252,209,22,.10) 40%,rgba(252,209,22,0) 70%)}
+  .sun{position:absolute;right:90px;top:160px;width:220px;height:220px;border-radius:50%;background:#FCD116;box-shadow:0 0 80px rgba(252,209,22,.6)}
+  .ray{position:absolute;right:200px;top:270px;width:6px;height:200px;background:rgba(252,209,22,.55);border-radius:3px;transform-origin:50% 0}
+  /* faint sea lines */
+  .wave{position:absolute;left:0;width:1080px;height:3px;background:rgba(255,255,255,.06)}
+  .card{position:absolute;background:#fff;border-radius:40px;box-shadow:0 30px 70px rgba(0,0,0,.35)}
+  .pill{left:150px;top:640px;width:780px;height:120px;border-radius:60px;display:flex;align-items:center;padding:0 44px;box-sizing:border-box;gap:28px}
+  .dot{width:46px;height:46px;border-radius:50%;border:7px solid #0072C6;box-sizing:border-box;position:relative}
+  .dot:after{content:"";position:absolute;width:24px;height:7px;background:#0072C6;border-radius:4px;right:-22px;bottom:-10px;transform:rotate(45deg)}
+  .bar{height:18px;border-radius:9px;background:#E7E5DE}
+  .cursor{width:5px;height:56px;background:#0072C6;border-radius:3px}
+  .go{margin-left:auto;height:72px;padding:0 34px;border-radius:36px;background:#FCD116;display:flex;align-items:center}
+  .go i{display:block;width:90px;height:14px;border-radius:7px;background:#0B3A63}
+  .biz{top:840px;width:300px;height:420px;display:flex;flex-direction:column;align-items:center;padding-top:60px;box-sizing:border-box;gap:34px}
+  .icon{width:150px;height:150px;border-radius:36px;background:#EEF4FA;display:flex;align-items:center;justify-content:center}
+  .line{width:200px;height:16px;border-radius:8px;background:#E7E5DE}
+  .short{width:130px}
+  .hl{outline:6px solid #FCD116;outline-offset:6px;transform:scale(1.06)}
+  .star{position:absolute;top:-34px;right:-34px;width:76px;height:76px;border-radius:50%;background:#FCD116;box-shadow:0 0 30px rgba(252,209,22,.7)}
+  svg.i{stroke:#0B3A63;stroke-width:7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .flag{position:absolute;left:0;bottom:0;width:1080px;height:16px;display:flex}
+  .flag i{display:block;height:100%}
+  .pin{position:absolute;left:465px;top:1400px;width:150px;height:190px}
+</style></head>
+<body>
+  <div class="glow"></div>
+  <div class="ray" style="transform:rotate(25deg)"></div><div class="ray" style="transform:rotate(55deg)"></div><div class="ray" style="transform:rotate(85deg)"></div>
+  <div class="sun"></div>
+  <div class="wave" style="top:1620px"></div><div class="wave" style="top:1680px;left:120px"></div><div class="wave" style="top:1740px;left:-80px"></div><div class="wave" style="top:1800px;left:200px"></div>
+
+  <div class="card pill"><div class="dot"></div><div class="bar" style="width:260px"></div><div class="cursor"></div><div class="go"><i></i></div></div>
+
+  <div class="card biz" style="left:40px"><div class="icon"><svg class="i" width="90" height="90" viewBox="0 0 90 90"><rect x="10" y="26" width="70" height="48" rx="10"/><circle cx="45" cy="50" r="14"/><path d="M30 26l6-10h18l6 10"/></svg></div><div class="line"></div><div class="line short"></div></div>
+  <div class="card biz hl" style="left:390px"><div class="star"></div><div class="icon"><svg class="i" width="90" height="90" viewBox="0 0 90 90"><circle cx="24" cy="66" r="12"/><circle cx="66" cy="66" r="12"/><path d="M33 58L70 14M57 58L20 14"/></svg></div><div class="line"></div><div class="line short"></div></div>
+  <div class="card biz" style="left:740px"><div class="icon"><svg class="i" width="90" height="90" viewBox="0 0 90 90"><path d="M60 12a18 18 0 0 0-22 24L14 60a8 8 0 0 0 12 12l24-24a18 18 0 0 0 24-22l-12 12-10-4-4-10z"/></svg></div><div class="line"></div><div class="line short"></div></div>
+
+  <svg class="pin" viewBox="0 0 150 190">
+    <ellipse cx="75" cy="182" rx="34" ry="7" fill="rgba(0,0,0,.35)"/>
+    <path d="M75 6C39 6 12 33 12 68c0 46 63 106 63 106s63-60 63-106C138 33 111 6 75 6z" fill="#0072C6" stroke="#fff" stroke-width="6"/>
+    <circle cx="75" cy="66" r="34" fill="#fff"/>
+    <text x="75" y="84" text-anchor="middle" font-family="Segoe UI,sans-serif" font-weight="800" font-size="50" fill="#0072C6">S</text>
+  </svg>
+
+  <div class="flag">
+    <i style="flex:7;background:#0072C6"></i><i style="flex:.7;background:#fff"></i><i style="flex:.7;background:#CE1126"></i><i style="flex:.7;background:#111111"></i>
+    <i style="flex:1.6;background:#FCD116"></i>
+    <i style="flex:.7;background:#111111"></i><i style="flex:.7;background:#CE1126"></i><i style="flex:.7;background:#fff"></i><i style="flex:7;background:#0072C6"></i>
+  </div>
+</body></html>

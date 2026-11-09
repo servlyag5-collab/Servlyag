@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WideSplit } from '../components/WideSplit';
@@ -11,7 +11,9 @@ import { colors, ui } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
 
 type T = { id: string; name: string; monthly_price: number; booking_included: boolean };
-const PAY_URL = process.env.EXPO_PUBLIC_PAY_URL; // your payment provider's page (set once you pick a provider)
+// The website's /pay page (e.g. https://servlyag.com/pay). It opens CyberSource's secure payment page (ACB).
+// Empty = online payment not switched on yet.
+const PAY_URL = process.env.EXPO_PUBLIC_PAY_URL;
 
 // Order summary for the plan chosen on the Plan screen, then on to the payment page.
 export default function Checkout() {
@@ -23,6 +25,8 @@ export default function Checkout() {
   const [code, setCode] = useState('');
   const [promoBusy, setPromoBusy] = useState(false);
   const [promoErr, setPromoErr] = useState('');
+  const [paying, setPaying] = useState(false);
+  const [payErr, setPayErr] = useState('');
 
   useEffect(() => {
     supabase.from('tiers').select('id,name,monthly_price,booking_included').eq('id', tier).single().then(({ data }) => setT(data as T));
@@ -42,6 +46,19 @@ export default function Checkout() {
   async function removeCode() {
     await supabase.rpc('remove_my_promo');
     setPromo(null);
+  }
+
+  // Servly's server works out the price and saves the order, then the /pay page sends the merchant to
+  // CyberSource. On the website it opens in the same tab; in the phone apps, in the web browser.
+  async function pay() {
+    if (!t) return;
+    setPaying(true); setPayErr('');
+    const { data, error } = await supabase.functions.invoke('payment-start', { body: { tier: t.id, booking: withBooking } });
+    setPaying(false);
+    if (error || !data?.order) return setPayErr('The payment page could not be opened. Please try again in a moment.');
+    const query = `order=${encodeURIComponent(data.order)}&s=${encodeURIComponent(data.secret)}`;
+    if (Platform.OS === 'web') router.push(`/pay?${query}` as Href);
+    else Linking.openURL(`${PAY_URL}?${query}`);
   }
 
   const withBooking = !!t && !t.booking_included && booking === '1';
@@ -110,10 +127,13 @@ export default function Checkout() {
               </View>
             )}
             {PAY_URL ? (
-              <Pressable style={[ui.btn, ui.primary]}
-                onPress={() => Linking.openURL(`${PAY_URL}?merchant=${session?.user.id}&tier=${t.id}&booking=${withBooking ? 1 : 0}&amount=${total}${promo && discount > 0 ? `&promo=${promo.code}` : ''}`)}>
-                <Text style={[ui.btnText, { color: '#fff' }]}>Pay {total} XCD</Text>
-              </Pressable>
+              <>
+                <Pressable style={[ui.btn, ui.primary]} onPress={pay} disabled={paying || !session}>
+                  {paying ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>Pay {total} XCD</Text>}
+                </Pressable>
+                <Text style={[ui.muted, { fontSize: 14, textAlign: 'center' }]}>You'll pay on ACB's secure card page. Servly never sees your card number.</Text>
+                {!!payErr && <Text style={ui.error}>{payErr}</Text>}
+              </>
             ) : (
               <View style={[ui.card, { borderColor: colors.gold, borderWidth: 2 }]}>
                 <Text style={{ fontWeight: '800', fontSize: 16, color: colors.ink }}>Online payment is not connected yet</Text>

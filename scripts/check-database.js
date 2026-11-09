@@ -37,6 +37,8 @@ const checks = [
   ['v28', 'free bookings (Admin "Bookings on, no charge")', { rpc: 'admin_stop_free_booking', body: { p_user: ZERO } }],
   ['v29', 'call taps (Admin call counts)', { rpc: 'antigua_month_start', body: {} }],
   ['v30', 'ranked search + suggestions (best match first)', { rpc: 'search_suggestions', body: { p_q: 'test' } }],
+  ['v31', 'fair turns (Business plan first, everyone takes turns)', { rpc: 'search_turn_minutes', body: {} }],
+  ['v32', 'card payments (payment orders for ACB / CyberSource)', { get: 'payment_orders?select=id&limit=1' }],
 ];
 
 const MISSING = ['PGRST202', 'PGRST205', '42703', '42883', '42P01'];
