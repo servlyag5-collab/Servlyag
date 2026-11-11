@@ -1,5 +1,5 @@
-import { createHmac } from 'crypto';
-import { outcome, paymentFields, signedDateTime, signFields, verifyFields, verifyWebhook } from '../supabase/functions/_shared/cybersource';
+import { createHash, createHmac } from 'crypto';
+import { chargeResult, outcome, paymentFields, REST_HOST, renewalBody, restHeaders, signedDateTime, signFields, verifyFields, verifyWebhook } from '../supabase/functions/_shared/cybersource';
 
 const SECRET = 'test-secret-key';
 
@@ -56,4 +56,34 @@ it('turns CyberSource decisions into Servly order statuses', () => {
   expect(outcome('REVIEW')).toBe('pending');
   expect(outcome('DECLINE')).toBe('declined');
   expect(outcome(undefined)).toBe('declined');
+});
+
+describe('Monthly charges (REST)', () => {
+  const secret = Buffer.from('rest-shared-secret').toString('base64');
+  const body = JSON.stringify(renewalBody({ reference: 'charge-1-1', token: 'TOKEN123', amount: 125, currency: 'XCD', previousTransactionId: '7943' }));
+  const h = restHeaders({ host: REST_HOST.test, merchantId: 'servly_test', keyId: 'KEY1', secret, path: '/pts/v2/payments', body, date: 'Tue, 10 Nov 2026 10:00:00 GMT' });
+
+  it('signs host, date, target, body hash and merchant id with the Base64-decoded secret', () => {
+    const digest = 'SHA-256=' + createHash('sha256').update(body).digest('base64');
+    expect(h.digest).toBe(digest);
+    const lines = ['host: apitest.cybersource.com', 'date: Tue, 10 Nov 2026 10:00:00 GMT', 'request-target: post /pts/v2/payments', `digest: ${digest}`, 'v-c-merchant-id: servly_test'].join('\n');
+    const sig = createHmac('sha256', Buffer.from(secret, 'base64')).update(lines).digest('base64');
+    expect(h.signature).toBe(`keyid="KEY1", algorithm="HmacSHA256", headers="host date request-target digest v-c-merchant-id", signature="${sig}"`);
+    expect(h['v-c-merchant-id']).toBe('servly_test');
+  });
+
+  it('charges the saved token as a captured, merchant-initiated recurring payment', () => {
+    const b = JSON.parse(body);
+    expect(b.paymentInformation.customer.id).toBe('TOKEN123');
+    expect(b.orderInformation.amountDetails).toEqual({ totalAmount: '125.00', currency: 'XCD' });
+    expect(b.processingInformation).toMatchObject({ capture: true, commerceIndicator: 'recurring' });
+    expect(b.processingInformation.authorizationOptions.initiator).toMatchObject({ type: 'merchant', storedCredentialUsed: true, merchantInitiatedTransaction: { previousTransactionId: '7943' } });
+  });
+
+  it('counts only an authorised charge as paid', () => {
+    expect(chargeResult(201, { id: 'T1', status: 'AUTHORIZED' })).toEqual({ ok: true, id: 'T1', reason: 'AUTHORIZED', message: null });
+    expect(chargeResult(201, { id: 'T2', status: 'DECLINED', errorInformation: { reason: 'EXPIRED_CARD', message: 'Expired card' } }))
+      .toEqual({ ok: false, id: 'T2', reason: 'EXPIRED_CARD', message: 'Expired card' });
+    expect(chargeResult(401, {}).ok).toBe(false);
+  });
 });

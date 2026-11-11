@@ -118,6 +118,39 @@ on Recurring Billing webhooks (they are only checked and logged for now).
 5. Test: Plan > choose a plan > Checkout > Pay > card 4111 1111 1111 1111, any future expiry, any 3-digit
    code. Then tell the CyberSource rep the endpoint is live, so they can finish the webhook subscriptions.
 
+**Support case 002799226** (CyberSource): reply to the case follow-up, not a new email. Support confirmed TMS,
+Recurring Billing, "Servly Test" active, Visa with XCD, keys, Customer Response. 2026-11-10: payment functions
+checked online (payment-webhook rejects unsigned requests with 401 "Bad signature"); owner replying with: finish
+webhook subscriptions + delivery test, reason 150 (xcd_outlet_id / xcd_terminal_id), tokenization "session timeout".
+
+**2026-11-10: first full test payment WORKED** (order f194e939-ad32-4735-b137-7fd030146c61, Growth + bookings,
+125.00 XCD, ACCEPT / reason 100, status paid). What it took: the rep set the XCD outlet/terminal IDs (reason 150
+gone; Virtual Terminal test Request ID 7943499578246693104010 = SOK); in the "Servly Test" profile
+(33087B8A-18BD-4755-8C19-764F6C58599C) Customer Response > Transaction Response Page = **Hosted By You** ->
+payment-return (it was "Hosted By Visa Acceptance Solutions", so the merchant saw CyberSource's receipt and no
+answer reached Servly), Merchant POST URL enabled -> payment-webhook; activating needed CyberSource's **domain
+validation** of the supabase.co address (approved). Order e38ba495-... (22:40 UTC) stays "pending": paid on
+CyberSource's test system before those settings were active; ignore it, never activate it by hand.
+Still open: saving cards (`sale,create_payment_token` -> session_timeout page; RIDs/timestamps sent on the case,
+orders 093f0716-... and e562475a-..., 12:57/12:58 UTC), webhook subscriptions + delivery test, monthly charges.
+
+## Built 2026-11-10: automatic monthly charges (database v33; NOT yet tested)
+
+Waits on CyberSource enabling tokenization (reason 102 "This account is not enabled for tokenization",
+case 002799226). How it works: each morning at 6 AM Antigua the `payment-renewals` function charges the saved
+card (billing_cards) of merchants whose plan ends in the next 24 hours, by REST (/pts/v2/payments, signed with
+the REST Shared Secret). Paid = one month added from the old end date + receipt + notification. Failed = tried
+again each of the next 3 days, listings stay visible meanwhile, notification each time; then the listings hide.
+Merchants switch "Pay automatically each month" on Account. Nobody is charged without a saved card.
+
+### Owner: switching monthly charges on (after CyberSource enables tokenization)
+1. Supabase > SQL Editor: run `supabase/upgrade-v33-monthly-charges.sql` (safe to run now).
+2. Supabase > Edge Functions > Secrets: add `CYBS_MERCHANT_ID` = servlyag_1793983604, `CYBS_REST_KEY_ID` (the REST
+   key's Key ID) and `CYBS_REST_SECRET` (its Shared Secret), from Key Management > REST - Shared Secret.
+3. Deploy the functions again: `npx supabase functions deploy` (adds payment-renewals and the Checkout wording).
+4. When tokenization is on: set `CYBS_SAVE_CARD` = `yes`, pay once (the card is saved), then Claude helps test a
+   charge (by moving the test account's end date to tomorrow and running the job once).
+
 ## Claude's steps (developer)
 
 - Build a small server function that prepares a signed payment request (so the price can't be changed by anyone).

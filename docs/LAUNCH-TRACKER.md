@@ -60,7 +60,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [ ] Add the CyberSource secrets in Supabase > Edge Functions > Secrets (list in docs/CYBERSOURCE-SETUP.md)
 - [ ] Put the payment functions online (npx supabase login / link / functions deploy), then a test payment with card 4111 1111 1111 1111
 - [ ] Build the automatic monthly charge (Claude, needs the REST key)
-- [ ] CyberSource: set up XCD outlet ID and terminal ID on the test processor (fdiglobal). Test payments fail with reason 150 "xcd_outlet_id, xcd_terminal_id missing" (2026-11-08). Waiting on the CyberSource rep / ACB
+- [x] CyberSource: XCD outlet ID and terminal ID set up by the rep; first full test payment through Servly worked (2026-11-10)
 - [ ] Decide how merchants pay in the store apps (options in docs/STORE-BILLING.md, 2026-11-09): website-only payment is likely to be rejected by Apple and Google; the app's Pay button must change before submitting. Owner leaning to option 1 (website + Apple/Google billing), final decision another day; not built yet
 - [x] Password-reset email through Resend works: test arrived 2026-11-09, from "Servly AG" <noreply@servlyag.com>, signed by servlyag.com, encrypted, landed in the inbox (not spam)
 - [ ] Deleting a listing: owner to choose who can delete (merchant, admin, or both); needs a database change
@@ -96,7 +96,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [ ] Sign up Founding Merchants and start their free trials (Admin > Merchants)
 - [ ] Switch on LAUNCH50 on launch day (Admin > Promos); LAUNCH50B when it runs out
 - [ ] Social media launch posts
-- [ ] Remove or hide the demo businesses
+- [ ] Remove or hide the demo businesses, and reset the owner test account (yonnie J photo media events: Business until 24 Nov 2027 from 2026-10-24 "Owner testing", then Growth; test payments)
 
 ---
 
@@ -143,3 +143,11 @@ Short dated notes the brief should know about (decisions, things you are waiting
 - 2026-11-07: CyberSource confirmed the test profile is active, Secure Acceptance works, and Token Management,
   Recurring Billing and XCD are available in the sandbox. Next: webhook signature key now; the webhook
   subscription once the notification function is reachable.
+- 2026-11-10: CyberSource support case **002799226** (reply to the case follow-up). Endpoint confirmed online; owner
+  replying to ask for: webhook subscriptions + delivery test, XCD outlet/terminal IDs (reason 150), saving cards. Waiting on CyberSource.
+- 2026-11-10: First full test card payment worked (Growth + bookings, 125.00 XCD, paid). Fixes: XCD outlet/terminal IDs (rep),
+  Transaction Response Page = Hosted By You -> payment-return, Merchant POST -> payment-webhook (after CyberSource domain
+  validation). Still waiting on case 002799226: saving cards (session timeout) and webhook subscriptions + delivery test.
+- 2026-11-10: Saving cards fails with reason 102 "This account is not enabled for tokenization" (asked CyberSource on case 002799226).
+  Automatic monthly charges BUILT (database v33, not yet run or tested; owner's rules: charge on the end date, retry 3 days with
+  listings visible, merchants switch auto-pay off on Account). Waiting on tokenization; steps in docs/CYBERSOURCE-SETUP.md.

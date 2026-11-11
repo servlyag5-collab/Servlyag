@@ -27,6 +27,11 @@ export default function Checkout() {
   const [promoErr, setPromoErr] = useState('');
   const [paying, setPaying] = useState(false);
   const [payErr, setPayErr] = useState('');
+  const [saveCard, setSaveCard] = useState(false); // the card is saved for automatic monthly payments (server setting)
+
+  useEffect(() => {
+    supabase.functions.invoke('payment-start', { method: 'GET' }).then(({ data }) => setSaveCard(!!data?.saveCard));
+  }, []);
 
   useEffect(() => {
     supabase.from('tiers').select('id,name,monthly_price,booking_included').eq('id', tier).single().then(({ data }) => setT(data as T));
@@ -94,7 +99,10 @@ export default function Checkout() {
               <Text style={ui.muted}>Your listings go live as soon as your payment is confirmed. Each payment covers one month.</Text>
               {/* Shown before paying, as banks and the stores expect: renewal, how to cancel, refunds. */}
               <Text style={[ui.muted, { fontSize: 14, lineHeight: 20 }]}>
-                Renews every month until you cancel (Contact support). No refund once a month has started.{' '}
+                {saveCard
+                  ? 'Your card is saved securely by our payment provider (Servly never sees the number) and charged automatically each month on your renewal date, until you turn automatic payments off on your Account page.'
+                  : 'Renews every month until you cancel (Contact support).'}{' '}
+                No refund once a month has started.{' '}
                 <Text style={{ color: colors.blue, fontWeight: '700', textDecorationLine: 'underline' }} onPress={() => router.push('/refunds' as Href)}>
                   Refund and Cancellation Policy
                 </Text>

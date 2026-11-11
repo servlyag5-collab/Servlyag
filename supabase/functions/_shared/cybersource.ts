@@ -1,6 +1,6 @@
 // Shared CyberSource helpers for Servly's server functions (Deno), also tested from jest (__tests__).
 // Only node:crypto is used, so the same file runs in both.
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 
 // Secure Acceptance (the hosted payment page): signs "name=value,name=value" for the fields listed in
@@ -67,6 +67,60 @@ export function verifyWebhook(header: string | null, body: string, key: string, 
   if (keyId && parts.keyId && parts.keyId !== keyId) return false;
   const sig = createHmac('sha256', Buffer.from(key, 'base64')).update(`${parts.t}.${body}`, 'utf8').digest('base64');
   return same(sig, parts.sig);
+}
+
+// REST API (monthly charges of a saved card). Each request is signed with the REST Shared Secret key
+// ("HTTP Signature"): HMAC-SHA256, with the Base64-decoded secret, of the lines
+// "host: ...", "date: ...", "request-target: post /path", "digest: SHA-256=<body hash>", "v-c-merchant-id: ...".
+export const REST_HOST = { test: 'apitest.cybersource.com', live: 'api.cybersource.com' };
+
+export function restHeaders(o: {
+  host: string; merchantId: string; keyId: string; secret: string; path: string; body: string; date?: string;
+}): Record<string, string> {
+  const date = o.date ?? new Date().toUTCString();
+  const digest = 'SHA-256=' + createHash('sha256').update(o.body, 'utf8').digest('base64');
+  const lines = [`host: ${o.host}`, `date: ${date}`, `request-target: post ${o.path}`, `digest: ${digest}`, `v-c-merchant-id: ${o.merchantId}`];
+  const sig = createHmac('sha256', Buffer.from(o.secret, 'base64')).update(lines.join('\n'), 'utf8').digest('base64');
+  return {
+    'Content-Type': 'application/json',
+    'v-c-merchant-id': o.merchantId,
+    date,
+    digest,
+    signature: `keyid="${o.keyId}", algorithm="HmacSHA256", headers="host date request-target digest v-c-merchant-id", signature="${sig}"`,
+  };
+}
+
+// One monthly charge of a saved card: a merchant-initiated recurring payment, captured at once.
+export function renewalBody(o: { reference: string; token: string; amount: number; currency: string; previousTransactionId?: string | null }) {
+  return {
+    clientReferenceInformation: { code: o.reference },
+    processingInformation: {
+      capture: true,
+      commerceIndicator: 'recurring',
+      authorizationOptions: {
+        initiator: {
+          type: 'merchant',
+          storedCredentialUsed: true,
+          ...(o.previousTransactionId ? { merchantInitiatedTransaction: { previousTransactionId: o.previousTransactionId } } : {}),
+        },
+      },
+    },
+    paymentInformation: { customer: { id: o.token } },
+    orderInformation: { amountDetails: { totalAmount: o.amount.toFixed(2), currency: o.currency } },
+  };
+}
+
+// What CyberSource's REST answer means: paid only when the card was authorised (and captured).
+export function chargeResult(httpStatus: number, r: {
+  id?: string; status?: string; errorInformation?: { reason?: string; message?: string }; reason?: string; message?: string;
+}): { ok: boolean; id: string | null; reason: string | null; message: string | null } {
+  const ok = httpStatus === 201 && r.status === 'AUTHORIZED';
+  return {
+    ok,
+    id: r.id ?? null,
+    reason: r.errorInformation?.reason ?? r.reason ?? r.status ?? (ok ? null : `HTTP ${httpStatus}`),
+    message: r.errorInformation?.message ?? r.message ?? null,
+  };
 }
 
 // What a signed answer means for Servly.

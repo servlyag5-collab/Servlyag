@@ -50,6 +50,8 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const id = url.searchParams.get('order') ?? '';
     const s = url.searchParams.get('s') ?? '';
+    // No order: Checkout asks whether the card will be saved for automatic monthly payments (shown before paying).
+    if (!id) return json({ saveCard: Deno.env.get('CYBS_SAVE_CARD') === 'yes' });
     const { data: order } = await db.from('payment_orders').select('*').eq('id', id).maybeSingle();
     if (!order || !s || order.link_secret !== s) return json({ error: 'This payment link is not valid.' }, 404);
     if (order.status !== 'pending') return json({ error: 'This payment is already finished.', status: order.status }, 409);

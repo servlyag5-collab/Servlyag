@@ -426,3 +426,6 @@ verify_jwt = false
 
 [functions.payment-webhook]
 verify_jwt = false
+
+[functions.payment-renewals]
+verify_jwt = false

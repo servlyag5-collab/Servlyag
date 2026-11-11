@@ -92,19 +92,20 @@ export const TERMS: Section[] = [
 ];
 
 // Refund and Cancellation Policy (servlyag.com/refunds). Owner's rules (Oct 2026): no refund once a month
-// has started; cancel through Contact support; billing mistakes reported within 30 days are refunded.
+// has started; cancel by turning automatic payments off on Account (v33, 2026-11-10) or through Contact
+// support; a failed automatic payment is retried for 3 days; billing mistakes reported within 30 days are refunded.
 export const REFUNDS: Section[] = [
   { heading: 'About this policy', body: [
     'This policy covers payments made to Servly AG: monthly merchant plans (Starter, Growth and Business) and the bookings upgrade (the booking app). Prices are in Eastern Caribbean dollars (XCD).',
     'Servly does not take payment for the services merchants offer. If you paid a merchant for a haircut, a delivery or any other service, refunds for that service are between you and the merchant.',
   ] },
   { heading: 'How monthly plans work', body: [
-    'Each payment covers one month, starting when the plan is activated. Plans renew every month, and the payment method is charged automatically, until the plan is cancelled.',
-    'If a monthly payment does not go through, the plan ends on its end date and the listings are hidden from customers until it is renewed.',
+    'Each payment covers one month, starting when the plan is activated. When you pay by card, the card is saved securely by our payment provider (Servly never sees the full card number) and charged automatically on each renewal date (the end date shown on your Account page), until automatic payments are turned off or the plan is cancelled.',
+    'If an automatic payment does not go through, we try the card again on each of the next 3 days and let you know each time. Your listings stay visible during those 3 days. If no payment goes through, the plan ends and the listings are hidden from customers until it is renewed.',
   ] },
   { heading: 'Cancelling', body: [
-    `You can cancel at any time. In the app, open the ☰ menu > Contact support and choose Billing, or email ${CONTACT}. We will confirm your cancellation.`,
-    'To avoid the next charge, please cancel before your renewal date (shown on your Account page). After you cancel, your plan keeps working until the end of the month you have paid for. Then it ends and your listings are hidden. Your account and listings are kept, so you can renew later.',
+    `You can cancel at any time: on your Account page, turn off "Pay automatically each month". You can also open the ☰ menu > Contact support and choose Billing, or email ${CONTACT}, and we will confirm your cancellation.`,
+    'To avoid the next charge, please turn automatic payments off (or cancel) before your renewal date (shown on your Account page). After you cancel, your plan keeps working until the end of the month you have paid for. Then it ends and your listings are hidden. Your account and listings are kept, so you can renew later.',
   ] },
   { heading: 'Refunds', body: [
     'Once a month has started, the payment for that month is not refundable, including for unused days or features, unless the law requires otherwise.',

@@ -8,6 +8,7 @@ import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { LegalLinks } from '../components/LegalLinks';
 import { PhoneToggle } from '../components/PhoneToggle';
+import { AutoPay } from '../components/AutoPay';
 import { PlanBanner } from '../components/PlanBanner';
 import { forgetThisDevice } from '../lib/push';
 import { setMode, useMode } from '../lib/mode';
@@ -190,6 +191,7 @@ export default function Account() {
                   <Text style={{ fontSize: 16, fontWeight: '700', color: active ? colors.blue : colors.red }}>
                     {active ? planStatus(me.tiers?.name, me.plan_expires_at!, trialEnd) : 'No active plan. Customers cannot see your listings yet.'}
                   </Text>
+                  <AutoPay active={active} />
                   <Pressable style={[ui.btn, ui.outline]} onPress={() => router.push('/plan')}><Text style={[ui.btnText, { color: colors.ink }]}>See plans</Text></Pressable>
                 </View>
 
