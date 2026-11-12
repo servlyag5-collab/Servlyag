@@ -28,13 +28,12 @@ Deno.serve(async (req) => {
 
   const body = await req.text();
   const key = Deno.env.get('CYBS_WEBHOOK_SECRET') ?? '';
-  if (!verifyWebhook(req.headers.get('v-c-signature'), body, key, Deno.env.get('CYBS_WEBHOOK_KEY_ID') ?? undefined)) {
-    console.log('payment-webhook: webhook signature check failed');
-    return json({ error: 'Bad signature' }, 401);
-  }
+  const verified = verifyWebhook(req.headers.get('v-c-signature'), body, key, Deno.env.get('CYBS_WEBHOOK_KEY_ID') ?? undefined);
   let event: { eventType?: string } = {};
   try { event = JSON.parse(body); } catch { /* keep empty */ }
-  // Logged for now (Supabase > Edge Functions > payment-webhook > Logs). Monthly charges come next.
-  console.log('payment-webhook: event', event.eventType ?? 'unknown', body.slice(0, 2000));
-  return json({ ok: true });
+  // Only logged for now (Supabase > Edge Functions > payment-webhook > Logs); nothing acts on these yet.
+  // An unsigned message still gets 200, because CyberSource's subscription setup / delivery test may send one;
+  // once these events DO something (e.g. a month added), anything unverified must be refused instead.
+  console.log('payment-webhook: event', verified ? 'verified' : 'NOT VERIFIED', event.eventType ?? 'unknown', body.slice(0, 2000));
+  return json({ ok: true, verified });
 });

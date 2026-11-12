@@ -20,7 +20,7 @@ import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
 
-type S = { active: boolean; paused: boolean; photos: string[]; photo_focus: unknown; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; show_hours: boolean; hours: unknown; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null; plan_expires_at: string | null } | null };
+type S = { active: boolean; paused: boolean; deleted_at: string | null; photos: string[]; photo_focus: unknown; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; show_hours: boolean; hours: unknown; city: string; village: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null; plan_expires_at: string | null } | null };
 
 // The page structure comes ONLY from the merchant's subscription tier (basic | plus | premium).
 // Merchants cannot choose or change it. Edit the three layouts here.
@@ -80,7 +80,7 @@ export default function ServiceDetail() {
 
   useEffect(() => {
     // Customers only get live listings; the owner and admins (v27) also get turned-off, paused and expired ones.
-    supabase.from('services').select('active,paused,photos,photo_focus,merchant_id,title,description,price,price_from,show_hours,hours,city,village,profiles(display_name,tier_id,public_phone,plan_expires_at)').eq('id', id).maybeSingle()
+    supabase.from('services').select('active,paused,deleted_at,photos,photo_focus,merchant_id,title,description,price,price_from,show_hours,hours,city,village,profiles(display_name,tier_id,public_phone,plan_expires_at)').eq('id', id).maybeSingle()
       .then(({ data, error }) => {
         if (error) setLoadErr('Something went wrong loading this listing. Please try again.');
         else if (!data) setLoadErr('This listing isn\'t available right now. The business may have turned it off, or its plan may have ended.');
@@ -139,7 +139,8 @@ export default function ServiceDetail() {
   );
   // Only the owner and admins can open a listing customers can't see: say why customers can't see it.
   const ended = !s.profiles?.plan_expires_at || new Date(s.profiles.plan_expires_at) <= new Date();
-  const hiddenWhy = !s.active ? 'Turned off: customers can\'t see this listing.'
+  const hiddenWhy = s.deleted_at ? 'Deleted: this listing no longer exists for customers.'
+    : !s.active ? 'Turned off: customers can\'t see this listing.'
     : s.paused ? 'Paused (over the plan\'s listing limit): customers can\'t see this listing.'
     : ended ? 'Plan ended: customers can\'t see this listing until the plan is renewed.' : '';
   const hiddenBanner = !!hiddenWhy && (

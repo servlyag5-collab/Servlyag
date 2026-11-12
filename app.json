@@ -17,9 +17,10 @@
         "foregroundImage": "./assets/adaptive-foreground.png",
         "backgroundColor": "#0072C6"
       },
-      "permissions": [
+      "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -31,7 +32,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Servly AG needs your photos so you can show your work."
+          "photosPermission": "Servly AG needs your photos so you can show your work.",
+          "microphonePermission": false,
+          "cameraPermission": false
         }
       ],
       "expo-font",
@@ -39,7 +42,11 @@
       [
         "expo-notifications",
         {
-          "color": "#0072C6"
+          "color": "#0072C6",
+          "sounds": [
+            "./assets/sounds/messages.mp3",
+            "./assets/sounds/updates.mp3"
+          ]
         }
       ],
       "expo-asset",
@@ -58,6 +65,12 @@
         "projectId": "73c20633-e5a5-4de2-a9db-673a16c3a060"
       }
     },
-    "owner": "servlyag"
+    "owner": "servlyag",
+    "updates": {
+      "url": "https://u.expo.dev/73c20633-e5a5-4de2-a9db-673a16c3a060"
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    }
   }
 }

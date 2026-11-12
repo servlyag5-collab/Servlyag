@@ -24,6 +24,7 @@ import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
+import { DeleteListing } from '../../components/DeleteListing';
 
 // One photo in the order shown: already saved (path) or newly picked (asset). The first is the cover.
 type Photo = { path?: string; asset?: ImagePicker.ImagePickerAsset };
@@ -55,7 +56,7 @@ export default function EditListing() {
   useEffect(() => {
     if (!uid) return;
     Promise.all([
-      supabase.from('services').select('title,description,tags,price,price_from,show_hours,hours,city,village,photos,photo_focus').eq('id', id).eq('merchant_id', uid).single(),
+      supabase.from('services').select('title,description,tags,price,price_from,show_hours,hours,city,village,photos,photo_focus').eq('id', id).eq('merchant_id', uid).is('deleted_at', null).maybeSingle(), // deleted listings (v35) can't be edited
       supabase.from('profiles').select('display_name,bio,show_phone').eq('id', uid).single(),
       supabase.rpc('my_phone'), // the real number is private; only its owner can read it
     ]).then(([s, p, ph]) => {
@@ -67,9 +68,10 @@ export default function EditListing() {
       setPriceFrom(!!s.data.price_from);
       setShowHours(!!s.data.show_hours);
       setHours(normalizeHours(s.data.hours));
-      const saved = (s.data.photos ?? []) as string[];
+      const data = s.data;
+      const saved = (data.photos ?? []) as string[];
       setPhotos(saved.map((path) => ({ path })));
-      setFocus(Object.fromEntries(saved.map((path) => [path, focusOf(s.data.photo_focus, path)])));
+      setFocus(Object.fromEntries(saved.map((path) => [path, focusOf(data.photo_focus, path)])));
       if (p.data) {
         setB({ name: p.data.display_name, bio: p.data.bio, phone: (ph.data as string | null) ?? '' });
         setShowPhone(p.data.show_phone);
@@ -195,6 +197,12 @@ export default function EditListing() {
             <Pressable style={[ui.btn, ui.primary]} onPress={save} disabled={busy}>
               {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>Save changes</Text>}
             </Pressable>
+
+            <View style={{ marginTop: 24, gap: 8, borderTopWidth: 1, borderColor: colors.border, paddingTop: 16 }}>
+              <Text style={ui.h2}>Delete this listing</Text>
+              <DeleteListing serviceId={id} title={f.title || 'this listing'} removePhotos
+                onDeleted={() => router.replace('/account')} />
+            </View>
           </>
         )}
         </WideSplit>

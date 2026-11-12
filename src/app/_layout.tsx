@@ -9,6 +9,7 @@ import { useSession } from '../lib/session';
 import { colors } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
 import { introDone } from '../lib/intro';
+import '../lib/authLink'; // starts listening for password reset links as soon as the app opens
 
 let splashPlayed = false; // the opening animation plays once per app launch
 

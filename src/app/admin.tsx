@@ -8,6 +8,7 @@ import { bookingDay } from '../lib/bookings';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
+import { DeleteListing } from '../components/DeleteListing';
 
 // The owner's dashboard (admins only; add yourself with the SQL at the top of upgrade-v14-launch-ready.sql).
 // Merchants: activate/renew plans, start Founding Merchant free trials (v22), give free bookings for N days (v28); with v26 also change
@@ -227,7 +228,8 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
             const live = l.active && !l.paused;
             const status = !l.active ? 'Off' : l.paused ? 'Paused (plan limit)' : active ? 'Live' : 'Hidden: plan ended';
             return (
-              <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View key={l.id} style={{ gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Pressable style={{ flex: 1 }} onPress={() => router.push({ pathname: '/service/[id]', params: { id: l.id } })}>
                   <Text style={{ fontWeight: '700', color: colors.ink }} numberOfLines={1}>{l.title}</Text>
                   <Text style={{ fontSize: 13, color: status === 'Live' ? colors.blue : colors.muted }}>{status} · 📞 {l.calls_month ?? 0} this month, {l.calls_total ?? 0} overall</Text>
@@ -236,6 +238,9 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
                   onPress={() => act(() => supabase.rpc('admin_set_listing_on', { p_service: l.id, p_on: !live }), `Listing "${l.title}" turned ${live ? 'off' : 'on'}.`)}>
                   <Text style={[ui.btnText, { color: live ? colors.ink : '#fff', fontSize: 14 }]}>Turn {live ? 'off' : 'on'}</Text>
                 </Pressable>
+              </View>
+              <DeleteListing serviceId={l.id} title={l.title} removePhotos={false} compact
+                onDeleted={() => { setMsg(`Listing "${l.title}" deleted.`); onChanged(); loadListings(); }} />
               </View>
             );
           })}

@@ -35,6 +35,7 @@ export default function Chat() {
   const sc = useRef<ScrollViewInstance>(null);
   const [bookings, setBookings] = useState<Record<string, Booking>>({});
   const [canBook, setCanBook] = useState<boolean | null>(null); // merchant has the booking app (null = still checking)
+  const [removedTitle, setRemovedTitle] = useState<string | null>(null); // the listing was deleted (v35): the chat is read-only history
   const [blocked, setBlocked] = useState(false);   // I blocked the other person
   const [askBlock, setAskBlock] = useState(false);
 
@@ -55,6 +56,8 @@ export default function Chat() {
         if (!data) return setErr(error?.message ?? 'Conversation not found.');
         const conv = data as unknown as Conv;
         setC(conv);
+        supabase.rpc('removed_listing_titles', { p_ids: [conv.service_id] })
+          .then(({ data: r }) => { const t = (r as { title: string }[] | null)?.[0]?.title; if (t) setRemovedTitle(t); });
         if (conv.merchant_id === uid) hasBookingApp().then(setCanBook);
       });
     supabase.from('messages').select('*').eq('conversation_id', id).order('created_at')
@@ -116,9 +119,11 @@ export default function Chat() {
           <TopBar />
           {c && (
             <>
-              <Pressable onPress={() => router.push({ pathname: '/service/[id]', params: { id: c.service_id } })}>
+              <Pressable disabled={!!removedTitle} onPress={() => router.push({ pathname: '/service/[id]', params: { id: c.service_id } })}>
                 <Text style={ui.h2} numberOfLines={1}>{other}</Text>
-                <Text style={{ color: colors.blue, fontWeight: '700' }} numberOfLines={1}>About: {c.services?.title ?? 'a listing'}</Text>
+                <Text style={{ color: removedTitle ? colors.muted : colors.blue, fontWeight: '700' }} numberOfLines={1}>
+                  About: {removedTitle ? `${removedTitle} (no longer offered)` : c.services?.title ?? 'a listing'}
+                </Text>
               </Pressable>
               <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
                 <ReportButton targetType="user" targetId={otherId} label={`Report ${other}`} />
@@ -148,7 +153,7 @@ export default function Chat() {
                   </Pressable>
                 </View>
               )}
-              {iAmMerchant && (
+              {iAmMerchant && !removedTitle && (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {canBook && (
                     <Pressable onPress={() => router.push({ pathname: '/book/[conversationId]', params: { conversationId: id } })}
@@ -232,6 +237,11 @@ export default function Chat() {
 
         <View style={[bar, { paddingVertical: 12, gap: 6, borderTopWidth: 1, borderColor: colors.border }]}>
           {!!err && !!c && <Text style={ui.error}>{err}</Text>}
+          {removedTitle ? (
+            <Text style={[ui.muted, { textAlign: 'center', fontSize: 14, lineHeight: 20 }]}>
+              This listing was removed, so new messages can't be sent here. You can still read the conversation.
+            </Text>
+          ) : (
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
             <TextInput style={[ui.field, { flex: 1, height: undefined, minHeight: 48, maxHeight: 120, paddingVertical: 12 }]}
               placeholder="Write a message" placeholderTextColor={colors.muted} multiline value={text} onChangeText={setText} editable={!!c} />
@@ -240,6 +250,7 @@ export default function Chat() {
               {busy ? <ActivityIndicator color="#fff" /> : <Ionicons name="send" size={20} color="#fff" />}
             </Pressable>
           </View>
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

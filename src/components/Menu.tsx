@@ -31,7 +31,7 @@ export function MenuButton() {
   useFocusEffect(useCallback(() => {
     if (!uid) return;
     // Only people with at least one listing can switch to merchant view.
-    supabase.from('services').select('id', { count: 'exact', head: true }).eq('merchant_id', uid)
+    supabase.from('services').select('id', { count: 'exact', head: true }).eq('merchant_id', uid).is('deleted_at', null)
       .then((c) => {
         const has = (c.count ?? 0) > 0;
         setHasListings(has);

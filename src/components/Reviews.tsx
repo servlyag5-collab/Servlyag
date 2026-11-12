@@ -48,7 +48,8 @@ function ReviewItem({ r, uid, showListing, onChanged }: { r: Review; uid?: strin
     <View style={[ui.card, { padding: 14, gap: 6 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Text style={{ flex: 1, fontWeight: '800', fontSize: 16, color: colors.ink }} numberOfLines={1}>
-          {r.customer_id === uid ? 'You' : customerName(r.customer, r.as_business)}
+          {/* No writer = they deleted their account; the review stays, shown as "Customer" (v36). */}
+          {!r.customer_id ? 'Customer' : r.customer_id === uid ? 'You' : customerName(r.customer, r.as_business)}
         </Text>
         <Text style={{ fontSize: 12, color: colors.muted }}>{new Date(r.updated_at).toLocaleDateString()}</Text>
       </View>
@@ -109,7 +110,18 @@ export function Reviews({ merchantId, serviceId, limit, allowWrite = true }: {
     let q = supabase.from('reviews').select('*,customer:profiles!customer_id(display_name,screen_name),services(title)').order('created_at', { ascending: false });
     q = serviceId ? q.eq('service_id', serviceId) : q.eq('merchant_id', merchantId);
     if (limit) q = q.limit(limit);
-    q.then(({ data, error }) => { setErr(error?.message ?? ''); setRows((data as unknown as Review[]) ?? []); });
+    q.then(async ({ data, error }) => {
+      setErr(error?.message ?? '');
+      const list = (data as unknown as Review[]) ?? [];
+      // Deleted listings (v35) can't be read any more: name them from removed_listing_titles, "no longer offered".
+      const gone = [...new Set(list.filter((r) => !r.services && r.service_id).map((r) => r.service_id as string))];
+      if (gone.length) {
+        const { data: t } = await supabase.rpc('removed_listing_titles', { p_ids: gone });
+        const names = new Map(((t as { id: string; title: string }[] | null) ?? []).map((x) => [x.id, x.title]));
+        for (const r of list) if (!r.services && r.service_id && names.has(r.service_id)) r.services = { title: `${names.get(r.service_id)} (no longer offered)` };
+      }
+      setRows(list);
+    });
     (serviceId
       ? supabase.from('service_ratings').select('average,total').eq('service_id', serviceId).maybeSingle()
       : supabase.from('merchant_ratings').select('average,total').eq('merchant_id', merchantId).maybeSingle()

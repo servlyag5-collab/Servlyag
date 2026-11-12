@@ -23,14 +23,15 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [x] Free trials for Founding Merchants, LAUNCH50 promo codes (2026-11-01)
 
 ### Still to build (owner's priorities, in order)
-- [ ] Deleting a listing
-- [ ] Payment connection + webhook that activates plans (needs a provider first, see Stage 2)
+- [x] Deleting a listing (2026-11-12, database v35: merchant and admin)
+- [x] Payment connection + webhook that activates plans (first full test payment 2026-11-10)
 - [ ] Settings screen
 - [ ] Final layouts for the three listing page designs (Starter / Growth / Business are placeholders)
 
 ### Database updates run in Supabase
 - [x] All updates up to v30 run (v25 on 2026-11-02; v27-v29 on 2026-11-03; v30 on 2026-11-06; check passes)
 - [x] Run v31 (fair turns in search) (database check shows it installed, 2026-11-07)
+- [x] Run v32 and v33 (card payments, monthly charges) (database check shows both installed, 2026-11-11)
 - [x] You are an admin (`admins` table, OWNER-GUIDE section 1) (owner confirmed 2026-11-02)
 - v21 is replaced by v24/v25 (no need to run it)
 
@@ -52,18 +53,17 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [x] CyberSource test profile "Servly Test": keys created (Profile ID, Access Key, Secret Key in password manager), return and notification addresses filled in (2026-11-07)
 - [x] CyberSource confirmed (2026-11-07): profile "Servly Test" active, Secure Acceptance configured, Token Management, Recurring Billing and **XCD** available in the sandbox
 - [x] CyberSource webhook digital signature key created and saved in the password manager; rep confirmed webhook security is ready (2026-11-07)
-- [ ] CyberSource webhook subscription (payment + recurring billing), done with the rep once Claude's notification function is live
-- [ ] CyberSource REST key (Key Management > REST - Shared Secret), for monthly charges
-- [ ] Put the CyberSource keys into Supabase > Edge Functions > Secrets (names in docs/CYBERSOURCE-SETUP.md)
+- [ ] CyberSource webhook subscription (payment + recurring billing): endpoint live and accepts test messages (2026-11-11); waiting on the rep to subscribe and run the delivery test
+- [x] CyberSource REST key created and added to Supabase secrets (2026-11-10)
+- [x] Put the CyberSource keys into Supabase > Edge Functions > Secrets (2026-11-10: the first test payment through Servly worked, so the keys are in)
 - [x] Build the first-payment connection (Claude, 2026-11-07: Pay button, secure card page, return page, webhook, database v32; tests pass; not yet online)
 - [x] Run v32 (card payments) in Supabase > SQL Editor (database check shows it installed, 2026-11-07)
-- [ ] Add the CyberSource secrets in Supabase > Edge Functions > Secrets (list in docs/CYBERSOURCE-SETUP.md)
-- [ ] Put the payment functions online (npx supabase login / link / functions deploy), then a test payment with card 4111 1111 1111 1111
-- [ ] Build the automatic monthly charge (Claude, needs the REST key)
+- [x] Add the CyberSource secrets in Supabase > Edge Functions > Secrets (2026-11-10, same evidence as above)
+- [x] Put the payment functions online, then a test payment (2026-11-10: Growth + bookings, 125.00 XCD, paid)
+- [x] Build the automatic monthly charge (Claude, 2026-11-10: database v33 + payment-renewals; online; first real charge waits on CyberSource tokenization)
 - [x] CyberSource: XCD outlet ID and terminal ID set up by the rep; first full test payment through Servly worked (2026-11-10)
 - [ ] Decide how merchants pay in the store apps (options in docs/STORE-BILLING.md, 2026-11-09): website-only payment is likely to be rejected by Apple and Google; the app's Pay button must change before submitting. Owner leaning to option 1 (website + Apple/Google billing), final decision another day; not built yet
 - [x] Password-reset email through Resend works: test arrived 2026-11-09, from "Servly AG" <noreply@servlyag.com>, signed by servlyag.com, encrypted, landed in the inbox (not spam)
-- [ ] Deleting a listing: owner to choose who can delete (merchant, admin, or both); needs a database change
 - [ ] CyberSource: allow saving cards (Payment Tokenization) on the Servly Test profile; then add Supabase secret CYBS_SAVE_CARD = yes
 - [x] Email provider (SMTP): Resend, sending as Servly AG <noreply@servlyag.com>; password reset tested end to end (2026-11-02)
 - [ ] Before launch, Supabase > Authentication: change **Site URL** to `https://servlyag.com` (now `http://localhost:8081`) and raise the **email rate limit** (Rate Limits)
@@ -74,16 +74,16 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [ ] Show the support email (servlyag5@gmail.com) on servlyag.com
 - [ ] Point servlyag.com at the Netlify site and make it public. Owner's decision 2026-11-06: NOT yet;
   only when going back to the bank (ACB needs it live for its review)
-- [ ] Pick the final launch date: 15 December or 7 January
+- [x] Launch date: **7 January 2027** (owner's decision 2026-11-12)
 
 ---
 
 ## Stage 3: Get ready for the stores
 
 - [x] Expo project linked (EAS project id) (2026-10-28)
-- [ ] Supabase keys added to EAS (preview + production), OWNER-GUIDE section 5
-- [ ] Android test build installed and checked on a real phone
-- [ ] Push notifications tested on the real build
+- [ ] Supabase keys added to EAS: preview done (checked 2026-11-11); production still to add before a store build
+- [x] Android test build installed and checked on a real phone (2026-11-11, push works)
+- [x] Push notifications tested on the real build: Android test push received (2026-11-11; Firebase + FCM V1 set up). iPhone needs the Apple Developer account
 - [ ] Apple Developer account (US$99/year) and Google Play account (US$25 once)
 - [ ] Store listings: screenshots, description, privacy page link, support link
 - [ ] Netlify site switched from Private to Public (just before store submission)
@@ -151,3 +151,11 @@ Short dated notes the brief should know about (decisions, things you are waiting
 - 2026-11-10: Saving cards fails with reason 102 "This account is not enabled for tokenization" (asked CyberSource on case 002799226).
   Automatic monthly charges BUILT (database v33, not yet run or tested; owner's rules: charge on the end date, retry 3 days with
   listings visible, merchants switch auto-pay off on Account). Waiting on tokenization; steps in docs/CYBERSOURCE-SETUP.md.
+- 2026-11-11: New Android test build installed; push notifications work. Microphone and camera permissions removed.
+  Promotional notifications (Christmas offers opening a search) left for AFTER launch, in a normal update.
+- 2026-11-11: Daily check shows v33 (automatic monthly payments) installed. Ticked the Supabase secrets and test-payment
+  items (the 2026-11-10 test payment proves them). Still waiting on CyberSource case 002799226 for saving cards.
+- 2026-11-12: Tokenization still refused (reason 102) on two new tries at 02:07 UTC; owner replying on case 002799226 with the new references. CYBS_SAVE_CARD back to no.
+- 2026-11-12: Built: deleting a listing (v35), two notification sounds + pop-up (v34, sounds need a new build), and public Pricing and Contact pages plus Delivery, Exchanges and card-security wording for ACB's website review (needs a new dist upload). Still for ACB: business phone number, official Visa/Mastercard logos (ask ACB), confirm Mastercard is accepted.
+- 2026-11-12: Tested on the new build: pop-up notifications, deleting a listing, password reset from the email link (fixed: the app now catches the link; Supabase Redirect URLs include servlyag://**). Over-the-air updates work (expo-updates, preview channel). v36 run: reviews stay when their writer deletes their account shown as "Customer" (owner's choice).
+- 2026-11-12: Both notification sounds confirmed on the phone (Sound 1 messages, Sound 2 updates). Over-the-air update delivered "Customer" on reviews. New website build (Pricing, Contact, ACB wording) uploaded to Netlify; servlyag.com itself still to be pointed at it and made public.

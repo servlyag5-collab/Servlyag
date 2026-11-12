@@ -26,7 +26,16 @@ export async function registerForPush() {
     if (status !== 'granted') status = (await Notifications.requestPermissionsAsync()).status;
     if (status !== 'granted') return;
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', { name: 'Messages and bookings', importance: Notifications.AndroidImportance.HIGH });
+      // Two kinds, each with its own sound (assets/sounds, listed in app.json). The database picks the kind
+      // (send_push's channel). HIGH importance = the notification pops up on screen. A channel's sound can't
+      // change after it is first made on a phone; people can change or mute it in Android settings.
+      await Notifications.setNotificationChannelAsync('messages', {
+        name: 'Messages and bookings', importance: Notifications.AndroidImportance.HIGH, sound: 'messages.mp3', vibrationPattern: [0, 250, 150, 250],
+      });
+      await Notifications.setNotificationChannelAsync('updates', {
+        name: 'Servly updates', description: 'Your plan, payments and news from Servly',
+        importance: Notifications.AndroidImportance.HIGH, sound: 'updates.mp3',
+      });
     }
     const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
     if (!projectId) { console.warn('Push notifications need an EAS project id: run `npx eas-cli init` once.'); return; }

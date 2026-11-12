@@ -4,6 +4,7 @@ import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
+import { SELLER } from '../lib/receipt';
 import { promoDiscount, promoMonthsLeft, type Promo } from '../lib/promo';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
@@ -96,7 +97,8 @@ export default function Checkout() {
               {!!promo && discount > 0 && (
                 <Text style={{ color: colors.blue, fontWeight: '700' }}>{total} XCD {promoMonthsLeft(promo)}, then {fullTotal} XCD per month.</Text>
               )}
-              <Text style={ui.muted}>Your listings go live as soon as your payment is confirmed. Each payment covers one month.</Text>
+              <Text style={ui.muted}>Your listings go live as soon as your payment is confirmed. Each payment covers one month. All prices in Eastern Caribbean dollars (XCD).</Text>
+              <Text style={[ui.muted, { fontSize: 13, lineHeight: 19 }]}>Sold by {SELLER.name}, {SELLER.address}. Pay by Visa or Mastercard on our payment provider's secure page.</Text>
               {/* Shown before paying, as banks and the stores expect: renewal, how to cancel, refunds. */}
               <Text style={[ui.muted, { fontSize: 14, lineHeight: 20 }]}>
                 {saveCard

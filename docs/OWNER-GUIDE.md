@@ -10,7 +10,7 @@ only you can do. File paths are inside the `servly-app` folder.
 
 ## 1. Do these first (after this update)
 
-1. **Run the database updates.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run, then `supabase/upgrade-v15-opening-hours.sql` > Run, then `supabase/upgrade-v16-screen-name.sql` > Run, then `supabase/upgrade-v17-max-tags.sql` > Run, then `supabase/upgrade-v18-photo-focus.sql` > Run, then `supabase/upgrade-v19-search-as-you-type.sql` > Run, then `supabase/upgrade-v20-plan-changes.sql` > Run, then `supabase/upgrade-v22-free-trials.sql` > Run (it works with or without the optional v21), then `supabase/upgrade-v23-promo-codes.sql` > Run, then `supabase/upgrade-v24-search-everywhere.sql` > Run, then `supabase/upgrade-v25-smart-search.sql` > Run, then `supabase/upgrade-v26-admin-controls.sql` > Run, then `supabase/upgrade-v27-admins-see-all-listings.sql` > Run, then `supabase/upgrade-v28-free-bookings.sql` > Run, then `supabase/upgrade-v29-call-taps.sql` > Run, then `supabase/upgrade-v30-ranked-search.sql` > Run, then `supabase/upgrade-v31-fair-turns.sql` > Run, then `supabase/upgrade-v32-card-payments.sql` > Run, then `supabase/upgrade-v33-monthly-charges.sql` > Run.
+1. **Run the database updates.** Supabase > SQL Editor > paste `supabase/upgrade-v14-launch-ready.sql` > Run, then `supabase/upgrade-v15-opening-hours.sql` > Run, then `supabase/upgrade-v16-screen-name.sql` > Run, then `supabase/upgrade-v17-max-tags.sql` > Run, then `supabase/upgrade-v18-photo-focus.sql` > Run, then `supabase/upgrade-v19-search-as-you-type.sql` > Run, then `supabase/upgrade-v20-plan-changes.sql` > Run, then `supabase/upgrade-v22-free-trials.sql` > Run (it works with or without the optional v21), then `supabase/upgrade-v23-promo-codes.sql` > Run, then `supabase/upgrade-v24-search-everywhere.sql` > Run, then `supabase/upgrade-v25-smart-search.sql` > Run, then `supabase/upgrade-v26-admin-controls.sql` > Run, then `supabase/upgrade-v27-admins-see-all-listings.sql` > Run, then `supabase/upgrade-v28-free-bookings.sql` > Run, then `supabase/upgrade-v29-call-taps.sql` > Run, then `supabase/upgrade-v30-ranked-search.sql` > Run, then `supabase/upgrade-v31-fair-turns.sql` > Run, then `supabase/upgrade-v32-card-payments.sql` > Run, then `supabase/upgrade-v33-monthly-charges.sql` > Run, then `supabase/upgrade-v34-notification-sounds.sql` > Run, then `supabase/upgrade-v35-delete-listing.sql` > Run, then `supabase/upgrade-v36-anonymous-reviews.sql` > Run (reviews stay, shown as "Customer", when their writer deletes their account).
    **Search: never run v19, v21, v24, v25 or v30 again after v31** (each search update replaces the last one; v31 is the current search).
    *Do not run* `supabase/upgrade-v21-search-word-starts.sql` again: it made search match only the start of words, and v24/v25 replace it. To check which updates are installed, run `npm run check:db`.
    Supabase warns about "destructive operations": those lines replace old rules with stricter ones
@@ -127,6 +127,24 @@ They are sent by the database through Expo's free push service. To switch them o
    ```
    When it finishes, open the link on your Android phone to install it.
 3. Store builds later: `npx eas-cli build --platform android --profile production` (and `ios`).
+
+---
+
+## 5b. Over-the-air updates (EAS Update, set up 2026-11-12)
+
+Changes to screens, wording and app logic can reach phones without a new store review. The app downloads
+the update quietly and uses it the next time it is opened.
+
+- Test phones (the preview APK):
+  ```bash
+  npx eas-cli update --channel preview --environment preview --message "What changed"
+  ```
+- Store apps (after launch): the same with `--channel production --environment production`.
+- What can NOT go over the air: new permissions, notification sounds, app icon, new native packages. Those need
+  a new build; EAS knows by itself (runtime version "fingerprint"), so an update never reaches an app it doesn't fit.
+- Store rules: fine for fixes and improvements; bigger new features (Jobs board, promotions) go through a
+  normal reviewed update.
+- Only builds made AFTER 2026-11-12 can receive updates (the first one with expo-updates inside).
 
 ---
 

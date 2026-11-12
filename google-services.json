@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "54335948178",
+    "project_id": "servly-ag",
+    "storage_bucket": "servly-ag.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:54335948178:android:1385427b84b0a7d4b66d4b",
+        "android_client_info": {
+          "package_name": "com.servlyag.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqEQ6DA-98QzQg-WAGHdz0-MuyZD_GHb4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

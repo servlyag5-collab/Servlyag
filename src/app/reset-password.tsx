@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import * as Linking from 'expo-linking';
+import { clearAuthLink, useAuthLink } from '../lib/authLink';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PasswordInput } from '../components/PasswordInput';
@@ -24,8 +24,10 @@ function linkParams(url: string | null) {
 // Opened from the "Reset your password" email: signs the person in from the link, then lets them
 // choose a new password.
 export default function ResetPassword() {
-  const nativeUrl = Linking.useURL();
-  const url = Platform.OS === 'web' ? window.location.href : nativeUrl;
+  // Phones: the link is caught when it reaches the app (src/lib/authLink.ts), even if this screen opens later.
+  const keptUrl = useAuthLink();
+  const hasTokens = (u: string | null) => !!u && /[?#&](access_token|code|error)=/.test(u);
+  const url = Platform.OS === 'web' ? window.location.href : keptUrl;
   const [state, setState] = useState<'checking' | 'ready' | 'invalid' | 'done'>('checking');
   const [why, setWhy] = useState('');
   const [pw, setPw] = useState('');
@@ -33,21 +35,38 @@ export default function ResetPassword() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
 
+  // Never spin forever: after 12 seconds, say so and offer a new link.
   useEffect(() => {
-    if (state !== 'checking' || (Platform.OS !== 'web' && !url)) return;
-    const p = linkParams(url);
-    const finish = (error?: { message: string } | null) => {
-      if (error) { setWhy(error.message); return setState('invalid'); }
-      if (Platform.OS === 'web') window.history.replaceState(null, '', window.location.pathname); // hide the code from the address bar
-      setState('ready');
-    };
-    if (p.error_description || p.error) { setWhy(p.error_description || p.error); return setState('invalid'); }
-    if (p.access_token && p.refresh_token) {
-      supabase.auth.setSession({ access_token: p.access_token, refresh_token: p.refresh_token }).then(({ error }) => finish(error));
-    } else if (p.code) {
-      supabase.auth.exchangeCodeForSession(p.code).then(({ error }) => finish(error));
-    } else {
-      setWhy('This page needs the link from your password reset email.');
+    if (state !== 'checking') return;
+    const t = setTimeout(() => {
+      setWhy(url ? 'The reset link could not be checked.' : 'The app did not receive the link from your email.');
+      setState('invalid');
+    }, 12000);
+    return () => clearTimeout(t);
+  }, [state, url]);
+
+  useEffect(() => {
+    if (state !== 'checking' || (Platform.OS !== 'web' && !hasTokens(url))) return;
+    try {
+      const p = linkParams(url);
+      clearAuthLink();
+      const finish = (error?: { message: string } | null) => {
+        if (error) { setWhy(error.message); return setState('invalid'); }
+        if (Platform.OS === 'web') window.history.replaceState(null, '', window.location.pathname); // hide the code from the address bar
+        setState('ready');
+      };
+      const failed = (e: unknown) => finish({ message: e instanceof Error ? e.message : 'The reset link could not be checked.' });
+      if (p.error_description || p.error) { setWhy(p.error_description || p.error); return setState('invalid'); }
+      if (p.access_token && p.refresh_token) {
+        supabase.auth.setSession({ access_token: p.access_token, refresh_token: p.refresh_token }).then(({ error }) => finish(error), failed);
+      } else if (p.code) {
+        supabase.auth.exchangeCodeForSession(p.code).then(({ error }) => finish(error), failed);
+      } else {
+        setWhy('This page needs the link from your password reset email.');
+        setState('invalid');
+      }
+    } catch {
+      setWhy('The reset link could not be read.');
       setState('invalid');
     }
   }, [url, state]);

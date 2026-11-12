@@ -82,7 +82,7 @@ export default function Account() {
       const c = data as { next_tier_name: string | null; next_tier_at: string | null } | null;
       setMoving(c?.next_tier_at ? c : null);
     });
-    supabase.from('services').select('id,title,photos,photo_focus,price,price_from,city,village,active,paused').eq('merchant_id', uid)
+    supabase.from('services').select('id,title,photos,photo_focus,price,price_from,city,village,active,paused').eq('merchant_id', uid).is('deleted_at', null)
       .order('created_at', { ascending: false })
       .then(({ data }) => setRows((data as Svc[]) ?? []));
     // Every plan payment (logged by activate_plan) has a receipt.
@@ -293,7 +293,7 @@ export default function Account() {
             <View style={[ui.card, { borderColor: colors.red, marginTop: 16 }]}>
               <Text style={[ui.h2, { color: colors.red }]}>Delete my account</Text>
               <Text style={ui.muted}>
-                This permanently deletes your account, profile, listings, photos, messages, bookings and reviews. It can't be undone.
+                This permanently deletes your account, profile, listings, photos, messages and bookings, and the reviews of your listings. It can't be undone. Reviews you wrote about other businesses stay, without your name.
                 {rows && rows.length > 0 ? ' Your plan is not refunded.' : ''}
               </Text>
               {askDelete ? (

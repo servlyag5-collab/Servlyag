@@ -19,7 +19,7 @@ export function PlanBanner() {
     if (!uid) return setState(null);
     Promise.all([
       supabase.from('profiles').select('plan_expires_at').eq('id', uid).maybeSingle(),
-      supabase.from('services').select('id', { count: 'exact', head: true }).eq('merchant_id', uid),
+      supabase.from('services').select('id', { count: 'exact', head: true }).eq('merchant_id', uid).is('deleted_at', null),
       myTrialEnd(uid),
     ]).then(([p, c, trialEnd]) => {
       const ends = (p.data?.plan_expires_at as string | null) ?? null;

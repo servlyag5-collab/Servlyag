@@ -40,6 +40,9 @@ const checks = [
   ['v31', 'fair turns (Business plan first, everyone takes turns)', { rpc: 'search_turn_minutes', body: {} }],
   ['v32', 'card payments (payment orders for ACB / CyberSource)', { get: 'payment_orders?select=id&limit=1' }],
   ['v33', 'automatic monthly payments', { rpc: 'my_auto_pay', body: {} }],
+  // v34 only changes how notifications are sent (server only); it has no outside check.
+  ['v35', 'deleting a listing', { rpc: 'removed_listing_titles', body: { p_ids: [] } }],
+  // v36 only changes what happens to reviews when an account is deleted; it has no outside check.
 ];
 
 const MISSING = ['PGRST202', 'PGRST205', '42703', '42883', '42P01'];
