@@ -93,7 +93,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 
 ## Stage 4: Launch week
 
-- [ ] Sign up Founding Merchants and start their free trials (Admin > Merchants)
+- [ ] Sign up Founding Merchants and start their free trials (Admin > Merchants > Free trial ends on: 8 March 2027 is filled in). Before launch: they message you, sign up on the private website, you start the trial, they create their listing
 - [ ] Switch on LAUNCH50 on launch day (Admin > Promos); LAUNCH50B when it runs out
 - [ ] Social media launch posts
 - [ ] Remove or hide the demo businesses, and reset the owner test account (yonnie J photo media events: Business until 24 Nov 2027 from 2026-10-24 "Owner testing", then Growth; test payments)

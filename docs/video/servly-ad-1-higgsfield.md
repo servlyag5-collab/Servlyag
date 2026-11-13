@@ -1,5 +1,13 @@
 # Servly ad 1: "Stop paying to be ignored" (Higgsfield prompts)
 
+> **Now made in code instead (2026-11-09):** `docs/video/code/ad1.html` draws all nine scenes on one 38 s
+> timeline (exact Servly colours, real flag ribbon, headlines and card words spelled right, dark-to-bright
+> sunrise at scene 4). Record with `node docs/video/code/record-frames.cjs docs/video/code/ad1.html
+> docs/video/out/servly-ad-1-full.mp4 38 30 8` from PowerShell (needs Edge and ffmpeg-static via TOOLS_DIR).
+> Output: `docs/video/out/` (full video + one clip per scene). Trades shown: hair salons, nail technicians,
+> caterers, photographers; never barbers (owner's rule). Captions and the voice are still added in CapCut.
+> The Higgsfield prompts below stay as a fallback.
+
 Vertical 9:16, about 38 seconds, 9 scenes. Animation copied from the reference clip (cream background,
 pop-in cards, blur-out transitions, typed headline with one coloured word, word-by-word captions), in
 Servly's colours. Made 2026-11-09.
@@ -118,9 +126,12 @@ principle). Captions matter because most feed video is watched muted: 69% of peo
 in public, and 80% are more likely to finish a video that has captions (Verizon Media and Publicis Media, 2019).
 
 ### 1 · The hook
-STYLE BLOCK + A single white social-media post card pops in at the centre with a small heart icon and a
-paper-plane share icon. A tiny blue "sent" tick appears. The card waits; a faint pulse ripples out from it and
-fades to nothing, as if no one is there. Ends with the blur-out.
+BEFORE BLOCK + A single plain blank white card pops in at the centre, with only a small heart icon and a
+paper-plane icon along its bottom edge: no profile picture, no name, no dots, nothing written. A tiny blue
+tick appears. The card waits; a faint golden pulse ripples out from it and fades to nothing, as if no one is
+there. Then the card slowly fades to a dull grey, as if ignored. Ends with the blur-out.
+(Tests 2026-11-09: when the prompt said "social-media post", Kling added a profile dot and a made-up name
+"on" with a heart; the version where the card turned grey worked best.)
 
 ### 2 · Almost nobody sees it
 STYLE BLOCK + A neat grid of 100 small dim white circle avatars pops in row by row. Then only 3 of them light
@@ -148,8 +159,12 @@ slow gentle push-in. No text, no letters, no logos, no human faces, no stripes a
 (Add the flag ribbon picture under the pin in CapCut.)
 
 ### 5 · People ready to hire
-STYLE BLOCK + A simple flat white outline map of a small Caribbean island pops in. Small blue location pins drop
-onto it one after another across the island, each with a tiny ripple. A rounded white search bar floats above
+STYLE BLOCK + A simple flat white outline map of two Caribbean islands pops in, one above the other: a larger,
+rounder island at the bottom (Antigua) and a smaller, narrower island with a long lagoon on its west side at the
+top (Barbuda), at their true relative sizes (Barbuda about half Antigua's area). Small blue location pins drop
+onto them one after another, five on the bottom island and two on the top one, each with a tiny ripple.
+(Owner's change 2026-11-12. The coded version, code/ad1.html, uses the real outlines; only the sea between the
+islands is shortened, 41 km drawn as 10 km, so both fit.) A rounded white search bar floats above
 the map with a blue magnifying-glass icon and a blinking cursor. Ends with the blur-out.
 
 ### 6 · You show up

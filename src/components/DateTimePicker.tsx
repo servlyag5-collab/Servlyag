@@ -10,8 +10,8 @@ export type Pick = { y: number; m: number; d: number; h: number; min: number } |
 const SLOTS = Array.from({ length: 27 }, (_, i) => ({ h: 7 + Math.floor(i / 2), min: (i % 2) * 30 }));
 const WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-// Servly-styled calendar + time slots. Past days and times are greyed out.
-export function DateTimePicker({ value, onChange }: { value: Pick; onChange: (v: Pick) => void }) {
+// Servly-styled calendar + time slots. Past days and times are greyed out. dateOnly hides the time slots.
+export function DateTimePicker({ value, onChange, dateOnly = false }: { value: Pick; onChange: (v: Pick) => void; dateOnly?: boolean }) {
   const now = antigua(new Date());
   const [view, setView] = useState({ y: value?.y ?? now.y, m: value?.m ?? now.m });
   const first = new Date(Date.UTC(view.y, view.m, 1)).getUTCDay();
@@ -58,7 +58,7 @@ export function DateTimePicker({ value, onChange }: { value: Pick; onChange: (v:
         })}
       </View>
 
-      {value && (
+      {value && !dateOnly && (
         <View style={{ gap: 8 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>Time (Antigua)</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TopBar } from '../components/Menu';
-import { bookingDay } from '../lib/bookings';
+import { antigua, bookingDay } from '../lib/bookings';
+import { DateTimePicker, type Pick } from '../components/DateTimePicker';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
@@ -91,10 +92,19 @@ function Merchants() {
   );
 }
 
+// Founding Merchant trials end 60 days after launch (launch 7 January 2027, owner's decision 2026-11-12),
+// unless the owner picks another date. After that date has passed, the picker starts empty.
+const TRIAL_END_DEFAULT = { y: 2027, m: 2, d: 8 }; // 8 March 2027 (months count from 0)
+function defaultTrialEnd(): Pick {
+  const t = antigua(new Date()), e = TRIAL_END_DEFAULT;
+  return Date.UTC(e.y, e.m, e.d) > Date.UTC(t.y, t.m, t.d) ? { ...e, h: -1, min: 0 } : null;
+}
+
 function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) {
   const [tier, setTier] = useState(m.requested_tier ?? m.tier_id);
   const [booking, setBooking] = useState(m.booking_requested);
-  const [days, setDays] = useState('90');
+  const [trialEnd, setTrialEnd] = useState<Pick>(defaultTrialEnd); // the day the free trial ends
+  const [showCal, setShowCal] = useState(false);
   const [extendDays, setExtendDays] = useState('30');
   const [bookDays, setBookDays] = useState('30');
   const [listings, setListings] = useState<AdminListing[] | null>(null); // loaded when "Show listings" is tapped
@@ -138,8 +148,11 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
   const extendN = Number(extendDays);
   const extendOk = Number.isInteger(extendN) && extendN >= 1 && extendN <= 365;
 
-  const trialDays = Number(days);
-  const trialOk = Number.isInteger(trialDays) && trialDays >= 1 && trialDays <= 365;
+  // Days from today to the chosen end date (Antigua calendar days); the trial then ends on that date.
+  const today = antigua(new Date());
+  const trialDays = trialEnd ? Math.round((Date.UTC(trialEnd.y, trialEnd.m, trialEnd.d) - Date.UTC(today.y, today.m, today.d)) / 86400000) : 0;
+  const trialOk = trialDays >= 1 && trialDays <= 365;
+  const endLabel = trialEnd ? bookingDay(new Date(Date.UTC(trialEnd.y, trialEnd.m, trialEnd.d, 16)).toISOString()) : '';
   const onTrial = !!m.trial_ends_at && new Date(m.trial_ends_at) > new Date();
 
   return (
@@ -205,14 +218,19 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
         </View>
       )}
       {!m.trial_ends_at && !active && (
-        // Founding Merchants: the chosen plan (and booking app, if ticked) free for this many days.
-        <View style={ui.row}>
-          <TextInput style={[ui.field, { width: 70, height: 44, textAlign: 'center' }]} keyboardType="number-pad" maxLength={3}
-            value={days} onChangeText={(v) => setDays(v.replace(/[^0-9]/g, ''))} accessibilityLabel="Free trial days" />
-          <Pressable style={[ui.btn, ui.outline, { flex: 1, height: 44, borderColor: colors.blue }]} disabled={busy || !trialOk}
+        // Founding Merchants: the chosen plan (and booking app, if ticked) free until the date picked here
+        // (starts set to 60 days after launch). One trial per merchant, so check the date before starting.
+        <View style={{ gap: 8 }}>
+          <Pressable onPress={() => setShowCal(!showCal)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
+            <Ionicons name="calendar-outline" size={20} color={colors.blue} />
+            <Text style={{ flex: 1, color: colors.ink, fontWeight: '700' }}>Free trial ends on {endLabel || '(pick a date)'}{trialOk ? ` · ${trialDays} days` : ''}</Text>
+            <Text style={{ color: colors.blue, fontWeight: '700' }}>{showCal ? 'Done' : 'Change'}</Text>
+          </Pressable>
+          {showCal && <DateTimePicker dateOnly value={trialEnd} onChange={(v) => { setTrialEnd(v); setShowCal(false); }} />}
+          <Pressable style={[ui.btn, ui.outline, { height: 44, borderColor: colors.blue }]} disabled={busy || !trialOk}
             onPress={() => act(() => supabase.rpc('admin_start_free_trial', { p_user: m.id, p_tier: tier, p_days: trialDays, p_booking: booking }),
-              `Free trial started: ${tierName(tier)} for ${trialDays} days.`)}>
-            <Text style={[ui.btnText, { color: trialOk ? colors.blue : colors.muted }]}>{trialOk ? `Start ${trialDays}-day free trial` : 'Free trial: 1 to 365 days'}</Text>
+              `Free trial started: ${tierName(tier)} until ${endLabel}.`)}>
+            <Text style={[ui.btnText, { color: trialOk ? colors.blue : colors.muted }]}>{trialOk ? `Start free trial until ${endLabel}` : 'Pick an end date within a year'}</Text>
           </Pressable>
         </View>
       )}
