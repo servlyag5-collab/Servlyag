@@ -217,6 +217,12 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
           )}
         </View>
       )}
+      {/* Why the free trial isn't offered: it's only for merchants with no plan yet and no earlier trial. */}
+      {(m.trial_ends_at || active) && (
+        <Text style={[ui.muted, { fontSize: 14 }]}>
+          Free trial: not available. {m.trial_ends_at ? 'They already had one (one per merchant).' : 'They already have an active plan. Trials are for merchants who have not started yet.'}
+        </Text>
+      )}
       {!m.trial_ends_at && !active && (
         // Founding Merchants: the chosen plan (and booking app, if ticked) free until the date picked here
         // (starts set to 60 days after launch). One trial per merchant, so check the date before starting.
@@ -268,6 +274,70 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
   );
 }
 
+// ---- ABST (v37): Antigua and Barbuda Sales Tax on Servly's own sales, on/off + registration number -------------
+// Off until Servly is registered with Inland Revenue. Switching on needs the registration number (it prints on
+// receipts); from then on every payment, including automatic monthly ones, adds 17% on top.
+function AbstCard() {
+  const [s, setS] = useState<{ abst_on: boolean; abst_rate: number; abst_number: string | null } | null>(null);
+  const [num, setNum] = useState('');
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const load = useCallback(() => {
+    supabase.from('tax_settings').select('abst_on,abst_rate,abst_number').maybeSingle().then(({ data, error }) => {
+      if (error) return setErr(error.message.includes('tax_settings') ? 'Run database update v37 to use ABST.' : error.message);
+      if (data) { setS(data as typeof s); setNum(data.abst_number ?? ''); }
+    });
+  }, []);
+  useFocusEffect(load);
+  async function save(on: boolean) {
+    setBusy(true); setErr('');
+    const { error } = await supabase.rpc('admin_set_abst', { p_on: on, p_number: num });
+    setBusy(false); setConfirm(false);
+    if (error) return setErr(error.message);
+    load();
+  }
+  const rate = s ? Number(Number(s.abst_rate).toFixed(2)) : 17;
+  return (
+    <View style={[ui.card, { padding: 14, gap: 8 }, s?.abst_on && { borderColor: colors.blue, borderWidth: 2 }]}>
+      <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>ABST ({rate}%)</Text>
+      {!!err && <Text style={ui.error}>{err}</Text>}
+      {s && (
+        <>
+          <Text style={{ fontWeight: '700', color: s.abst_on ? colors.blue : colors.muted }}>
+            {s.abst_on ? `On: ${rate}% is added to every payment, including automatic monthly ones.` : 'Off: no ABST is charged.'}
+          </Text>
+          <Text style={ui.muted}>Switch it on only once Servly is registered for ABST with Inland Revenue. Your registration number prints on every receipt.</Text>
+          <Text style={{ fontWeight: '700', color: colors.ink }}>ABST registration number</Text>
+          <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 44 }]} value={num} onChangeText={(v) => { setNum(v); setErr(''); }}
+            placeholder="From Inland Revenue" autoCapitalize="characters" autoCorrect={false} editable={!s.abst_on} />
+          {confirm ? (
+            <View style={{ gap: 8 }}>
+              <Text style={{ fontWeight: '700', color: colors.ink }}>
+                {s.abst_on ? 'Stop charging ABST from the next payment?' : `Charge ${rate}% ABST on every payment from now on, including automatic monthly ones?`}
+              </Text>
+              <View style={ui.row}>
+                <Pressable style={[ui.btn, ui.outline, { flex: 1, height: 44 }]} onPress={() => setConfirm(false)}>
+                  <Text style={[ui.btnText, { color: colors.ink }]}>Cancel</Text>
+                </Pressable>
+                <Pressable style={[ui.btn, ui.primary, { flex: 1, height: 44 }]} disabled={busy} onPress={() => save(!s.abst_on)}>
+                  {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>{s.abst_on ? 'Yes, switch off' : 'Yes, switch on'}</Text>}
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <Pressable style={[ui.btn, s.abst_on ? ui.outline : ui.primary, { height: 44 }]} disabled={!s.abst_on && !num.trim()} onPress={() => setConfirm(true)}>
+              <Text style={[ui.btnText, { color: s.abst_on ? colors.ink : !num.trim() ? colors.muted : '#fff' }]}>
+                {s.abst_on ? 'Switch ABST off' : num.trim() ? 'Switch ABST on' : 'Enter the number to switch on'}
+              </Text>
+            </Pressable>
+          )}
+        </>
+      )}
+    </View>
+  );
+}
+
 // ---- Promos: launch codes, places used, on/off --------------------------------------------------------
 function Promos() {
   const [rows, setRows] = useState<PromoCode[] | null>(null);
@@ -283,6 +353,7 @@ function Promos() {
   }
   return (
     <>
+      <AbstCard />
       <Text style={ui.muted}>
         Merchants type a code at Checkout. It holds a place for 7 days; the discount is taken when you activate their plan.
         Places count once paid, or while held. Switch the backup code on when the first one runs out.

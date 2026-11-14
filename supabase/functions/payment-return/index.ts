@@ -10,8 +10,9 @@ import { formFields, recordAnswer } from '../_shared/record.ts';
 Deno.serve(async (req) => {
   const app = (Deno.env.get('APP_URL') ?? '').replace(/\/+$/, '');
   const go = (status: string, order = '') =>
-    // Back to the Plan screen (owner's choice, 2026-11-08), which shows how the payment went at the top.
-    new Response(null, { status: 303, headers: { Location: `${app}/plan?payment=${status}${order ? `&order=${encodeURIComponent(order)}` : ''}` } });
+    // To the payment result page (owner's choice, 2026-11-13): it sends a logged-in merchant on to Account (plan,
+    // receipt, listings, with how the payment went at the top), and someone who paid from the phone app back to the app.
+    new Response(null, { status: 303, headers: { Location: `${app}/payment-result?status=${status}${order ? `&order=${encodeURIComponent(order)}` : ''}` } });
 
   if (req.method !== 'POST') return go('error');
   const secretKey = Deno.env.get('CYBS_SECRET_KEY') ?? '';

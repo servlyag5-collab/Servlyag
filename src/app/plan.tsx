@@ -10,6 +10,7 @@ import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
 import { myTrialEnd, planStatus } from '../lib/trial';
+import { ratePct, useAbst } from '../lib/abst';
 import { colors, ui } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
 
@@ -23,6 +24,7 @@ export default function Plan() {
   // next = 'offer' when coming from Offer a service; payment/order = back from the card payment page.
   const { next, payment, order } = useLocalSearchParams<{ next?: string; payment?: string; order?: string }>();
   const [reload, setReload] = useState(0);
+  const abst = useAbst(); // ABST (v37): shown as "+ ABST 17%" while switched on
   const [tiers, setTiers] = useState<T[]>([]);
   const [me, setMe] = useState<Me | null>(null);
   const [addon, setAddon] = useState(25);
@@ -116,7 +118,7 @@ export default function Plan() {
               const body = (
                 <>
                   {isCurrent &&<Text style={{ color: colors.blue, fontWeight: '800', letterSpacing: 2, fontSize: 12 }}>YOUR CURRENT PLAN</Text>}
-                  <Text style={ui.h2}>{t.name} · {t.monthly_price} XCD / month</Text>
+                  <Text style={ui.h2}>{t.name} · {t.monthly_price} XCD / month{abst.on ? ` + ABST ${ratePct(abst)}` : ''}</Text>
                   <Text style={ui.muted}>Business profile, customer messaging and call</Text>
                   <Text style={ui.muted}>{t.max_services ?? 'Unlimited'} service listing{t.max_services === 1 ? '' : 's'}</Text>
                   {t.priority_rank > 0 && <Text style={ui.muted}>{t.priority_rank > 1 ? 'Top placement in search' : 'Priority placement in search'}</Text>}
@@ -135,7 +137,7 @@ export default function Plan() {
                     </>
                   )}
                   <Pressable style={[ui.btn, ui.primary]} onPress={() => choose(t)}>
-                    <Text style={[ui.btnText, { color: '#fff' }]}>{isCurrent ? 'Renew' : 'Choose'} {t.name} · {price} XCD</Text>
+                    <Text style={[ui.btnText, { color: '#fff' }]}>{isCurrent ? 'Renew' : 'Choose'} {t.name} · {price} XCD{abst.on ? ' + ABST' : ''}</Text>
                   </Pressable>
                 </>
               );

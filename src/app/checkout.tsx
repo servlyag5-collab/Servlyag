@@ -6,6 +6,7 @@ import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { SELLER } from '../lib/receipt';
 import { promoDiscount, promoMonthsLeft, type Promo } from '../lib/promo';
+import { abstOf, ratePct, useAbst } from '../lib/abst';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
@@ -29,6 +30,7 @@ export default function Checkout() {
   const [paying, setPaying] = useState(false);
   const [payErr, setPayErr] = useState('');
   const [saveCard, setSaveCard] = useState(false); // the card is saved for automatic monthly payments (server setting)
+  const abst = useAbst();
 
   useEffect(() => {
     supabase.functions.invoke('payment-start', { method: 'GET' }).then(({ data }) => setSaveCard(!!data?.saveCard));
@@ -69,8 +71,13 @@ export default function Checkout() {
 
   const withBooking = !!t && !t.booking_included && booking === '1';
   const discount = promoDiscount(t?.monthly_price ?? 0, promo);
-  const fullTotal = (t?.monthly_price ?? 0) + (withBooking ? addon : 0);
-  const total = fullTotal - discount;
+  const fullNet = (t?.monthly_price ?? 0) + (withBooking ? addon : 0);
+  const net = fullNet - discount;
+  // ABST (v37): 17% on top while switched on; the server charges the same sum.
+  const tax = abstOf(net, abst);
+  const total = Math.round((net + tax) * 100) / 100;
+  const fullTotal = Math.round((fullNet + abstOf(fullNet, abst)) * 100) / 100;
+  const xcd = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(2)} XCD`;
   const line = (label: string, amount: string, bold = false) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
       <Text style={{ fontSize: 16, color: colors.ink, fontWeight: bold ? '800' : '400' }}>{label}</Text>
@@ -92,12 +99,14 @@ export default function Checkout() {
               {t.booking_included && line('Bookings', 'included')}
               {withBooking && line('Bookings upgrade', `${addon} XCD`)}
               {!!promo && discount > 0 && line(`${promo.code} (${promo.percent_off}% off the plan)`, `−${discount} XCD`)}
+              {abst.on && line('Subtotal', xcd(net))}
+              {abst.on && line(`ABST ${ratePct(abst)}`, xcd(tax))}
               <View style={{ height: 1, backgroundColor: colors.border }} />
-              {line('Total per month', `${total} XCD`, true)}
+              {line('Total per month', xcd(total), true)}
               {!!promo && discount > 0 && (
-                <Text style={{ color: colors.blue, fontWeight: '700' }}>{total} XCD {promoMonthsLeft(promo)}, then {fullTotal} XCD per month.</Text>
+                <Text style={{ color: colors.blue, fontWeight: '700' }}>{xcd(total)} {promoMonthsLeft(promo)}, then {xcd(fullTotal)} per month.</Text>
               )}
-              <Text style={ui.muted}>Your listings go live as soon as your payment is confirmed. Each payment covers one month. All prices in Eastern Caribbean dollars (XCD).</Text>
+              <Text style={ui.muted}>Your listings go live as soon as your payment is confirmed. Each payment covers one month. All prices in Eastern Caribbean dollars (XCD){abst.on ? `, including ABST (Antigua and Barbuda Sales Tax) at ${ratePct(abst)}${abst.number ? `, registration no. ${abst.number}` : ''}` : ''}.</Text>
               <Text style={[ui.muted, { fontSize: 13, lineHeight: 19 }]}>Sold by {SELLER.name}, {SELLER.address}. Pay by Visa or Mastercard on our payment provider's secure page.</Text>
               {/* Shown before paying, as banks and the stores expect: renewal, how to cancel, refunds. */}
               <Text style={[ui.muted, { fontSize: 14, lineHeight: 20 }]}>
@@ -139,7 +148,7 @@ export default function Checkout() {
             {PAY_URL ? (
               <>
                 <Pressable style={[ui.btn, ui.primary]} onPress={pay} disabled={paying || !session}>
-                  {paying ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>Pay {total} XCD</Text>}
+                  {paying ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>Pay {xcd(total)}</Text>}
                 </Pressable>
                 <Text style={[ui.muted, { fontSize: 14, textAlign: 'center' }]}>You'll pay on ACB's secure card page. Servly never sees your card number.</Text>
                 {!!payErr && <Text style={ui.error}>{payErr}</Text>}

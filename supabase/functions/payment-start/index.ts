@@ -1,8 +1,8 @@
 // Servly AG: start a card payment (CyberSource Secure Acceptance Hosted Checkout).
 //
 // 1. POST (logged-in merchant, from Checkout) { tier, booking }  ->  { order, secret }
-//    Servly works out the price itself (plan - promo discount + bookings upgrade, the same sum as
-//    activate_plan), and saves it as a payment order.
+//    Servly works out the price itself (plan - promo discount + bookings upgrade, + ABST while it is on;
+//    the same sum as activate_plan), and saves it as a payment order.
 // 2. GET ?order=...&s=...  (from the website's /pay page)  ->  { action, fields }
 //    The signed form that sends the merchant to CyberSource's payment page. The signature means nobody
 //    can change the amount on the way. Works for 1 hour after pressing Pay.
@@ -36,11 +36,15 @@ Deno.serve(async (req) => {
 
     // Same rule as activate_plan: the upgrade is charged when ticked now or on the Plan screen.
     const booking = (!!body.booking || !!profile?.booking_requested) && !tier.booking_included;
-    const amount = Math.round((Number(tier.monthly_price) - Number(discount ?? 0) + (booking ? Number(addon?.monthly_price ?? 0) : 0)) * 100) / 100;
+    const net = Math.round((Number(tier.monthly_price) - Number(discount ?? 0) + (booking ? Number(addon?.monthly_price ?? 0) : 0)) * 100) / 100;
+    // ABST (v37): 17% on top while switched on in Admin, 0 while off. Same sum as activate_plan.
+    const { data: abstData } = await db.rpc('abst_amount', { p_net: net });
+    const abst = Number(abstData ?? 0);
+    const amount = Math.round((net + abst) * 100) / 100;
 
     const secret = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
     const { data: order, error } = await db.from('payment_orders')
-      .insert({ merchant_id: user.id, tier_id: tierId, booking, amount, currency: 'XCD', link_secret: secret })
+      .insert({ merchant_id: user.id, tier_id: tierId, booking, amount, abst, currency: 'XCD', link_secret: secret })
       .select('id').single();
     if (error || !order) return json({ error: error?.message ?? 'Could not start the payment' }, 500);
     return json({ order: order.id, secret, amount });

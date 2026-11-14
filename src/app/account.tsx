@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, View, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { PaymentNotice } from '../components/PaymentNotice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cover } from '../components/Cover';
 import { WideSplit } from '../components/WideSplit';
@@ -31,6 +32,8 @@ export default function Account() {
   const session = useSession();
   const uid = session?.user.id;
   const merchant = useMode() === 'merchant';
+  // Back from the card payment page: show how it went at the top (payment-result sends merchants here).
+  const { payment, order } = useLocalSearchParams<{ payment?: string; order?: string }>();
   const [me, setMe] = useState<Me | null>(null);
   const [b, setB] = useState({ screen: '', name: '', bio: '', phone: '' });
   const [showPhone, setShowPhone] = useState(true);
@@ -62,6 +65,8 @@ export default function Account() {
   const logoTipOpen = useLogoTipOpen();
   const [tourOpen, setTourOpen] = useState(false);
   const setBiz = (k: keyof typeof b) => (v: string) => { setB((p) => ({ ...p, [k]: v })); setMsg(''); };
+  // After paying, show the merchant side (plan, receipts, listings) if they have a listing to manage.
+  useEffect(() => { if (payment && rows && rows.length > 0 && !merchant) setMode('merchant'); }, [payment, rows, merchant]);
 
   useFocusEffect(useCallback(() => {
     if (!uid) return;
@@ -160,6 +165,7 @@ export default function Account() {
         <WideSplit>
         <Text style={ui.h1}>Account</Text>
         <Text style={ui.muted}>{session?.user.email}</Text>
+        {!!payment && <PaymentNotice status={payment} order={order} onPaid={() => setTick((n) => n + 1)} noListing={rows?.length === 0} />}
         <PlanBanner />
         {!me ? (loadErr ? <Text style={ui.error}>{loadErr}</Text> : <PinLoader />) : (
           <>

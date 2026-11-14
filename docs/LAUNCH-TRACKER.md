@@ -40,7 +40,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 ## Stage 2: Things only you can decide or set up
 
 - [x] **Business registered** (owner, by 2026-11-06)
-- [ ] **Register with Inland Revenue** (not done yet, owner 2026-11-06)
+- [ ] **Register with Inland Revenue** (not done yet, owner 2026-11-06). Then ask for the **ABST registration number** and switch ABST on in Admin > Promos > ABST (17% added on top of plans and the bookings upgrade; built 2026-11-14, database v37). Confirm the rate and receipt wording with Inland Revenue or an accountant.
 - [x] **Went to ACB** (2026-11-06). Payments will run through ACB using **CyberSource**. Fees: 75 USD
   (about 202.50 XCD) a month + 4% of every payment. Full list and gaps: `docs/ACB-REQUIREMENTS.md`
 - [ ] **Website ready for ACB's review** (see `docs/ACB-REQUIREMENTS.md`): live servlyag.com, full
@@ -64,7 +64,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [x] CyberSource: XCD outlet ID and terminal ID set up by the rep; first full test payment through Servly worked (2026-11-10)
 - [ ] Decide how merchants pay in the store apps (options in docs/STORE-BILLING.md, 2026-11-09): website-only payment is likely to be rejected by Apple and Google; the app's Pay button must change before submitting. Owner leaning to option 1 (website + Apple/Google billing), final decision another day; not built yet
 - [x] Password-reset email through Resend works: test arrived 2026-11-09, from "Servly AG" <noreply@servlyag.com>, signed by servlyag.com, encrypted, landed in the inbox (not spam)
-- [ ] CyberSource: allow saving cards (Payment Tokenization) on the Servly Test profile; then add Supabase secret CYBS_SAVE_CARD = yes
+- [x] CyberSource: allow saving cards (Payment Tokenization) on the Servly Test profile; then add Supabase secret CYBS_SAVE_CARD = yes (2026-11-13: test card saved, ACCEPT 100; CYBS_SAVE_CARD = yes)
 - [x] Email provider (SMTP): Resend, sending as Servly AG <noreply@servlyag.com>; password reset tested end to end (2026-11-02)
 - [ ] Before launch, Supabase > Authentication: change **Site URL** to `https://servlyag.com` (now `http://localhost:8081`) and raise the **email rate limit** (Rate Limits)
 - [ ] Supabase paid plan (free projects pause after about a week with no activity)
@@ -159,3 +159,4 @@ Short dated notes the brief should know about (decisions, things you are waiting
 - 2026-11-12: Built: deleting a listing (v35), two notification sounds + pop-up (v34, sounds need a new build), and public Pricing and Contact pages plus Delivery, Exchanges and card-security wording for ACB's website review (needs a new dist upload). Still for ACB: business phone number, official Visa/Mastercard logos (ask ACB), confirm Mastercard is accepted.
 - 2026-11-12: Tested on the new build: pop-up notifications, deleting a listing, password reset from the email link (fixed: the app now catches the link; Supabase Redirect URLs include servlyag://**). Over-the-air updates work (expo-updates, preview channel). v36 run: reviews stay when their writer deletes their account shown as "Customer" (owner's choice).
 - 2026-11-12: Both notification sounds confirmed on the phone (Sound 1 messages, Sound 2 updates). Over-the-air update delivered "Customer" on reviews. New website build (Pricing, Contact, ACB wording) uploaded to Netlify; servlyag.com itself still to be pointed at it and made public.
+- 2026-11-13: Tokenization WORKS (CyberSource enabled Payment Tokenization on the Servly Test profile): test sale,create_payment_token ACCEPT 100, ref c1b6bcd6-dd9c-42b0-85ed-670de6631c0c, card saved; CYBS_SAVE_CARD stays yes. Reply sent to case 002799226; next from them: saved-token recurring billing + webhook tests. Renewal test set up: Jojo (yonniejphotography@gmail.com, Starter) plan end moved to 14 Nov 16:00 UTC, so the 6 AM run on 14 Nov should charge 50 XCD (check renewal_charges; reminder task at 6:15). Built (not live yet): after paying, merchants land on Account (payment-result page); needs `npx supabase functions deploy payment-return`, a new dist upload, an app update, and APP_URL = https://startling-crumble-f0ead8.netlify.app (servlyag.com at launch).

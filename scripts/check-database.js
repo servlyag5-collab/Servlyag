@@ -43,6 +43,7 @@ const checks = [
   // v34 only changes how notifications are sent (server only); it has no outside check.
   ['v35', 'deleting a listing', { rpc: 'removed_listing_titles', body: { p_ids: [] } }],
   // v36 only changes what happens to reviews when an account is deleted; it has no outside check.
+  ['v37', 'ABST (sales tax) settings', { get: 'tax_settings?select=abst_on&limit=1' }],
 ];
 
 const MISSING = ['PGRST202', 'PGRST205', '42703', '42883', '42P01'];
