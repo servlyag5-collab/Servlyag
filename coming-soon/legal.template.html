@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}} · Servly AG</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<!-- Made by scripts/build-coming-soon.js from the same text as the app (src/lib/legal.ts). Edit the words there. -->
+<style>
+  :root{--navy:#0B3A63;--blue:#0072C6;--ink:#14212B;--muted:#5A6B70;--bg:#FAFAF7;--line:#E2E5E0}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  a{color:var(--blue)}
+  .bar{position:relative;background:var(--navy);padding:16px 0 20px}
+  .ribbon{position:absolute;left:0;right:0;bottom:0;height:4px;display:flex}
+  .ribbon i{display:block;height:100%}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+  .brand{display:inline-flex;align-items:center;gap:10px;font:800 24px/1 "Bricolage Grotesque",sans-serif;color:#fff;text-decoration:none}
+  h1{font:800 clamp(30px,7vw,42px)/1.1 "Bricolage Grotesque",sans-serif;letter-spacing:-.8px;margin:34px 0 4px}
+  .updated{color:var(--muted);margin:0 0 20px}
+  h2{font:800 21px/1.25 "Bricolage Grotesque",sans-serif;margin:30px 0 8px}
+  p{margin:0 0 12px;max-width:68ch}
+  .back{display:inline-block;margin-top:28px;font-weight:700}
+  footer{margin:40px 0 0;padding:22px 0 34px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+  footer nav{display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:10px}
+  footer nav a{font-weight:700;text-decoration:none}
+  a:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <svg width="24" height="30" viewBox="0 0 150 190" aria-hidden="true"><path d="M75 6C39 6 12 33 12 68c0 46 63 106 63 106s63-60 63-106C138 33 111 6 75 6z" fill="#0072C6" stroke="#fff" stroke-width="8"/><circle cx="75" cy="66" r="32" fill="#fff"/></svg>
+      Servly
+    </a>
+  </div>
+  <div class="ribbon" aria-hidden="true">
+    <i style="flex:5;background:#0072C6"></i><i style="flex:.5;background:#fff"></i><i style="flex:.6;background:#CE1126"></i><i style="flex:.8;background:#111111"></i><i style="flex:1.6;background:#FCD116"></i><i style="flex:.8;background:#111111"></i><i style="flex:.6;background:#CE1126"></i><i style="flex:.5;background:#fff"></i><i style="flex:5;background:#0072C6"></i>
+  </div>
+</header>
+<main class="wrap">
+  <h1>{{TITLE}}</h1>
+  <p class="updated">Last updated: {{UPDATED}}</p>
+  {{BODY}}
+  <a class="back" href="/">Back to Servly</a>
+  <footer>
+    <nav aria-label="Legal and contact">
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a><a href="/pricing/">Plans and pricing</a><a href="/contact/">Contact us</a>
+    </nav>
+    Servly AG · {{ADDRESS}} · <a href="mailto:{{EMAIL}}">{{EMAIL}}</a>
+  </footer>
+</main>
+</body>
+</html>

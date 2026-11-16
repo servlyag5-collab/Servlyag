@@ -93,9 +93,9 @@ edges.
 | 2 | 4-9 s | Most posts reach under 5 percent of your followers. To reach the rest, you pay for ads. Again and again. | Under 5% SEE it |
 | 3 | 9-13 s | On Google, fewer than 1 in 100 people ever click to page two. | Page 2 = INVISIBLE |
 | 4 | 13-16 s | Servly is different. | Meet SERVLY |
-| 5 | 16-21 s | People open Servly for one reason: to hire someone, right here at home. | Ready to HIRE |
-| 6 | 21-26 s | Search for your service, and your business shows up. No feed, no algorithm burying your posts. | You SHOW UP |
-| 7 | 26-30 s | Customers call you, message you, or book you, in one tap. | Call. Message. BOOK. |
+| 5 | 16-21 s | People come to Servly to find someone to hire, right here at home. | Ready to HIRE |
+| 6 | 21-26 s | Search for your service, and your business shows up. No endless feed, and no paying per post to be seen. | You SHOW UP |
+| 7 | 26-30 s | Customers call or message you in one tap. Add bookings, and they can book you too. | Call. Message. BOOK. |
 | 8 | 30-34 s | Stop paying to be ignored. Get found when locals are ready to hire. | Get FOUND |
 | 9 | 34-38 s | I'm Yonnie, and this is Servly. List your business at servlyag.com. | servlyag.COM |
 

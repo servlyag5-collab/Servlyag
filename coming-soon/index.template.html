@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Servly AG: coming soon to Antigua and Barbuda</title>
+<meta name="description" content="Servly is a new local services app for Antigua and Barbuda. Find photographers, hair salons, nail technicians, caterers and more. Coming soon: ask to be told when it opens.">
+<meta property="og:title" content="Servly AG: coming soon to Antigua and Barbuda">
+<meta property="og:description" content="Whatever you need, someone's ready. Ask to be told when Servly opens.">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<!-- Servly "Coming soon" page (built by scripts/build-coming-soon.js; do not edit the copy in coming-soon/out).
+     Sign-ups go to Supabase (database v38, join_launch_list) with the public anon key; nobody can read the list
+     from here. Brand: harbour navy hero, the flag's gold sun, flag ribbon with all five colours. -->
+<style>
+  :root{--navy:#0B3A63;--blue:#0072C6;--red:#CE1126;--black:#111111;--gold:#FCD116;--ink:#14212B;--muted:#5A6B70;--bg:#FAFAF7;--line:#E2E5E0;--field:#F4F5F1}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--blue)}
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px}
+  h1,h2,.brand{font-family:"Bricolage Grotesque",-apple-system,"Segoe UI",sans-serif}
+
+  /* hero: the harbour at sunrise */
+  .hero{position:relative;overflow:hidden;background:linear-gradient(180deg,#0B3A63 0%,#0A3157 70%,#082a4b 100%);color:#fff;padding:22px 0 64px}
+  .sun{position:absolute;right:-70px;top:-70px;width:230px;height:230px;border-radius:50%;background:var(--gold);box-shadow:0 0 80px 30px rgba(252,209,22,.35)}
+  .glow{position:absolute;right:-260px;top:-260px;width:620px;height:620px;border-radius:50%;background:radial-gradient(circle,rgba(252,209,22,.22) 0%,rgba(252,209,22,0) 65%)}
+  .brand{position:relative;display:flex;align-items:center;gap:10px;font-weight:800;font-size:26px;letter-spacing:-.5px;color:#fff;text-decoration:none}
+  .brand small{font-family:-apple-system,"Segoe UI",sans-serif;font-weight:600;font-size:13px;letter-spacing:2px;color:rgba(255,255,255,.7);margin-top:6px}
+  .hero h1{position:relative;margin:56px 0 0;font-weight:800;font-size:clamp(40px,10.5vw,60px);line-height:1.02;letter-spacing:-1.5px;max-width:11ch}
+  .hero p{position:relative;margin:18px 0 0;font-size:19px;color:rgba(255,255,255,.88);max-width:30ch}
+  .waves{position:absolute;left:0;right:0;bottom:26px;height:40px;opacity:.12;background:repeating-linear-gradient(180deg,#fff 0 2px,transparent 2px 13px)}
+  .ribbon{position:absolute;left:0;right:0;bottom:0;height:6px;display:flex}
+  .ribbon i{display:block;height:100%}
+
+  /* the sign-up card, just under the flag ribbon (the ribbon's centre must stay visible) */
+  .card{position:relative;margin-top:24px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:24px 20px;box-shadow:0 24px 50px rgba(11,58,99,.16)}
+  .card h2{margin:0;font-size:26px;font-weight:800;letter-spacing:-.4px}
+  .card .lead{margin:6px 0 18px;color:var(--muted)}
+  label.f{display:block;font-weight:700;font-size:15px;margin:14px 0 6px}
+  input[type=text],input[type=tel]{width:100%;height:52px;border:1px solid var(--line);border-radius:12px;background:var(--field);padding:0 14px;font:inherit;color:var(--ink)}
+  input:focus-visible,button:focus-visible,.pick input:focus-visible+span,a:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+  .pick{display:flex;gap:8px;margin-top:2px}
+  .pick label{flex:1;position:relative}
+  .pick input{position:absolute;opacity:0;inset:0}
+  .pick span{display:flex;align-items:center;justify-content:center;height:50px;border:1.5px solid var(--line);border-radius:12px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;padding:0 6px}
+  .pick input:checked+span{border-color:var(--blue);background:#EAF3FB;color:var(--blue)}
+  .consent{display:flex;gap:10px;align-items:flex-start;margin:18px 0 0;font-size:14.5px;color:var(--muted);cursor:pointer}
+  .consent input{width:22px;height:22px;margin:1px 0 0;flex:none;accent-color:var(--blue)}
+  .trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  button.go{margin-top:20px;width:100%;height:56px;border:0;border-radius:14px;background:var(--gold);color:var(--ink);font:800 18px/1 "Bricolage Grotesque",sans-serif;cursor:pointer}
+  button.go:disabled{opacity:.6;cursor:default}
+  .msg{margin:12px 0 0;font-weight:700}
+  .msg.err{color:var(--red)}
+  .done{display:none;text-align:center;padding:10px 0}
+  .done svg{width:64px;height:64px}
+  .done h2{margin-top:10px}
+
+  .biz{margin:28px 0 0;padding:20px;border-radius:20px;background:#fff;border:1.5px dashed var(--blue)}
+  .biz h3{margin:0;font:800 21px/1.2 "Bricolage Grotesque",sans-serif}
+  .biz p{margin:6px 0 12px;color:var(--muted)}
+  .biz a.btn{display:inline-flex;align-items:center;height:48px;padding:0 18px;border-radius:12px;background:var(--blue);color:#fff;font-weight:800;text-decoration:none}
+
+  .what{margin:32px 0 0;color:var(--muted)}
+  .what b{color:var(--ink)}
+  footer{margin:40px 0 0;padding:22px 0 34px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+  footer nav{display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:10px}
+  footer nav a{font-weight:700;text-decoration:none}
+
+  @media (prefers-reduced-motion:no-preference){
+    .sun{animation:rise 1.6s cubic-bezier(.2,.8,.2,1) both}
+    @keyframes rise{from{transform:translate(-30px,90px) scale(.85);opacity:.6}to{transform:none;opacity:1}}
+  }
+  @media (min-width:700px){.hero{padding-top:30px;padding-bottom:80px}.hero h1{margin-top:72px;max-width:16ch}.sun{width:280px;height:280px}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="glow" aria-hidden="true"></div><div class="sun" aria-hidden="true"></div>
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Servly AG home">
+      <svg width="30" height="38" viewBox="0 0 150 190" aria-hidden="true"><path d="M75 6C39 6 12 33 12 68c0 46 63 106 63 106s63-60 63-106C138 33 111 6 75 6z" fill="#0072C6" stroke="#fff" stroke-width="8"/><circle cx="75" cy="66" r="32" fill="#fff"/><text x="75" y="84" text-anchor="middle" font-family="Bricolage Grotesque,Arial,sans-serif" font-weight="800" font-size="50" fill="#0072C6">S</text></svg>
+      Servly <small>AG</small>
+    </a>
+    <h1>Whatever you need, someone's ready.</h1>
+    <p>Coming soon to Antigua and Barbuda. One app to find local photographers, hair salons, nail technicians, caterers and more.</p>
+  </div>
+  <div class="waves" aria-hidden="true"></div>
+  <div class="ribbon" aria-hidden="true">
+    <i style="flex:5;background:#0072C6"></i><i style="flex:.5;background:#fff"></i><i style="flex:.6;background:#CE1126"></i><i style="flex:.8;background:#111111"></i><i style="flex:1.6;background:#FCD116"></i><i style="flex:.8;background:#111111"></i><i style="flex:.6;background:#CE1126"></i><i style="flex:.5;background:#fff"></i><i style="flex:5;background:#0072C6"></i>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card" aria-labelledby="join-title">
+    <form id="join" novalidate>
+      <h2 id="join-title">Be the first to know</h2>
+      <p class="lead">Leave your details and we'll tell you the day Servly opens.</p>
+
+      <label class="f" for="name">Your name</label>
+      <input id="name" name="name" type="text" autocomplete="name" maxlength="80" required>
+
+      <label class="f" for="contact">WhatsApp number or email</label>
+      <input id="contact" name="contact" type="text" inputmode="email" autocomplete="tel" maxlength="120" placeholder="268 555 1234 or you@example.com" required>
+
+      <span class="f" id="kind-label" style="display:block;font-weight:700;font-size:15px;margin:14px 0 6px">I am</span>
+      <div class="pick" role="radiogroup" aria-labelledby="kind-label">
+        <label><input type="radio" name="kind" value="customer" checked><span>Looking for a service</span></label>
+        <label><input type="radio" name="kind" value="business"><span>Running a business</span></label>
+      </div>
+
+      <div class="trap" aria-hidden="true"><label>Leave this empty <input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
+
+      <label class="consent"><input id="consent" type="checkbox" required>
+        <span>We'll only use this to tell you when Servly opens. Ask us to delete it any time. See our <a href="/privacy/">Privacy Policy</a>.</span></label>
+
+      <button class="go" type="submit" id="go">Tell me when it opens</button>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </form>
+
+    <div class="done" id="done" role="status" aria-live="polite">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#0072C6"/><path d="M19 33l9 9 17-19" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h2>You're on the list</h2>
+      <p class="lead" id="done-text">We'll message you the day Servly opens. Thank you!</p>
+    </div>
+  </section>
+
+  <section class="biz" aria-labelledby="biz-title">
+    <h3 id="biz-title">Run a business?</h3>
+    <p>Get your services listed before we open, so customers find you on day one.</p>
+    <a class="btn" href="{{BUSINESS_HREF}}">{{BUSINESS_TEXT}}</a>
+  </section>
+
+  <p class="what"><b>What is Servly?</b> A local marketplace for Antigua and Barbuda. Customers search for a service and call or message the business straight from the app. Free for customers. Businesses list their services on a monthly plan.</p>
+
+  <footer>
+    <nav aria-label="Legal and contact">
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a><a href="/pricing/">Plans and pricing</a><a href="/contact/">Contact us</a>
+    </nav>
+    Servly AG · {{ADDRESS}} · <a href="mailto:{{EMAIL}}">{{EMAIL}}</a>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var URL = '{{SUPABASE_URL}}', KEY = '{{ANON_KEY}}';
+  var form = document.getElementById('join'), msg = document.getElementById('msg'), go = document.getElementById('go');
+  function say(t, bad) { msg.textContent = t; msg.className = 'msg' + (bad ? ' err' : ''); }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (document.getElementById('website').value) return; // a bot filled the hidden box
+    var name = document.getElementById('name').value.trim();
+    var contact = document.getElementById('contact').value.trim();
+    var kind = form.querySelector('input[name=kind]:checked').value;
+    var consent = document.getElementById('consent').checked;
+    if (!name) { say('Please enter your name.', true); return document.getElementById('name').focus(); }
+    if (!contact) { say('Please enter a WhatsApp number or an email address.', true); return document.getElementById('contact').focus(); }
+    if (!consent) { say('Please tick the box so we can tell you when Servly opens.', true); return document.getElementById('consent').focus(); }
+    go.disabled = true; go.textContent = 'Sending...'; say('');
+    fetch(URL + '/rest/v1/rpc/join_launch_list', {
+      method: 'POST',
+      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_name: name, p_contact: contact, p_kind: kind, p_consent: consent })
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error((res.j && res.j.message) || 'Something went wrong. Please try again.');
+        if (res.j === 'updated') document.getElementById('done-text').textContent = 'You were already on the list, so we updated your details. We will message you the day Servly opens.';
+        else if (kind === 'business') document.getElementById('done-text').textContent = "We'll message you the day Servly opens. Want to be listed from day one? Message us using the button below.";
+        form.style.display = 'none'; document.getElementById('done').style.display = 'block';
+      })
+      .catch(function (err) { say(err.message || 'Something went wrong. Please try again.', true); go.disabled = false; go.textContent = 'Tell me when it opens'; });
+  });
+})();
+</script>
+</body>
+</html>

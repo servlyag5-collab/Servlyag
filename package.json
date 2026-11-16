@@ -48,7 +48,8 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "check:db": "node scripts/check-database.js",
-    "build:web": "expo export --platform web --output-dir dist --clear && node scripts/fix-web-assets.js"
+    "build:web": "expo export --platform web --output-dir dist --clear && node scripts/fix-web-assets.js",
+    "build:coming-soon": "node scripts/build-coming-soon.js"
   },
   "private": true,
   "jest": {

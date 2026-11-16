@@ -67,16 +67,24 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [x] CyberSource: allow saving cards (Payment Tokenization) on the Servly Test profile; then add Supabase secret CYBS_SAVE_CARD = yes (2026-11-13: test card saved, ACCEPT 100; CYBS_SAVE_CARD = yes)
 - [x] Email provider (SMTP): Resend, sending as Servly AG <noreply@servlyag.com>; password reset tested end to end (2026-11-02)
 - [ ] Before launch, Supabase > Authentication: change **Site URL** to `https://servlyag.com` (now `http://localhost:8081`) and raise the **email rate limit** (Rate Limits)
-- [ ] Supabase paid plan (free projects pause after about a week with no activity)
+- [ ] Supabase paid plan BEFORE 7 January (free projects pause after about a week with no activity, and the free plan allows only about 200 people connected live at once: the most likely cause of a launch-day slowdown)
 - [ ] Lawyer review of Privacy Policy, Terms, Refund Policy (`src/lib/legal.ts`, still DRAFT).
   Asked the lawyer about the consultation fee (2026-11-06): **$409** (EC or US dollars: please confirm)
 - [ ] Check Apple and Google rules on charging merchants outside their billing
 - [ ] Show the support email (servlyag5@gmail.com) on servlyag.com
+- [ ] **Coming soon page for servlyag.com: BUILT 2026-11-16, not online.** Switch on after meeting ACB: run v38, add COMING_SOON_WHATSAPP (optional), build, drag coming-soon/out to a NEW Netlify site, point servlyag.com at it (steps in coming-soon/README.md). Before launch (7 Jan 2027): move servlyag.com to the app site and send the launch notice to the sign-up list, then delete the list.
 - [ ] Point servlyag.com at the Netlify site and make it public. Owner's decision 2026-11-06: NOT yet;
   only when going back to the bank (ACB needs it live for its review)
 - [x] Launch date: **7 January 2027** (owner's decision 2026-11-12)
 
 ---
+
+## Launch-day watch (set up in mid-December; agreed 2026-11-16)
+- [ ] **Crash reporting** (e.g. Sentry, free plan): records every app crash/error with the screen, phone and code line so Claude can fix it. Needs an install (ask the owner first) and one new app build, so do it BEFORE the store builds.
+- [ ] **Launch-day check every 30 minutes** (Claude scheduled task): website loads and how fast, search answers and how fast, listings and business pages open, payment functions respond, database health (read-only: slow queries, busy connections). Tells the owner at once what is wrong and where. Runs only while the laptop is on with the Claude app open.
+- [ ] **Practice run** of the check before launch, to fix the checks themselves.
+- [ ] **Free website monitor** (e.g. UptimeRobot): checks servlyag.com every 5 minutes and texts/emails the owner if it is down, even with the laptop off.
+- [ ] **Launch day:** checks running, owner watches Admin (support tickets, reports), Claude fixes what comes up; most fixes reach phones in minutes as over-the-air updates (native problems need a store build).
 
 ## Stage 3: Get ready for the stores
 

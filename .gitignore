@@ -43,3 +43,6 @@ yarn-error.*
 
 # daily brief recordings (made again from the brief any time)
 docs/briefs/audio/
+
+# Coming soon site build (has the public key filled in; rebuild with npm run build:coming-soon)
+coming-soon/out/
