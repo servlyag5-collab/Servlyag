@@ -44,6 +44,8 @@ const checks = [
   ['v35', 'deleting a listing', { rpc: 'removed_listing_titles', body: { p_ids: [] } }],
   // v36 only changes what happens to reviews when an account is deleted; it has no outside check.
   ['v37', 'ABST (sales tax) settings', { get: 'tax_settings?select=abst_on&limit=1' }],
+  // v38 (launch sign-up list) is only run when the Coming soon page goes online, so it is not checked here.
+  ['v39', 'search insights (Admin > Searches)', { rpc: 'admin_rising_searches', body: { p_limit: 1 } }],
 ];
 
 const MISSING = ['PGRST202', 'PGRST205', '42703', '42883', '42P01'];

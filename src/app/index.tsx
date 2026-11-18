@@ -8,6 +8,7 @@ import { splitRows } from '../lib/rows';
 import { LegalLinks } from '../components/LegalLinks';
 import { SunGlow } from '../components/SunGlow';
 import { SearchSuggestions } from '../components/SearchSuggestions';
+import { noteSearch, SETTLE_MS } from '../lib/searchLog';
 import { FirstTimeGuide, replayGuide, useGuideReplay, useGuideSeen, type GuideStep } from '../components/FirstTimeGuide';
 import { useIntroDone } from '../lib/intro';
 import { MenuButton } from '../components/Menu';
@@ -60,6 +61,8 @@ export default function Home() {
   const [guideOpen, setGuideOpen] = useState(false);
   const latest = useRef(0); // only the newest search may show its results (older ones can arrive late)
   const started = useRef(false);
+  const settle = useRef<ReturnType<typeof setTimeout> | null>(null); // waits to count a finished search (v39)
+  useEffect(() => () => { if (settle.current) clearTimeout(settle.current); }, []);
   const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
   // Suggestions under the search box show while it's being typed in (hidden a moment after leaving it, so a tap still lands).
   const [typing, setTyping] = useState(false);
@@ -106,6 +109,13 @@ export default function Home() {
     setQuery(x);
     fetchListingRatings(list.map((r) => r.id)).then(setRatings);
     if (scroll) setTimeout(() => sc.current?.scrollTo({ y: resultsY.current, animated: true }), 60);
+    // Search insights (v39): count it once it's finished: Search pressed now, or nothing changed for a moment.
+    if (!more) {
+      if (settle.current) clearTimeout(settle.current);
+      const note = { q: x.q, city: x.city, village: x.village, results: page.length };
+      if (scroll) noteSearch(note);
+      else settle.current = setTimeout(() => noteSearch(note), SETTLE_MS);
+    }
   }
   const search = () => { setTyping(false); run(f, true); };
   const clear = () => setF(EMPTY); // the live search above then shows everything again

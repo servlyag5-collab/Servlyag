@@ -20,6 +20,7 @@ export const PRIVACY: Section[] = [
     'Payments (merchants): which plan you paid for, the amount, the date and the payment reference. Card details are handled by the payment provider, never by Servly.',
     'Call button taps: when anyone taps Call on a listing or business profile, we record which business and listing, and when, to count how many people contacted each business. We do not record who tapped, their phone number, or anything about the call itself.',
     'Device information: if you allow notifications, a notification address for your device so we can send you message and booking alerts.',
+    'Searches: what people search for (the words, the parish and village chosen, and how many results came up), to understand which services people need. We do not record who searched, and searches that look like a phone number or email address are not kept. Searches are deleted after 12 months.',
     'Launch list (before Servly opens): if you ask to be told when Servly opens, your name, your WhatsApp number or email, and whether you are a customer or a business. We use it only to send that notice, and delete it when you ask.',
   ] },
   { heading: 'How we use it', body: [

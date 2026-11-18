@@ -91,7 +91,12 @@ export function restHeaders(o: {
 }
 
 // One monthly charge of a saved card: a merchant-initiated recurring payment, captured at once.
+// previousTransactionId must be the card network's transaction id (up to 15 digits, e.g. Visa). Servly only knows
+// CyberSource's own request ids (22 digits), which CyberSource rejects there (INVALID_DATA, 2026-11-16), so those are
+// left out: with Token Management on, CyberSource keeps the network id with the saved card token.
+export const networkTransactionId = (id?: string | null) => (id && /^\d{1,15}$/.test(id) ? id : null);
 export function renewalBody(o: { reference: string; token: string; amount: number; currency: string; previousTransactionId?: string | null }) {
+  const prev = networkTransactionId(o.previousTransactionId);
   return {
     clientReferenceInformation: { code: o.reference },
     processingInformation: {
@@ -101,7 +106,7 @@ export function renewalBody(o: { reference: string; token: string; amount: numbe
         initiator: {
           type: 'merchant',
           storedCredentialUsed: true,
-          ...(o.previousTransactionId ? { merchantInitiatedTransaction: { previousTransactionId: o.previousTransactionId } } : {}),
+          ...(prev ? { merchantInitiatedTransaction: { previousTransactionId: prev } } : {}),
         },
       },
     },
@@ -111,15 +116,21 @@ export function renewalBody(o: { reference: string; token: string; amount: numbe
 }
 
 // What CyberSource's REST answer means: paid only when the card was authorised (and captured).
+type FieldProblem = { field?: string; reason?: string };
 export function chargeResult(httpStatus: number, r: {
-  id?: string; status?: string; errorInformation?: { reason?: string; message?: string }; reason?: string; message?: string;
+  id?: string; status?: string; errorInformation?: { reason?: string; message?: string; details?: FieldProblem[] };
+  reason?: string; message?: string; details?: FieldProblem[];
 }): { ok: boolean; id: string | null; reason: string | null; message: string | null } {
   const ok = httpStatus === 201 && r.status === 'AUTHORIZED';
+  // CyberSource names the fields it didn't accept (field names only, never card data): keep them with the message.
+  const details = [...(r.errorInformation?.details ?? []), ...(r.details ?? [])]
+    .map((d) => [d.field, d.reason].filter(Boolean).join(' ')).filter(Boolean);
+  const message = r.errorInformation?.message ?? r.message ?? null;
   return {
     ok,
     id: r.id ?? null,
     reason: r.errorInformation?.reason ?? r.reason ?? r.status ?? (ok ? null : `HTTP ${httpStatus}`),
-    message: r.errorInformation?.message ?? r.message ?? null,
+    message: details.length ? `${message ?? 'Problem'} (fields: ${details.join('; ')})`.slice(0, 500) : message,
   };
 }
 

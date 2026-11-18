@@ -25,21 +25,21 @@ while the 75 USD is still charged. Ask ACB exactly when the monthly fee starts.
 
 ## Website requirements (ACB list) vs servlyag.com today
 
-| ACB needs | Status | What to do |
+| ACB needs | Status (checked 2026-11-17) | What to do |
 |---|---|---|
-| Website URL live (not inactive, parked or forwarded) | **Missing** | Point servlyag.com at Netlify with DNS records at GoDaddy (not "forwarding"), and make the Netlify site **Public**. Owner's earlier plan was Private until store submission; the bank review needs it public. |
-| Business name and physical address, incl. country at checkout | **Partly** | Address given 2026-11-06: Old Road Village, St. Mary's Parish, Antigua (now on receipts and legal pages). Still to show it on a Contact page, in the footer and at Checkout ("Antigua and Barbuda"). |
-| Contact: support email and telephone | **Partly** | Email: servlyag5@gmail.com. Phone: owner getting a separate business number. Add a public Contact page. |
-| Terms and Conditions | Draft | `/terms` (lawyer review pending) |
-| Return/Refund policy | Draft | `/refunds` |
-| Exchange/Cancellation policy | Draft | Cancelling is in `/refunds`; add a line that plans can't be exchanged, only changed (upgrade now / move down at month end). |
-| Delivery policy | **Missing** | Add: digital service, nothing shipped; plan works as soon as payment is confirmed; receipt in Account. |
-| Privacy policy | Draft | `/privacy` |
-| Card brand marks (Visa, Mastercard) | **Missing** | Official logos on Checkout and the website footer (follow Visa/Mastercard logo rules; ACB may supply them). |
-| Complete description of the services sold | **Missing for visitors** | The Plan screen needs a login. Add a public "Plans and pricing" page (what each plan includes and costs). |
-| Transaction currency | OK in Checkout (XCD) | Also state "All prices in Eastern Caribbean dollars (XCD)" on the pricing page and in the Terms. |
-| Legal restrictions / export restrictions (if known) | **Missing** | Short statement (e.g. plans are for businesses in Antigua and Barbuda; no export of goods). Ask the lawyer. |
-| Security policy for card details | **Missing** | Add: card details are typed on CyberSource's secure page over an encrypted connection; Servly never sees or stores card numbers. |
+| Website URL live (not inactive, parked or forwarded) | **Missing** | Put servlyag.com online: the Coming soon site (public, with all policy pages; needs v38 in Supabase for its form, steps in coming-soon/README.md) or make the app site Public. Point the domain with DNS records at GoDaddy, not forwarding. |
+| Business name and physical address, incl. country at checkout | Done | Old Road Village, St. Mary's Parish, Antigua and Barbuda: Contact page, website footer, Checkout ("Sold by ..."), receipts. |
+| Contact: support email and telephone | **Partly** | Email servlyag5@gmail.com on /contact. Phone: add the business number to SUPPORT_PHONE in src/lib/legal.ts when it exists. |
+| Terms and Conditions | Draft | /terms (lawyer review pending) |
+| Return/Refund policy | Draft | /refunds |
+| Exchange/Cancellation policy | Done (draft) | /refunds: Cancelling and Exchanges sections |
+| Delivery policy | Done (draft) | /refunds: Delivery section (digital service, nothing shipped) |
+| Privacy policy | Draft | /privacy |
+| Card brand marks (Visa, Mastercard) | **Missing** | Ask ACB for the official logos (and whether Mastercard is accepted); then add to Checkout and the footer. |
+| Complete description of the services sold | Done | Public /pricing page (each plan, what it includes, prices in XCD) |
+| Transaction currency | Done | XCD on Checkout and /pricing |
+| Legal restrictions / export restrictions | Done (draft) | /pricing: "for businesses ... in Antigua and Barbuda ... digital listing service only: no goods are sold or shipped, so there are no export restrictions" |
+| Security policy for card details | Done (draft) | /privacy > Security: CyberSource secure page, encrypted, Servly never sees card numbers |
 
 ## For the developer (CyberSource)
 

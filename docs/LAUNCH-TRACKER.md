@@ -48,12 +48,12 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [x] Business address: Old Road Village, St. Mary's Parish, Antigua (2026-11-06)
 - [x] Support email: servlyag5@gmail.com (2026-11-06)
 - [ ] **Support phone number**: owner getting a separate business number (not the personal one)
-- [ ] **Ask ACB the follow-up questions** (XCD, monthly charges, webhooks, test account, when the fee starts)
+- [ ] **Ask ACB the follow-up questions.** Answered by testing: XCD works, monthly charges work, test account works, webhooks not needed. Still to ask: when the 75 USD monthly fee starts, the official Visa/Mastercard logos, whether Mastercard is accepted, and whether they can review the website from a link after the meeting.
 - [x] CyberSource test (sandbox) account created (2026-11-06); Organization ID servlyag_1793983604
 - [x] CyberSource test profile "Servly Test": keys created (Profile ID, Access Key, Secret Key in password manager), return and notification addresses filled in (2026-11-07)
 - [x] CyberSource confirmed (2026-11-07): profile "Servly Test" active, Secure Acceptance configured, Token Management, Recurring Billing and **XCD** available in the sandbox
 - [x] CyberSource webhook digital signature key created and saved in the password manager; rep confirmed webhook security is ready (2026-11-07)
-- [ ] CyberSource webhook subscription (payment + recurring billing): endpoint live and accepts test messages (2026-11-11); waiting on the rep to subscribe and run the delivery test
+- [x] CyberSource webhook subscription: NOT needed for launch (decided 2026-11-16). Payment results arrive by Merchant POST (working) and the monthly charges get CyberSource's answer directly (working since 2026-11-16).
 - [x] CyberSource REST key created and added to Supabase secrets (2026-11-10)
 - [x] Put the CyberSource keys into Supabase > Edge Functions > Secrets (2026-11-10: the first test payment through Servly worked, so the keys are in)
 - [x] Build the first-payment connection (Claude, 2026-11-07: Pay button, secure card page, return page, webhook, database v32; tests pass; not yet online)
@@ -71,7 +71,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [ ] Lawyer review of Privacy Policy, Terms, Refund Policy (`src/lib/legal.ts`, still DRAFT).
   Asked the lawyer about the consultation fee (2026-11-06): **$409** (EC or US dollars: please confirm)
 - [ ] Check Apple and Google rules on charging merchants outside their billing
-- [ ] Show the support email (servlyag5@gmail.com) on servlyag.com
+- [x] Support email (servlyag5@gmail.com) is on the Contact page and in the footer of the website and the Coming soon page
 - [ ] **Coming soon page for servlyag.com: BUILT 2026-11-16, not online.** Switch on after meeting ACB: run v38, add COMING_SOON_WHATSAPP (optional), build, drag coming-soon/out to a NEW Netlify site, point servlyag.com at it (steps in coming-soon/README.md). Before launch (7 Jan 2027): move servlyag.com to the app site and send the launch notice to the sign-up list, then delete the list.
 - [ ] Point servlyag.com at the Netlify site and make it public. Owner's decision 2026-11-06: NOT yet;
   only when going back to the bank (ACB needs it live for its review)
@@ -89,11 +89,11 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 ## Stage 3: Get ready for the stores
 
 - [x] Expo project linked (EAS project id) (2026-10-28)
-- [ ] Supabase keys added to EAS: preview done (checked 2026-11-11); production still to add before a store build
+- [x] Supabase keys added to EAS: preview and production (production confirmed 2026-11-16), plus the payment page address for both. Launch builds are tracked in **docs/LAUNCH-KIT.md** (owner: everything ready ahead of time)
 - [x] Android test build installed and checked on a real phone (2026-11-11, push works)
 - [x] Push notifications tested on the real build: Android test push received (2026-11-11; Firebase + FCM V1 set up). iPhone needs the Apple Developer account
 - [ ] Apple Developer account (US$99/year) and Google Play account (US$25 once)
-- [ ] Store listings: screenshots, description, privacy page link, support link
+- [ ] Store listings: screenshots, description, privacy page link, support link. Privacy forms (Apple privacy label, Google Data safety): include **Search history: collected, not linked to the user** (search insights, v39), plus the account, messages, payments, call taps and notification data in the Privacy Policy
 - [ ] Netlify site switched from Private to Public (just before store submission)
 - [ ] Submit Android build · [ ] Submit iPhone build
 
@@ -168,3 +168,5 @@ Short dated notes the brief should know about (decisions, things you are waiting
 - 2026-11-12: Tested on the new build: pop-up notifications, deleting a listing, password reset from the email link (fixed: the app now catches the link; Supabase Redirect URLs include servlyag://**). Over-the-air updates work (expo-updates, preview channel). v36 run: reviews stay when their writer deletes their account shown as "Customer" (owner's choice).
 - 2026-11-12: Both notification sounds confirmed on the phone (Sound 1 messages, Sound 2 updates). Over-the-air update delivered "Customer" on reviews. New website build (Pricing, Contact, ACB wording) uploaded to Netlify; servlyag.com itself still to be pointed at it and made public.
 - 2026-11-13: Tokenization WORKS (CyberSource enabled Payment Tokenization on the Servly Test profile): test sale,create_payment_token ACCEPT 100, ref c1b6bcd6-dd9c-42b0-85ed-670de6631c0c, card saved; CYBS_SAVE_CARD stays yes. Reply sent to case 002799226; next from them: saved-token recurring billing + webhook tests. Renewal test set up: Jojo (yonniejphotography@gmail.com, Starter) plan end moved to 14 Nov 16:00 UTC, so the 6 AM run on 14 Nov should charge 50 XCD (check renewal_charges; reminder task at 6:15). Built (not live yet): after paying, merchants land on Account (payment-result page); needs `npx supabase functions deploy payment-return`, a new dist upload, an app update, and APP_URL = https://startling-crumble-f0ead8.netlify.app (servlyag.com at launch).
+- 2026-11-16: AUTOMATIC MONTHLY PAYMENTS WORK (sandbox): Jojo charged 75 XCD by payment-renewals, AUTHORIZED, plan moved to 17 Dec. First try failed INVALID_DATA (Servly sent a CyberSource request id as the network transaction id); fixed and deployed. CyberSource (case 002799226) said to go ahead with recurring billing and webhook tests ourselves; webhook subscription still to set up in the test Business Center.
+- 2026-11-16: Card-testing protection (CyberSource pre-live checklist): payment-start allows at most 5 payment attempts per account per hour (429 "Too many payment attempts"), Checkout shows the server message; deployed + app update. Pre-live checklist reviewed: live addresses switch with CYBS_ENV=live; ask CyberSource for Token Management + Payment Tokenization on the LIVE account. Not run yet: v38 (launch list, only with the Coming soon page) and v39 (search insights).

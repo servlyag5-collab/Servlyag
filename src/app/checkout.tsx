@@ -63,7 +63,12 @@ export default function Checkout() {
     setPaying(true); setPayErr('');
     const { data, error } = await supabase.functions.invoke('payment-start', { body: { tier: t.id, booking: withBooking } });
     setPaying(false);
-    if (error || !data?.order) return setPayErr('The payment page could not be opened. Please try again in a moment.');
+    if (error || !data?.order) {
+      // The server's own words when it has some (e.g. "Too many payment attempts..."), else a general message.
+      let said = '';
+      try { said = (await (error as { context?: Response } | null)?.context?.json())?.error ?? ''; } catch { /* no reason given */ }
+      return setPayErr(said || 'The payment page could not be opened. Please try again in a moment.');
+    }
     const query = `order=${encodeURIComponent(data.order)}&s=${encodeURIComponent(data.secret)}`;
     if (Platform.OS === 'web') router.push(`/pay?${query}` as Href);
     else Linking.openURL(`${PAY_URL}?${query}`);

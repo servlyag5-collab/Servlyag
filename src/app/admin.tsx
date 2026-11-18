@@ -36,7 +36,7 @@ const chipText = (on: boolean) => ({ fontWeight: '700' as const, color: on ? '#f
 
 export default function Admin() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<'merchants' | 'support' | 'reports' | 'promos'>('merchants');
+  const [tab, setTab] = useState<'merchants' | 'support' | 'reports' | 'promos' | 'searches'>('merchants');
   useFocusEffect(useCallback(() => { supabase.rpc('is_admin').then(({ data }) => setAllowed(!!data)); }, []));
 
   return (
@@ -48,10 +48,10 @@ export default function Admin() {
           <Text style={ui.muted}>This page is for Servly admins only.</Text>
         ) : (
           <>
-            <View style={{ flexDirection: 'row', backgroundColor: colors.field, borderRadius: 12, padding: 4, gap: 4 }}>
-              {(['merchants', 'support', 'reports', 'promos'] as const).map((t) => (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.field, borderRadius: 12, padding: 4, gap: 4 }}>
+              {(['merchants', 'support', 'reports', 'promos', 'searches'] as const).map((t) => (
                 <Pressable key={t} onPress={() => setTab(t)}
-                  style={{ flex: 1, height: 40, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: tab === t ? colors.blue : 'transparent' }}>
+                  style={{ flexGrow: 1, flexBasis: '30%', height: 40, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: tab === t ? colors.blue : 'transparent' }}>
                   <Text style={{ fontWeight: '800', color: tab === t ? '#fff' : colors.muted }}>{t[0].toUpperCase() + t.slice(1)}</Text>
                 </Pressable>
               ))}
@@ -60,6 +60,7 @@ export default function Admin() {
             {tab === 'support' && <Support />}
             {tab === 'reports' && <Reports />}
             {tab === 'promos' && <Promos />}
+            {tab === 'searches' && <Searches />}
           </>
         )}
       </ScrollView>
@@ -270,6 +271,88 @@ function MerchantCard({ m, onChanged }: { m: Merchant; onChanged: () => void }) 
           })}
         </View>
       ))}
+    </View>
+  );
+}
+
+// ---- Searches (v39): what people search for, ranked, and what they couldn't find --------------------------------
+// Never who searched. "Not found" first: those are the businesses to sign up or to market to.
+type Top = { q: string; searches: number; no_results: number; last_at: string };
+type Unmet = { q: string; place: string; searches: number; last_at: string };
+type Rising = { q: string; this_week: number; last_week: number };
+type Place = { place: string; searches: number; no_results: number };
+function Searches() {
+  const [days, setDays] = useState(30);
+  const [data, setData] = useState<{ top: Top[]; unmet: Unmet[]; rising: Rising[]; places: Place[] } | null>(null);
+  const [err, setErr] = useState('');
+  const load = useCallback(() => {
+    setData(null); setErr('');
+    Promise.all([
+      supabase.rpc('admin_unmet_searches', { p_days: days, p_limit: 30 }),
+      supabase.rpc('admin_top_searches', { p_days: days, p_limit: 30 }),
+      supabase.rpc('admin_rising_searches', { p_limit: 15 }),
+      supabase.rpc('admin_search_places', { p_days: days }),
+    ]).then(([u, t, r, p]) => {
+      const e = u.error ?? t.error ?? r.error ?? p.error;
+      if (e) return setErr(/admin_unmet_searches|function/.test(e.message) ? 'Run database update v39 to see searches.' : e.message);
+      setData({ unmet: (u.data as Unmet[]) ?? [], top: (t.data as Top[]) ?? [], rising: (r.data as Rising[]) ?? [], places: (p.data as Place[]) ?? [] });
+    });
+  }, [days]);
+  useFocusEffect(load);
+
+  const head = (title: string, note: string) => (
+    <View style={{ gap: 2, marginTop: 6 }}>
+      <Text style={ui.h2}>{title}</Text>
+      <Text style={[ui.muted, { fontSize: 14 }]}>{note}</Text>
+    </View>
+  );
+  const item = (rank: number, left: string, sub: string, right: string, key: string, color = colors.ink) => (
+    <View key={key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderColor: colors.border }}>
+      <Text style={{ width: 26, textAlign: 'right', color: colors.muted, fontWeight: '700' }}>{rank}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontWeight: '700', color: colors.ink, fontSize: 16 }} numberOfLines={1}>{left}</Text>
+        {!!sub && <Text style={{ color: colors.muted, fontSize: 13 }} numberOfLines={1}>{sub}</Text>}
+      </View>
+      <Text style={{ fontWeight: '800', color, fontSize: 16 }}>{right}</Text>
+    </View>
+  );
+  const none = (t: string) => <Text style={ui.muted}>{t}</Text>;
+  const ago = (iso: string) => `last ${bookingDay(iso)}`;
+
+  return (
+    <View style={{ gap: 10 }}>
+      <Text style={ui.muted}>What people search for on Servly. Only the words, parish and village are kept, never who searched. Searches older than 12 months are deleted.</Text>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {[7, 30, 90].map((d) => (
+          <Pressable key={d} style={chip(days === d)} onPress={() => setDays(d)}><Text style={chipText(days === d)}>Last {d} days</Text></Pressable>
+        ))}
+      </View>
+      {!!err && <Text style={ui.error}>{err}</Text>}
+      {!data && !err && <PinLoader />}
+      {data && (
+        <>
+          <View style={[ui.card, { padding: 14, gap: 4, borderColor: colors.red, borderWidth: 2 }]}>
+            {head('Searched, but nothing found', 'Businesses to sign up, or to market to. Where people searched is shown under each one.')}
+            {data.unmet.length === 0 ? none('Nothing yet. Every search found something.')
+              : data.unmet.map((r, i) => item(i + 1, r.q || '(only a place)', `${r.place} · ${ago(r.last_at)}`, `${r.searches}×`, `u${i}`, colors.red))}
+          </View>
+          <View style={[ui.card, { padding: 14, gap: 4 }]}>
+            {head('Top searches', 'Most searched first. "Not found" shows how many of those found nothing.')}
+            {data.top.length === 0 ? none('No searches yet.')
+              : data.top.map((r, i) => item(i + 1, r.q, r.no_results > 0 ? `${r.no_results} not found · ${ago(r.last_at)}` : ago(r.last_at), `${r.searches}×`, `t${i}`))}
+          </View>
+          <View style={[ui.card, { padding: 14, gap: 4 }]}>
+            {head('Rising this week', 'Searched at least 3 times this week and more than last week.')}
+            {data.rising.length === 0 ? none('Nothing rising right now.')
+              : data.rising.map((r, i) => item(i + 1, r.q, `last week ${r.last_week}`, `${r.this_week}×`, `r${i}`, colors.blue))}
+          </View>
+          <View style={[ui.card, { padding: 14, gap: 4 }]}>
+            {head('Where people search', 'The parish or village picked in the search ("Anywhere" = none picked).')}
+            {data.places.length === 0 ? none('No searches yet.')
+              : data.places.map((r, i) => item(i + 1, r.place, r.no_results > 0 ? `${r.no_results} found nothing` : '', `${r.searches}×`, `p${i}`))}
+          </View>
+        </>
+      )}
     </View>
   );
 }

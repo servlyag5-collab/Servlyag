@@ -12,6 +12,7 @@ import { PAY_PAGE, paymentFields } from '../_shared/cybersource.ts';
 import { admin, cors, json } from '../_shared/record.ts';
 
 const TIERS = ['basic', 'plus', 'premium'];
+const MAX_TRIES = 5; // payment attempts per account per hour
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -27,6 +28,15 @@ Deno.serve(async (req) => {
     try { body = await req.json(); } catch { return json({ error: 'Bad request' }, 400); }
     const tierId = String(body.tier ?? '');
     if (!TIERS.includes(tierId)) return json({ error: 'Unknown plan' }, 400);
+
+    // Card-testing protection (CyberSource's pre-live checklist, 2026-11-16): at most MAX_TRIES payment attempts
+    // per account per hour. Real merchants never need more; fraudsters testing stolen cards do.
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: tries } = await db.from('payment_orders').select('id', { count: 'exact', head: true })
+      .eq('merchant_id', user.id).gte('created_at', since);
+    if ((tries ?? 0) >= MAX_TRIES) {
+      return json({ error: 'Too many payment attempts. Please try again in an hour, or contact Servly support.' }, 429);
+    }
 
     const { data: tier } = await db.from('tiers').select('monthly_price,booking_included').eq('id', tierId).single();
     const { data: addon } = await db.from('addons').select('monthly_price').eq('id', 'booking').single();

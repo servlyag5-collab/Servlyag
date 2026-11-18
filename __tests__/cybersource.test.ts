@@ -86,4 +86,20 @@ describe('Monthly charges (REST)', () => {
       .toEqual({ ok: false, id: 'T2', reason: 'EXPIRED_CARD', message: 'Expired card' });
     expect(chargeResult(401, {}).ok).toBe(false);
   });
+
+  it('only sends a card-network transaction id, never a 22-digit CyberSource request id', () => {
+    const withRequestId = JSON.parse(JSON.stringify(renewalBody({ reference: 'c-1', token: 'T', amount: 75, currency: 'XCD', previousTransactionId: '7943499578246693104010' })));
+    expect(withRequestId.processingInformation.authorizationOptions.initiator.merchantInitiatedTransaction).toBeUndefined();
+    expect(withRequestId.processingInformation.authorizationOptions.initiator).toMatchObject({ type: 'merchant', storedCredentialUsed: true });
+    const withNetworkId = JSON.parse(JSON.stringify(renewalBody({ reference: 'c-1', token: 'T', amount: 75, currency: 'XCD', previousTransactionId: '016153570198200' })));
+    expect(withNetworkId.processingInformation.authorizationOptions.initiator.merchantInitiatedTransaction).toEqual({ previousTransactionId: '016153570198200' });
+  });
+
+  it('keeps the names of the fields CyberSource rejected', () => {
+    const r = chargeResult(400, { status: 'INVALID_REQUEST', reason: 'INVALID_DATA', message: 'Declined - One or more fields in the request contains invalid data',
+      details: [{ field: 'processingInformation.authorizationOptions.initiator.merchantInitiatedTransaction.previousTransactionId', reason: 'INVALID_DATA' }] });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('INVALID_DATA');
+    expect(r.message).toContain('(fields: processingInformation.authorizationOptions.initiator.merchantInitiatedTransaction.previousTransactionId INVALID_DATA)');
+  });
 });

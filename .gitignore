@@ -46,3 +46,6 @@ docs/briefs/audio/
 
 # Coming soon site build (has the public key filled in; rebuild with npm run build:coming-soon)
 coming-soon/out/
+
+# Launch builds made ahead of time (rebuild with npm run build:web:launch)
+launch/

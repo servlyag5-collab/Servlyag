@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const dist = path.join(__dirname, '..', 'dist');
+const dist = path.join(__dirname, '..', process.argv[2] || 'dist'); // another folder can be given (launch build)
 const from = path.join(dist, 'assets', 'node_modules');
 const to = path.join(dist, 'assets', 'fonts');
 
