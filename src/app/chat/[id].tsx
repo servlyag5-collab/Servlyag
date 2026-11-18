@@ -10,12 +10,12 @@ import { hasBookingApp, type Booking } from '../../lib/bookings';
 import { channelName, phoneDigits, type Conversation, type Message } from '../../lib/chat';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
-import { customerName } from '../../lib/names';
+import { customerName, listingName } from '../../lib/names';
 import { colors, ui, SIDE, WIDE } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
 
 type Conv = Conversation & {
-  services: { title: string } | null;
+  services: { title: string; listed_as?: string | null } | null;
   customer: { display_name: string; screen_name: string } | null;
   merchant: { display_name: string } | null;
 };
@@ -50,7 +50,7 @@ export default function Chat() {
   useEffect(() => {
     if (!uid) return;
     supabase.from('conversations')
-      .select('*,services(title),customer:profiles!customer_id(display_name,screen_name),merchant:profiles!merchant_id(display_name)')
+      .select('*,services(title,listed_as),customer:profiles!customer_id(display_name,screen_name),merchant:profiles!merchant_id(display_name)')
       .eq('id', id).single()
       .then(({ data, error }) => {
         if (!data) return setErr(error?.message ?? 'Conversation not found.');
@@ -80,7 +80,7 @@ export default function Chat() {
 
   async function send(kind: 'text' | 'review_request' = 'text') {
     const body = kind === 'review_request'
-      ? `Thank you for choosing ${c?.merchant?.display_name || 'us'}! If you have a moment, we'd love a review of our service.`
+      ? `Thank you for choosing ${listingName(c?.services?.listed_as, c?.merchant?.display_name, 'us')}! If you have a moment, we'd love a review of our service.`
       : text.trim();
     if (!body || !uid) return;
     setBusy(true); setErr('');
@@ -92,7 +92,7 @@ export default function Chat() {
   }
 
   const iAmMerchant = !!c && c.merchant_id === uid;
-  const other = c ? (iAmMerchant ? customerName(c.customer, c.customer_as_business) : c.merchant?.display_name || 'Merchant') : '';
+  const other = c ? (iAmMerchant ? customerName(c.customer, c.customer_as_business) : listingName(c.services?.listed_as, c.merchant?.display_name, 'Merchant')) : '';
   const otherId = c ? (iAmMerchant ? c.customer_id : c.merchant_id) : '';
 
   // Block / unblock the other person: blocked people can't message or book you (enforced by the database).

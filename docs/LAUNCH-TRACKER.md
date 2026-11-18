@@ -26,7 +26,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [x] Deleting a listing (2026-11-12, database v35: merchant and admin)
 - [x] Payment connection + webhook that activates plans (first full test payment 2026-11-10)
 - [ ] Settings screen
-- [ ] Final layouts for the three listing page designs (Starter / Growth / Business are placeholders)
+- [x] Listing page designs approved and built 2026-11-17 (Starter clean, Growth showcase, Business feature page; design in docs/design/). Check them in the next test build.
 
 ### Database updates run in Supabase
 - [x] All updates up to v30 run (v25 on 2026-11-02; v27-v29 on 2026-11-03; v30 on 2026-11-06; check passes)

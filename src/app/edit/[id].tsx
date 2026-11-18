@@ -25,6 +25,7 @@ import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
 import { DeleteListing } from '../../components/DeleteListing';
+import { LISTED_AS_MAX } from '../../lib/names';
 
 // One photo in the order shown: already saved (path) or newly picked (asset). The first is the cover.
 type Photo = { path?: string; asset?: ImagePicker.ImagePickerAsset };
@@ -39,7 +40,7 @@ export default function EditListing() {
   const merchant = useMode() === 'merchant';
   const [b, setB] = useState({ name: '', bio: '', phone: '' });
   const [showPhone, setShowPhone] = useState(true);
-  const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '' });
+  const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '', listedAs: '' });
   const [priceFrom, setPriceFrom] = useState(false); // "From EC$..." starting price
   const [showHours, setShowHours] = useState(false); // opening hours switch (hours stay saved when off)
   const [hours, setHours] = useState<Hours>(DEFAULT_HOURS);
@@ -56,13 +57,13 @@ export default function EditListing() {
   useEffect(() => {
     if (!uid) return;
     Promise.all([
-      supabase.from('services').select('title,description,tags,price,price_from,show_hours,hours,city,village,photos,photo_focus').eq('id', id).eq('merchant_id', uid).is('deleted_at', null).maybeSingle(), // deleted listings (v35) can't be edited
+      supabase.from('services').select('title,description,tags,price,price_from,show_hours,hours,city,village,photos,photo_focus,listed_as').eq('id', id).eq('merchant_id', uid).is('deleted_at', null).maybeSingle(), // deleted listings (v35) can't be edited
       supabase.from('profiles').select('display_name,bio,show_phone').eq('id', uid).single(),
       supabase.rpc('my_phone'), // the real number is private; only its owner can read it
     ]).then(([s, p, ph]) => {
       if (!s.data) return setErr('This listing could not be found, or it is not yours.');
       setF({
-        title: s.data.title, description: s.data.description, tags: (s.data.tags as string[]).join(', '),
+        title: s.data.title, listedAs: s.data.listed_as ?? '', description: s.data.description, tags: (s.data.tags as string[]).join(', '),
         price: s.data.price != null ? String(s.data.price) : '', city: s.data.city, village: s.data.village ?? '',
       });
       setPriceFrom(!!s.data.price_from);
@@ -120,6 +121,7 @@ export default function EditListing() {
 
     const { error } = await supabase.from('services').update({
       title: f.title.trim(),
+      listed_as: f.listedAs.trim() || null,
       description: f.description.trim(),
       tags: parseTags(f.tags),
       price: f.price.trim() ? Number(f.price) : null,
@@ -156,6 +158,9 @@ export default function EditListing() {
 
             <Text style={[ui.h2, { marginTop: 8 }]}>The service</Text>
             <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Service name" value={f.title} onChangeText={set('title')} />
+        {/* "Listed as" (v40): optional name for this listing only, e.g. a side business. */}
+        <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Listed as (optional): another name for this listing" value={f.listedAs} onChangeText={set('listedAs')} maxLength={LISTED_AS_MAX} />
+        <Text style={[ui.muted, { fontSize: 14, marginTop: -4 }]}>For a side business, e.g. "Green Cut by Jojo". Leave empty to use your business name.</Text>
             <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Describe what you offer" multiline value={f.description} onChangeText={set('description')} />
             <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Search tags, separated by commas" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
             <TagRules count={parseTags(f.tags).length} />

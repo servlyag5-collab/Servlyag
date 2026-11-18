@@ -24,7 +24,7 @@ The store builds are the only things that can't be redone in minutes, so these c
 | Item | Status | Why it matters |
 |---|---|---|
 | How merchants pay inside the phone apps (`docs/STORE-BILLING.md`) | 🟡 owner to decide | Apple/Google may reject a Pay button that only sends merchants to the website. The store builds must have the final behaviour. |
-| Crash reporting (e.g. Sentry) | 🟡 owner to OK the install | It lives inside the app, so it must be in the store builds (launch-day watch plan). |
+| Crash reporting (Sentry) | ✅ installed and wired 2026-11-17, OFF until the owner's Sentry DSN is added; needs a new build | Owner: create the free Sentry account + React Native project, send Claude the DSN. |
 | iPhone notification sounds (WAV copies) | ⛔ not made yet (may need ffmpeg: ask first) | Built into the iPhone app. |
 | Expo package updates (16 small ones) | ⛔ not done (ask first) | Best done once, before the final builds, then retest. |
 | Apple Developer account (US$99/year) | ⛔ owner | No iPhone build can be made without it. |

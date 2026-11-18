@@ -93,8 +93,8 @@ function ReviewItem({ r, uid, showListing, onChanged }: { r: Review; uid?: strin
 // Reviews for ONE listing (pass serviceId, e.g. on the listing page) or for a whole business
 // (pass only merchantId, e.g. the business profile; each review then says which listing it's about).
 // `limit` shows the newest few with a "Read all" link; `allowWrite` is off in the owner's preview.
-export function Reviews({ merchantId, serviceId, limit, allowWrite = true }: {
-  merchantId: string; serviceId?: string; limit?: number; allowWrite?: boolean;
+export function Reviews({ merchantId, serviceId, limit, allowWrite = true, title = 'Reviews' }: {
+  merchantId: string; serviceId?: string; limit?: number; allowWrite?: boolean; title?: string;
 }) {
   const session = useSession();
   const uid = session?.user.id;
@@ -138,7 +138,7 @@ export function Reviews({ merchantId, serviceId, limit, allowWrite = true }: {
   const total = rating?.total ?? 0;
   return (
     <View style={{ gap: 10 }}>
-      <Text style={[ui.h2, { marginTop: 8 }]}>Reviews</Text>
+      <Text style={[ui.h2, { marginTop: 8 }]}>{title}</Text>
       {!!err && <Text style={ui.error}>{err}</Text>}
       {total > 0 ? <RatingSummary rating={rating} size={18} /> : rows && !err && <Text style={ui.muted}>No reviews yet.</Text>}
       {!rows && <PinLoader size={30} />}

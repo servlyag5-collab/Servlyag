@@ -10,6 +10,7 @@ import { colors } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
 import { introDone } from '../lib/intro';
 import '../lib/authLink'; // starts listening for password reset links as soon as the app opens
+import { withCrashReporting } from '../lib/crash'; // Sentry (off until the DSN is set)
 
 let splashPlayed = false; // the opening animation plays once per app launch
 
@@ -20,7 +21,7 @@ if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.pa
   window.location.replace(`/reset-password${window.location.hash}`);
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const session = useSession();
   const [splash, setSplash] = useState(!splashPlayed);
   useEffect(() => { if (splashPlayed) introDone(); }, []);
@@ -71,3 +72,5 @@ export default function RootLayout() {
     </>
   );
 }
+
+export default withCrashReporting(RootLayout);

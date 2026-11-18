@@ -13,7 +13,7 @@ import { colors, ui } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
 
 type P = { display_name: string; bio: string; public_phone: string | null };
-type Svc = { id: string; title: string; photos: string[]; photo_focus: unknown; price: number | null; price_from: boolean; city: string; village: string | null };
+type Svc = { id: string; title: string; photos: string[]; photo_focus: unknown; price: number | null; price_from: boolean; city: string; village: string | null; listed_as?: string | null };
 
 export default function Business() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,7 +23,7 @@ export default function Business() {
 
   useEffect(() => {
     supabase.from('profiles').select('display_name,bio,public_phone').eq('id', id).single().then(({ data }) => setP(data as P));
-    supabase.from('services').select('id,title,photos,photo_focus,price,price_from,city,village').eq('merchant_id', id).eq('active', true).eq('paused', false)
+    supabase.from('services').select('id,title,photos,photo_focus,price,price_from,city,village,listed_as').eq('merchant_id', id).eq('active', true).eq('paused', false)
       .order('created_at', { ascending: false }).then(({ data }) => setRows((data as Svc[]) ?? []));
   }, [id]);
 
@@ -46,6 +46,7 @@ export default function Business() {
                 <Cover photos={s.photos} focus={s.photo_focus} title={s.title} width={72} height={72} radius={12} />
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{s.title}</Text>
+                  {!!s.listed_as?.trim() && <Text style={{ fontSize: 14, fontWeight: '700', color: colors.blue }}>Listed as {s.listed_as.trim()}</Text>}
                   <Text style={ui.muted}>{s.village ? `${s.village}, ` : ''}{s.city} · {formatPrice(s.price, s.price_from)}</Text>
                 </View>
               </Pressable>

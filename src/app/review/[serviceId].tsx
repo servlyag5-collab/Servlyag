@@ -6,7 +6,7 @@ import { WideSplit } from '../../components/WideSplit';
 import { TopBar } from '../../components/Menu';
 import { Stars } from '../../components/Stars';
 import { useMode } from '../../lib/mode';
-import { customerName, type PersonNames } from '../../lib/names';
+import { customerName, type PersonNames, listingName } from '../../lib/names';
 import { canReview } from '../../lib/reviews';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
@@ -14,7 +14,7 @@ import { colors, ui } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
 
 const WORDS = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
-type Svc = { title: string; merchant_id: string; profiles: { display_name: string } | null };
+type Svc = { title: string; merchant_id: string; listed_as?: string | null; profiles: { display_name: string } | null };
 
 // Write (or edit) my one review of a LISTING. Only customers who messaged about it can review.
 export default function WriteReview() {
@@ -34,7 +34,7 @@ export default function WriteReview() {
   useEffect(() => {
     if (!uid) return;
     Promise.all([
-      supabase.from('services').select('title,merchant_id,profiles(display_name)').eq('id', serviceId).maybeSingle(),
+      supabase.from('services').select('title,merchant_id,listed_as,profiles(display_name)').eq('id', serviceId).maybeSingle(),
       canReview(serviceId, uid),
       supabase.from('reviews').select('id,rating,comment,as_business').eq('service_id', serviceId).eq('customer_id', uid).maybeSingle(),
       supabase.from('profiles').select('display_name,screen_name').eq('id', uid).maybeSingle(),
@@ -68,7 +68,7 @@ export default function WriteReview() {
         {!!svc && (
           <View style={{ gap: 2 }}>
             <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{svc.title}</Text>
-            <Text style={{ fontSize: 15, fontWeight: '700', color: colors.blue }}>{svc.profiles?.display_name || 'Servly merchant'}</Text>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: colors.blue }}>{listingName(svc.listed_as, svc.profiles?.display_name)}</Text>
           </View>
         )}
         {state === 'loading' && <PinLoader />}

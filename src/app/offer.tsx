@@ -22,6 +22,7 @@ import { setMode } from '../lib/mode';
 import { shrinkPhoto } from '../lib/photos';
 import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
+import { LISTED_AS_MAX } from '../lib/names';
 import { PinLoader } from '../components/PinLoader';
 
 type Plan = { name: string; max_services: number | null; booking_included: boolean };
@@ -32,7 +33,7 @@ const toPlanFirst = () => router.replace({ pathname: '/plan', params: { next: 'o
 export default function Offer() {
   const [b, setB] = useState({ name: '', bio: '', phone: '' });
   const [showPhone, setShowPhone] = useState(true);
-  const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '' });
+  const [f, setF] = useState({ title: '', description: '', tags: '', price: '', city: '', village: '', listedAs: '' });
   const [priceFrom, setPriceFrom] = useState(false); // "From EC$..." starting price
   const [showHours, setShowHours] = useState(false); // opening hours switch (hours stay saved when off)
   const [hours, setHours] = useState<Hours>(DEFAULT_HOURS);
@@ -91,6 +92,7 @@ export default function Offer() {
     const { data: svc, error } = await supabase.from('services').insert({
       merchant_id: user!.id,
       title: f.title.trim(),
+      listed_as: f.listedAs.trim() || null,
       description: f.description.trim(),
       tags: parseTags(f.tags),
       price: f.price.trim() ? Number(f.price) : null,
@@ -158,6 +160,9 @@ export default function Offer() {
 
         <Text style={[ui.h2, { marginTop: 8 }]}>The service</Text>
         <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Service name (e.g. Wedding photography)" value={f.title} onChangeText={set('title')} />
+        {/* "Listed as" (v40): optional name for this listing only, e.g. a side business. */}
+        <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Listed as (optional): another name for this listing" value={f.listedAs} onChangeText={set('listedAs')} maxLength={LISTED_AS_MAX} />
+        <Text style={[ui.muted, { fontSize: 14, marginTop: -4 }]}>For a side business, e.g. "Green Cut by Jojo". Leave empty to use your business name.</Text>
         <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 110, paddingTop: 14, textAlignVertical: 'top' }]} placeholder="Describe what you offer" multiline value={f.description} onChangeText={set('description')} />
         <TextInput placeholderTextColor={colors.muted} style={ui.field} placeholder="Search tags, separated by commas (photographer, events)" autoCapitalize="none" value={f.tags} onChangeText={set('tags')} />
         <TagRules count={parseTags(f.tags).length} />

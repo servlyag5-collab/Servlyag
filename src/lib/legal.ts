@@ -20,6 +20,7 @@ export const PRIVACY: Section[] = [
     'Payments (merchants): which plan you paid for, the amount, the date and the payment reference. Card details are handled by the payment provider, never by Servly.',
     'Call button taps: when anyone taps Call on a listing or business profile, we record which business and listing, and when, to count how many people contacted each business. We do not record who tapped, their phone number, or anything about the call itself.',
     'Device information: if you allow notifications, a notification address for your device so we can send you message and booking alerts.',
+    'Crash reports (phone apps): if the app crashes or hits an error, technical details such as the error, the screen, the phone model and the app version, so we can fix it. Crash reports do not include your messages or card details.',
     'Searches: what people search for (the words, the parish and village chosen, and how many results came up), to understand which services people need. We do not record who searched, and searches that look like a phone number or email address are not kept. Searches are deleted after 12 months.',
     'Launch list (before Servly opens): if you ask to be told when Servly opens, your name, your WhatsApp number or email, and whether you are a customer or a business. We use it only to send that notice, and delete it when you ask.',
   ] },
@@ -32,7 +33,7 @@ export const PRIVACY: Section[] = [
   { heading: 'Who can see your information', body: [
     'Public: listings, business names and descriptions, prices, locations, photos, reviews and merchant replies. A merchant\'s phone number is public only if they turn on "Show my phone number to customers".',
     'Only the two people in a conversation can read its messages and bookings.',
-    'Service providers who help us run Servly (hosting and database: Supabase; notifications: Expo; emails such as password resets: Resend; the payment provider once connected) process data only on our behalf.',
+    'Service providers who help us run Servly (hosting and database: Supabase; notifications: Expo; emails such as password resets: Resend; app crash reports: Sentry; the payment provider: CyberSource through Antigua Commercial Bank) process data only on our behalf.',
     'We may share information if the law requires it, or to protect the safety of users.',
   ] },
   { heading: 'How long we keep it', body: [

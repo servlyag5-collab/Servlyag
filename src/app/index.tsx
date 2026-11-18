@@ -96,7 +96,7 @@ export default function Home() {
     const from = more ? (rows?.length ?? 0) : 0;
     const { data, error } = await supabase
       .rpc('search_services', { p_q: x.q.replace(/[%_\\]/g, ' ').trim(), p_city: x.city.trim(), p_village: x.village.trim() })
-      .select('id,merchant_id,title,photos,photo_focus,price,price_from,show_hours,hours,priority,city,village,profiles(display_name)')
+      .select('id,merchant_id,title,photos,photo_focus,price,price_from,show_hours,hours,priority,city,village,listed_as,profiles(display_name)')
       .range(from, from + PAGE - 1);
     if (me !== latest.current) return; // a newer search has started; ignore this one
     setBusy(false);

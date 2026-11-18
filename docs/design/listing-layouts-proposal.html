@@ -1,0 +1,142 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Servly listing layouts</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0B3A63;--blue:#0072C6;--red:#CE1126;--black:#111;--gold:#FCD116;--ink:#14212B;--muted:#5A6B70;--bg:#FAFAF7;--line:#E2E5E0}
+  *{box-sizing:border-box}
+  body{margin:0;background:#DDE3E6;font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);padding:28px}
+  .row{display:flex;gap:28px;align-items:flex-start}
+  .col h2{font:800 22px/1.2 "Bricolage Grotesque",sans-serif;margin:0 0 4px}
+  .col p.sub{margin:0 0 12px;color:#43535a;font-size:14px;max-width:390px}
+  .phone{width:390px;height:1460px;background:var(--bg);border-radius:34px;border:10px solid #14212B;overflow:hidden;position:relative}
+  .scroll{padding:0 0 110px}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;font-weight:700;color:var(--blue)}
+  .top .logo{font:800 18px "Bricolage Grotesque",sans-serif;color:var(--ink)}
+  .pad{padding:0 16px}
+  .ph{background:linear-gradient(135deg,#7FA9C9,#2F6E9E 55%,#173E5E);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.85);font-weight:700;letter-spacing:.3px}
+  .ph.b{background:linear-gradient(135deg,#C9A27F,#9E6A2F 55%,#5E3A17)}
+  .ph.c{background:linear-gradient(135deg,#9FC9A2,#3F8E5A 55%,#1C4E31)}
+  .ph.d{background:linear-gradient(135deg,#C9B7E0,#7D5EA8 55%,#3F2C5E)}
+  .cover{height:244px;border-radius:18px}
+  h1{font:800 26px/1.15 "Bricolage Grotesque",sans-serif;margin:14px 0 4px;letter-spacing:-.3px}
+  .who{color:var(--muted)} .who b{color:var(--ink);text-decoration:underline}
+  .price{font-weight:800;font-size:19px;color:var(--blue);margin-top:4px}
+  .stars{color:#E8A600;letter-spacing:1px}
+  .rating{display:flex;gap:8px;align-items:center;margin-top:6px;font-weight:700}
+  .rating span.n{color:var(--muted);font-weight:600}
+  .open{display:inline-block;background:#FFF4C2;color:#7A5B00;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:12px}
+  .card h3{margin:0 0 6px;font:800 17px "Bricolage Grotesque",sans-serif}
+  .muted{color:var(--muted)}
+  .thumbs{display:flex;gap:8px;margin-top:8px}
+  .thumbs .ph{flex:1;height:74px;border-radius:12px;font-size:12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .grid .ph{height:128px;border-radius:14px;font-size:12px}
+  .rev{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+  .rev b{display:block}
+  .bar{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px 18px;display:flex;gap:10px}
+  .btn{flex:1;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px}
+  .btn.p{background:var(--blue);color:#fff}
+  .btn.o{border:1.5px solid var(--line);color:var(--ink);background:#fff}
+  .btn.g{background:var(--gold);color:var(--ink)}
+  .inline{display:flex;gap:10px;margin-top:14px}
+  .chip{display:inline-block;border:1.5px solid var(--blue);color:var(--blue);font-weight:700;font-size:13px;padding:4px 10px;border-radius:20px;margin:6px 6px 0 0}
+  .flag{display:flex;height:5px}
+  .flag i{display:block;height:100%}
+  .hero{height:330px;position:relative;border-radius:0}
+  .hero .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(5,25,45,.82) 100%)}
+  .hero .txt{position:absolute;left:16px;right:16px;bottom:16px;color:#fff}
+  .hero h1{color:#fff;margin:0 0 4px;font-size:28px}
+  .hero .who{color:#E6F1FA} .hero .who b{color:#fff}
+  .dots{position:absolute;top:290px;left:0;right:0;display:none}
+  .more{display:flex;gap:10px;overflow:hidden;margin-top:8px}
+  .more .m{width:150px;flex:none}
+  .more .ph{height:94px;border-radius:12px;font-size:12px}
+  .more b{display:block;font-size:13px;margin-top:4px}
+  .count{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:12px}
+  .rel{position:relative}
+  .avg{display:flex;align-items:center;gap:12px}
+  .avg .big{font:800 34px "Bricolage Grotesque",sans-serif}
+</style></head>
+<body>
+<div class="row">
+
+<!-- STARTER -->
+<div class="col">
+  <h2>Starter: clean and trustworthy</h2>
+  <p class="sub">Everything a customer needs to trust and contact the business. Nothing missing, nothing extra.</p>
+  <div class="phone"><div class="scroll">
+    <div class="top"><span>← Back</span><span class="logo">Servly</span><span>☰</span></div>
+    <div class="pad">
+      <div class="ph cover">Cover photo</div>
+      <h1>Portrait &amp; event photography</h1>
+      <div class="who"><b>Coral Lens</b> · English Harbour, St. Paul</div>
+      <div class="rating"><span class="stars">★★★★★</span> 4.9 <span class="n">(12 reviews)</span> <span class="open">Open</span></div>
+      <div class="price">From EC$350</div>
+      <p class="muted">Weddings, birthdays and family portraits. Photos delivered in 7 days.</p>
+      <div class="card"><h3>Opening hours</h3><div class="muted">Mon to Sat 9:00 AM to 6:00 PM</div></div>
+      <div class="card"><h3>Our work</h3><div class="thumbs"><div class="ph b">Photo</div><div class="ph c">Photo</div><div class="ph d">Photo</div><div class="ph">Photo</div></div></div>
+      <div class="card"><h3>Reviews</h3><div class="rev" style="border:0;margin:0;padding:0"><b><span class="stars">★★★★★</span> Kezia</b><span class="muted">Beautiful wedding photos, on time and so friendly.</span></div><div style="color:var(--blue);font-weight:700;margin-top:8px">Read all 12 reviews</div></div>
+      <div class="inline"><div class="btn p">Send a note</div><div class="btn o">Call</div></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- GROWTH -->
+<div class="col">
+  <h2>Growth: a showcase</h2>
+  <p class="sub">Swipe-through photos, a bigger gallery, more reviews up front, and the contact buttons always in reach.</p>
+  <div class="phone"><div class="scroll">
+    <div class="top"><span>← Back</span><span class="logo">Servly</span><span>☰</span></div>
+    <div class="pad">
+      <div class="ph cover rel" style="height:270px">Photos (swipe)<span class="count">1 / 5</span></div>
+      <h1>Portrait &amp; event photography</h1>
+      <div class="who"><b>Coral Lens</b> · English Harbour, St. Paul</div>
+      <div class="rating"><span class="stars">★★★★★</span> 4.9 <span class="n">(12 reviews)</span> <span class="open">Open now</span></div>
+      <div class="price">From EC$350</div>
+      <p class="muted">Weddings, birthdays and family portraits. Photos delivered in 7 days.</p>
+      <div class="card"><h3>Our work</h3><div class="grid"><div class="ph b">Photo</div><div class="ph c">Photo</div><div class="ph d">Photo</div><div class="ph">Photo</div></div></div>
+      <div class="card"><h3>What customers say</h3>
+        <div class="avg"><span class="big">4.9</span><div><span class="stars">★★★★★</span><div class="muted">12 reviews</div></div></div>
+        <div class="rev"><b><span class="stars">★★★★★</span> Kezia</b><span class="muted">Beautiful wedding photos, on time and so friendly.</span></div>
+        <div class="rev"><b><span class="stars">★★★★★</span> Andre</b><span class="muted">Did our family shoot at Shirley Heights. Highly recommend.</span></div>
+        <div style="color:var(--blue);font-weight:700;margin-top:8px">Read all 12 reviews</div></div>
+      <div class="card"><h3>Opening hours</h3><div class="muted">Mon to Sat 9:00 AM to 6:00 PM</div></div>
+    </div>
+  </div>
+  <div class="bar"><div class="btn p">Send a note</div><div class="btn o">Call</div></div>
+  </div>
+</div>
+
+<!-- BUSINESS -->
+<div class="col">
+  <h2>Business: a feature page</h2>
+  <p class="sub">A big photo with the name on it, a short "about us", their other services, and bookings in the always-visible bar.</p>
+  <div class="phone"><div class="scroll" style="padding-top:0">
+    <div class="ph hero">Big cover photo<div class="shade"></div>
+      <div class="txt"><h1>Portrait &amp; event photography</h1><div class="who"><b>Coral Lens</b> · English Harbour, St. Paul</div></div>
+      <span class="count" style="top:58px;bottom:auto">1 / 5</span>
+    </div>
+    <div class="flag"><i style="flex:5;background:#0072C6"></i><i style="flex:.5;background:#fff"></i><i style="flex:.6;background:#CE1126"></i><i style="flex:.8;background:#111"></i><i style="flex:1.6;background:#FCD116"></i><i style="flex:.8;background:#111"></i><i style="flex:.6;background:#CE1126"></i><i style="flex:.5;background:#fff"></i><i style="flex:5;background:#0072C6"></i></div>
+    <div class="pad">
+      <div class="rating" style="margin-top:12px"><span class="stars">★★★★★</span> 4.9 <span class="n">(12 reviews)</span> <span class="open">Open now</span></div>
+      <div class="price">From EC$350</div>
+      <span class="chip">Takes bookings</span><span class="chip">Weddings</span><span class="chip">Family portraits</span>
+      <p class="muted">Weddings, birthdays and family portraits. Photos delivered in 7 days.</p>
+      <div class="card"><h3>About Coral Lens</h3><div class="muted">Local photographer for 8 years, based in English Harbour. Travels island-wide and to Barbuda.</div></div>
+      <div class="card"><h3>Our work</h3><div class="grid"><div class="ph b">Photo</div><div class="ph c">Photo</div><div class="ph d">Photo</div><div class="ph">Photo</div></div></div>
+      <div class="card"><h3>What customers say</h3>
+        <div class="avg"><span class="big">4.9</span><div><span class="stars">★★★★★</span><div class="muted">12 reviews</div></div></div>
+        <div class="rev"><b><span class="stars">★★★★★</span> Kezia</b><span class="muted">Beautiful wedding photos, on time and so friendly.</span></div>
+        <div style="color:var(--blue);font-weight:700;margin-top:8px">Read all 12 reviews</div></div>
+      <div class="card"><h3>More from Coral Lens</h3><div class="more">
+        <div class="m"><div class="ph c">Photo</div><b>Passport photos</b><span class="muted">EC$40</span></div>
+        <div class="m"><div class="ph d">Photo</div><b>Drone videos</b><span class="muted">From EC$600</span></div></div></div>
+    </div>
+  </div>
+  <div class="bar"><div class="btn g">Book</div><div class="btn p">Send a note</div><div class="btn o" style="flex:.7">Call</div></div>
+  </div>
+</div>
+
+</div>
+</body></html>

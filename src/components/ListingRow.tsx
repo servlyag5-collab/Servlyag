@@ -8,10 +8,11 @@ import type { Rating } from '../lib/reviews';
 import { colors, fonts } from '../lib/theme';
 import { Cover } from './Cover';
 import { RatingSummary } from './Stars';
+import { listingName } from '../lib/names';
 
 export type CardListing = {
   id: string; merchant_id: string; title: string; photos: string[]; photo_focus?: unknown; price: number | null; price_from: boolean;
-  city: string; village: string | null; profiles: { display_name: string } | null;
+  city: string; village: string | null; listed_as?: string | null; profiles: { display_name: string } | null;
   show_hours?: boolean; hours?: unknown;
 };
 
@@ -32,7 +33,7 @@ function ListingCard({ s, rating, now, width = CARD_W }: { s: CardListing; ratin
         <View style={{ minHeight: 17, justifyContent: 'center' }}><RatingSummary rating={rating} size={13} /></View>
         <Text style={{ fontSize: 17, fontFamily: fonts.semi, color: colors.ink, lineHeight: 22, minHeight: 44 }} numberOfLines={2}>{s.title}</Text>
         <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
-          {s.profiles?.display_name || 'Servly merchant'} · {s.village || s.city}
+          {listingName(s.listed_as, s.profiles?.display_name)} · {s.village || s.city}
         </Text>
         {/* Bottom line: a small "Open" on the left (only while the listing shows hours and is open now), price on the right. */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 'auto' }}>
