@@ -47,6 +47,7 @@ const checks = [
   // v38 (launch sign-up list) is only run when the Coming soon page goes online, so it is not checked here.
   ['v39', 'search insights (Admin > Searches)', { rpc: 'admin_rising_searches', body: { p_limit: 1 } }],
   ['v40', 'Listed as (a name per listing)', { get: 'services?select=listed_as&limit=1' }],
+  ['v41', 'Founding Business invite codes', { rpc: 'redeem_invite', body: { p_code: 'X' } }],
 ];
 
 const MISSING = ['PGRST202', 'PGRST205', '42703', '42883', '42P01'];

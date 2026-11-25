@@ -51,7 +51,8 @@
     "check:db": "node scripts/check-database.js",
     "build:web": "expo export --platform web --output-dir dist --clear && node scripts/fix-web-assets.js",
     "build:coming-soon": "node scripts/build-coming-soon.js",
-    "build:web:launch": "node scripts/build-web-launch.js"
+    "build:web:launch": "node scripts/build-web-launch.js",
+    "build:web:founders": "node scripts/build-web-founders.js"
   },
   "private": true,
   "jest": {

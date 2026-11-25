@@ -18,6 +18,15 @@ if (crashReportingOn) {
   });
 }
 
+// Admin > "Send a test error": a harmless, clearly labelled error so the owner can check Sentry's email alert.
+// Returns false when crash reporting is off (website, or no DSN in this build).
+export async function sendTestError() {
+  if (!crashReportingOn) return false;
+  Sentry.captureException(new Error(`Servly test error (sent from Admin on purpose, ${new Date().toISOString()})`));
+  await Sentry.flush();
+  return true;
+}
+
 // Wraps the whole app so crashes on any screen are caught; does nothing while crash reporting is off.
 export function withCrashReporting(App: () => React.JSX.Element) {
   return crashReportingOn ? Sentry.wrap(App) : App;

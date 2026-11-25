@@ -142,18 +142,18 @@ export default function Account() {
   const pausedCount = rows?.filter((s) => s.paused).length ?? 0;
   const canRestore = active && !moving && (limit === null || liveCount < limit);
 
-  const tourReady = !WIDE && merchant && !!me && !!rows?.length && !!pays && !logoTipOpen;
+  const tourReady = merchant && !!me && !!rows?.length && !!pays && !logoTipOpen;
   useEffect(() => {
     if (!tourReady || tourSeen !== false) return;
     const t = setTimeout(() => setTourOpen(true), 1200); // let the page settle (and the logo tip go first)
     return () => clearTimeout(t);
   }, [tourReady, tourSeen]);
-  useMerchantGuideReplay(useCallback(() => { if (!WIDE) setTourOpen(true); }, []));
+  useMerchantGuideReplay(useCallback(() => { setTourOpen(true); }, []));
   const tourSteps: GuideStep[] = [
     { target: planRef, title: 'Welcome to Servly', text: 'Your business is on Servly. This is your plan and when it renews. Customers can see your listings while your plan is active.' },
-    { target: receiptsRef, title: 'Your receipts', text: 'Every payment gets a receipt here. Tap Download to save it as a PDF.' },
-    { target: listingRef, title: 'Your listings', text: 'Tap View to see your listing the way customers do. Tap Edit to change details, prices, opening hours and photos.' },
-    { target: menuRef, title: 'Messages and help', text: 'Tap ☰ for Messages, where notes from customers arrive. Contact support is there too, and so is this tour (How to use Servly).' },
+    { target: receiptsRef, title: 'Your receipts', text: `Every payment gets a receipt here. ${WIDE ? 'Click' : 'Tap'} Download to save it as a PDF.` },
+    { target: listingRef, title: 'Your listings', text: WIDE ? 'Click View to see your listing the way customers do. Click Edit to change details, prices, opening hours and photos.' : 'Tap View to see your listing the way customers do. Tap Edit to change details, prices, opening hours and photos.' },
+    { target: menuRef, title: 'Messages and help', text: (WIDE ? 'Click' : 'Tap') + ' ☰ for Messages, where notes from customers arrive. Contact support is there too, and so is this tour (How to use Servly).' },
   ];
 
   return (

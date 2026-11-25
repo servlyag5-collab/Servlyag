@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Share, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,31 @@ import { supabase } from '../lib/supabase';
 import { colors, ui } from '../lib/theme';
 import { PinLoader } from '../components/PinLoader';
 import { DeleteListing } from '../components/DeleteListing';
+import { crashReportingOn, sendTestError } from '../lib/crash';
+
+// Admin > Reports, at the bottom (owner 2026-11-24; it used to show under every tab): check that Sentry emails the owner when the app hits an error (a harmless test error).
+function CrashTest() {
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'off'>('idle');
+  return (
+    <View style={[ui.card, { padding: 14, gap: 8, marginTop: 12 }]}>
+      <Text style={{ fontSize: 17, fontWeight: '800', color: colors.ink }}>Bug alerts (Sentry)</Text>
+      <Text style={ui.muted}>
+        {crashReportingOn
+          ? 'When the app hits a problem, Sentry emails you. Send a harmless test error to check the email arrives (usually within a few minutes).'
+          : 'Crash reporting works in the phone app only. Open Admin in the Servly app on your phone to send a test.'}
+      </Text>
+      {crashReportingOn && (
+        <Pressable style={[ui.btn, ui.outline, { height: 44 }]} disabled={state === 'sending'}
+          onPress={async () => { setState('sending'); setState((await sendTestError()) ? 'sent' : 'off'); }}>
+          {state === 'sending' ? <ActivityIndicator color={colors.blue} />
+            : <Text style={[ui.btnText, { color: colors.ink }]}>Send a test error</Text>}
+        </Pressable>
+      )}
+      {state === 'sent' && <Text style={{ color: colors.blue, fontWeight: '700' }}>Test error sent. Check your email (and Sentry's Issues page) in a few minutes.</Text>}
+      {state === 'off' && <Text style={ui.error}>Crash reporting is off in this app version.</Text>}
+    </View>
+  );
+}
 
 // The owner's dashboard (admins only; add yourself with the SQL at the top of upgrade-v14-launch-ready.sql).
 // Merchants: activate/renew plans, start Founding Merchant free trials (v22), give free bookings for N days (v28); with v26 also change
@@ -58,7 +83,7 @@ export default function Admin() {
             </View>
             {tab === 'merchants' && <Merchants />}
             {tab === 'support' && <Support />}
-            {tab === 'reports' && <Reports />}
+            {tab === 'reports' && <><Reports /><CrashTest /></>}
             {tab === 'promos' && <Promos />}
             {tab === 'searches' && <Searches />}
           </>
@@ -357,6 +382,94 @@ function Searches() {
   );
 }
 
+// ---- Founding invites (v41): a personal code locked to one email; entering it starts that business's free trial ----
+type Invite = { code: string; email: string; tier_name: string; booking: boolean; trial_ends: string; created_at: string;
+  used_at: string | null; used_by_name: string | null };
+const dayOf = (d: string) => bookingDay(new Date(`${d}T16:00:00Z`).toISOString()); // a date (yyyy-mm-dd) as Antigua shows it
+function InvitesCard() {
+  const [email, setEmail] = useState('');
+  const [tier, setTier] = useState('basic');
+  const [booking, setBooking] = useState(false);
+  const [ends, setEnds] = useState<Pick>(defaultTrialEnd);
+  const [showCal, setShowCal] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [made, setMade] = useState<{ code: string; email: string } | null>(null);
+  const [rows, setRows] = useState<Invite[] | null>(null);
+  const [err, setErr] = useState('');
+  const load = useCallback(() => {
+    supabase.rpc('admin_invites').then(({ data, error }) => {
+      if (error) return setErr(error.message.includes('admin_invites') ? 'Run database update v41 to use invite codes.' : error.message);
+      setRows((data as Invite[]) ?? []);
+    });
+  }, []);
+  useFocusEffect(load);
+  const endsIso = ends ? `${ends.y}-${String(ends.m + 1).padStart(2, '0')}-${String(ends.d).padStart(2, '0')}` : '';
+  async function create() {
+    setBusy(true); setErr(''); setMade(null);
+    const { data, error } = await supabase.rpc('admin_create_invite', { p_email: email, p_tier: tier, p_booking: booking, p_ends: endsIso });
+    setBusy(false);
+    if (error) return setErr(error.message);
+    setMade({ code: data as string, email: email.trim().toLowerCase() }); setEmail(''); load();
+  }
+  async function cancel(code: string) {
+    const { error } = await supabase.rpc('admin_cancel_invite', { p_code: code });
+    if (error) return setErr(error.message);
+    load();
+  }
+  const message = made && `Welcome to Servly! Your Founding Business code is ${made.code}. Sign up with ${made.email}, then open Plan and enter the code to start your free trial until ${endsIso ? dayOf(endsIso) : 'the date we agreed'}.`;
+  return (
+    <View style={[ui.card, { padding: 14, gap: 8 }]}>
+      <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>Founding invites</Text>
+      <Text style={ui.muted}>A personal code for one business. It only works for the account signed up with that email, and only once. Entering it on the Plan screen starts their free trial.</Text>
+      <TextInput placeholderTextColor={colors.muted} style={[ui.field, { height: 44 }]} placeholder="Their email address" value={email}
+        onChangeText={(v) => { setEmail(v); setErr(''); }} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {TIERS.map((t) => (
+          <Pressable key={t.id} style={chip(tier === t.id)} onPress={() => setTier(t.id)}><Text style={chipText(tier === t.id)}>{t.name}</Text></Pressable>
+        ))}
+        {tier !== 'premium' && <Pressable style={chip(booking)} onPress={() => setBooking(!booking)}><Text style={chipText(booking)}>+ booking app</Text></Pressable>}
+      </View>
+      <Pressable onPress={() => setShowCal(!showCal)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
+        <Ionicons name="calendar-outline" size={20} color={colors.blue} />
+        <Text style={{ flex: 1, color: colors.ink, fontWeight: '700' }}>Free trial ends on {endsIso ? dayOf(endsIso) : '(pick a date)'}</Text>
+        <Text style={{ color: colors.blue, fontWeight: '700' }}>{showCal ? 'Done' : 'Change'}</Text>
+      </Pressable>
+      {showCal && <DateTimePicker dateOnly value={ends} onChange={(v) => { setEnds(v); setShowCal(false); }} />}
+      <Pressable style={[ui.btn, ui.primary, { height: 44 }]} disabled={busy || !email.trim() || !endsIso} onPress={create}>
+        {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ui.btnText, { color: '#fff' }]}>Make a code</Text>}
+      </Pressable>
+      {!!err && <Text style={ui.error}>{err}</Text>}
+      {made && (
+        <View style={{ borderWidth: 2, borderColor: colors.gold, borderRadius: 14, padding: 12, gap: 6 }}>
+          <Text selectable style={{ fontSize: 28, fontWeight: '800', color: colors.ink, letterSpacing: 2 }}>{made.code}</Text>
+          <Text style={ui.muted}>For {made.email}. Send them this message:</Text>
+          <Text selectable style={{ color: colors.ink }}>{message}</Text>
+          <Pressable style={[ui.btn, ui.outline, { height: 40 }]} onPress={() => Share.share({ message: message! }).catch(() => {})}>
+            <Text style={[ui.btnText, { color: colors.ink }]}>Share message</Text>
+          </Pressable>
+        </View>
+      )}
+      {rows && rows.length > 0 && (
+        <View style={{ gap: 6, borderTopWidth: 1, borderColor: colors.border, paddingTop: 8 }}>
+          {rows.map((r) => (
+            <View key={r.code} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '800', color: colors.ink }} selectable>{r.code} · <Text style={{ fontWeight: '600' }}>{r.email}</Text></Text>
+                <Text style={{ fontSize: 13, color: r.used_at ? colors.blue : colors.muted }}>
+                  {r.tier_name}{r.booking ? ' + bookings' : ''} · until {dayOf(r.trial_ends)} · {r.used_at ? `Used by ${r.used_by_name || 'them'} on ${bookingDay(r.used_at)}` : 'Not used yet'}
+                </Text>
+              </View>
+              {!r.used_at && (
+                <Pressable onPress={() => cancel(r.code)} hitSlop={8}><Text style={{ color: colors.red, fontWeight: '700' }}>Cancel</Text></Pressable>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 // ---- ABST (v37): Antigua and Barbuda Sales Tax on Servly's own sales, on/off + registration number -------------
 // Off until Servly is registered with Inland Revenue. Switching on needs the registration number (it prints on
 // receipts); from then on every payment, including automatic monthly ones, adds 17% on top.
@@ -436,6 +549,7 @@ function Promos() {
   }
   return (
     <>
+      <InvitesCard />
       <AbstCard />
       <Text style={ui.muted}>
         Merchants type a code at Checkout. It holds a place for 7 days; the discount is taken when you activate their plan.

@@ -141,7 +141,6 @@ export const PRICING: Section[] = [
   { heading: 'What Servly is', body: [
     'Servly AG is a marketplace for local services in Antigua and Barbuda. Customers search and contact businesses for free. Businesses pay a monthly plan to list their services.',
     'All prices are in Eastern Caribbean dollars (XCD). Each payment covers one month of the plan.',
-    'Where ABST (Antigua and Barbuda Sales Tax) applies, it is added at 17% on top of these prices and shown separately at checkout and on your receipt.',
   ] },
   { heading: 'Starter: 50 XCD per month', body: [
     '1 service listing, with up to 5 photos, prices and opening hours.',
@@ -171,8 +170,8 @@ export const PRICING: Section[] = [
   ] },
 ];
 
-// Contact page (servlyag.com/contact). SUPPORT_PHONE: add the business number when it is ready.
-export const SUPPORT_PHONE = '';
+// Contact page (servlyag.com/contact). Business number (owner, 2026-11-20), also on receipts (SELLER.phone).
+export const SUPPORT_PHONE = SELLER.phone;
 export const CONTACT_PAGE: Section[] = [
   { heading: 'Servly AG', body: [
     SELLER.address,

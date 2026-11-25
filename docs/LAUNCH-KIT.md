@@ -15,9 +15,19 @@ Marks: ✅ ready · 🔁 rebuild just before launch (one command) · ⛔ blocked
 | Database: v39 search insights | ✅ written, not run | `supabase/upgrade-v39-search-insights.sql` | Run any time (best before launch) |
 | Store build settings (EAS production) | ✅ Supabase address + key and the payment page `https://servlyag.com/pay` are stored in EAS (2026-11-16) | Expo account > servly-ag > Environment variables | Nothing to do |
 | Over-the-air updates | ✅ working (preview channel); store builds use the `production` channel | `eas.json` | `npx eas-cli update --channel production ...` after launch |
-| ABST 17% | ✅ built, OFF | Admin > Promos > ABST | Once registered with Inland Revenue: number + Switch on |
+| ABST 17% | ✅ built, stays OFF | Admin > Promos > ABST | Not needed: Inland Revenue said Servly does not charge ABST (2026-11-20). Leave off. |
 | Launch promo codes LAUNCH50 / LAUNCH50B | ✅ built, OFF | Admin > Promos | Launch day: switch LAUNCH50 on |
 | Founding merchant free trials | ✅ built | Admin > Merchants > Free trial ends on (8 March 2027) | Any time, per merchant |
+
+## 1b. Founders website (before launch; owner's decision 2026-11-23)
+A public but UNLISTED copy of the app for founding businesses only (Netlify's free plan can't share a password: "Private" = owner only). Nothing links to it; the owner sends the link with each business's personal invite code. The link can be passed around, so: Pay is switched off in this build, the payment server only lets admins pay (secret PAYMENTS_ADMIN_ONLY = yes), and free trials need a personal code locked to the business's email.
+| Item | Status | To do |
+|---|---|---|
+| Founders build (Pay off, no messages or calls: a "Servly opens on Thursday 7 January" notice instead) | ✅ built 2026-11-23 · 🔁 rebuild after app changes (`npm run build:web:founders`) | `founders/web` (not on GitHub) |
+| Netlify: new site | ✅ online 2026-11-24 at **https://servly-founders.netlify.app** (checked: listings show the opening notice, no Call or note form) | To update it: rebuild, then drag `founders/web` onto this site's Deploys page |
+| Supabase Auth URLs | owner | Authentication > URL Configuration: Site URL = the founders address (e.g. https://servly-founders.netlify.app) and add it to Redirect URLs (`https://servly-founders.netlify.app/**`), so sign-up and password emails work |
+| Founders site redirect (launch day) | ✅ built 2026-11-24 | `founders-redirect/` (2 files: `_redirects` + a backup `index.html`). Launch day: drag the `founders-redirect` folder onto the founders site's Deploys page. Every founders link then opens the same page on servlyag.com |
+| Payments locked to admins | ✅ secret PAYMENTS_ADMIN_ONLY = yes (2026-11-23) | Launch day: set it to no |
 
 ## 2. Decisions and accounts needed BEFORE the store builds
 The store builds are the only things that can't be redone in minutes, so these come first:
@@ -39,8 +49,8 @@ The store builds are the only things that can't be redone in minutes, so these c
 | Submit to the stores | after the builds and the store listings | `npx eas-cli submit --platform android` / `--platform ios` (review takes days: submit by mid-December) |
 
 ## 4. Launch day: switch-on list (in this order)
-1. Netlify: remove servlyag.com from the Coming soon site, add it to the app site, make the app site **Public**.
-2. Supabase: Authentication > **Site URL** = `https://servlyag.com`; raise the email rate limit; Edge Functions secret **APP_URL** = `https://servlyag.com`.
+1. Netlify: remove servlyag.com from the Coming soon site, add it to the app site, make the app site **Public**. Then drag the `founders-redirect` folder onto the founders site (servly-founders.netlify.app) so its links go to servlyag.com. Do this AFTER servlyag.com works. Keep the founders site; don't delete it.
+2. Supabase: Authentication > **Site URL** = `https://servlyag.com`; raise the email rate limit; Edge Functions secret **APP_URL** = `https://servlyag.com`; secret **PAYMENTS_ADMIN_ONLY = no** (opens payments to everyone).
 3. CyberSource: live keys in Supabase secrets and **CYBS_ENV = live** (after ACB approval; ask CyberSource for Payment Tokenization on the live account). One small real payment as a check.
 4. Admin > Promos: **LAUNCH50 on**.
 5. Stores: release the approved apps.
@@ -50,3 +60,6 @@ The store builds are the only things that can't be redone in minutes, so these c
 ## Change log
 - 2026-11-16: kit started. EAS payment page address added (preview: Netlify site; production: servlyag.com).
   Launch website built (`launch/web`).
+- 2026-11-20: Launch website rebuilt (launch/web) with the first-time guide on every screen size and the new listing pages.
+- 2026-11-23: Founding invite codes (v41, run). Launch website rebuilt.
+- 2026-11-24: Founders website online at https://servly-founders.netlify.app. Launch-day redirect built (`founders-redirect/`). First-time guide fixed for phones with the browser's page zoom turned up (outlines landed in the wrong place; `src/lib/measure.ts`); founders, test and launch websites rebuilt.

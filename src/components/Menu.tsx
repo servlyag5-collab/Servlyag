@@ -130,7 +130,8 @@ export function MenuButton() {
                 );
               })}
               <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 6 }} />
-              {!WIDE && (
+              {/* "How to use Servly": on every screen size (computers since 2026-11-20). */}
+              {(
                 <Pressable onPress={howTo} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingVertical: 14, borderRadius: 14 }}>
                   <Ionicons name="help-circle-outline" size={22} color={colors.blue} />
                   <Text style={{ fontSize: 18, fontWeight: '800', color: colors.muted }}>How to use Servly</Text>

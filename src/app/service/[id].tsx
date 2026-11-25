@@ -22,6 +22,7 @@ import { supabase } from '../../lib/supabase';
 import { colors, flag, ui } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
 import { listingName } from '../../lib/names';
+import { FOUNDERS_PREVIEW, PREVIEW_NOTICE } from '../../lib/preview';
 
 type S = { active: boolean; paused: boolean; deleted_at: string | null; photos: string[]; photo_focus: unknown; merchant_id: string; title: string; description: string; price: number | null; price_from: boolean; show_hours: boolean; hours: unknown; city: string; village: string | null; listed_as: string | null; profiles: { display_name: string; tier_id: string; public_phone: string | null; plan_expires_at: string | null; bio: string | null } | null };
 type Other = { id: string; title: string; photos: string[]; photo_focus: unknown; price: number | null; price_from: boolean };
@@ -334,6 +335,13 @@ export default function ServiceDetail() {
       )}
     </>
   );
+  // Founders website (preview): no note box, Send or Call; a notice instead (src/lib/preview.ts).
+  const previewNotice = (
+    <View style={[ui.card, { gap: 8, borderColor: colors.gold, borderWidth: 2 }]}>
+      <Text style={ui.h2}>Send a note</Text>
+      <Text style={ui.muted}>{PREVIEW_NOTICE}</Text>
+    </View>
+  );
   const contactForm = (
     <>
       <Text style={[ui.h2, { marginTop: 4 }]}>Send a note</Text>
@@ -394,7 +402,7 @@ export default function ServiceDetail() {
               {details}
             </View>
             <View style={[ui.card, { flex: 1, maxWidth: 480, minWidth: 320, gap: 12, boxShadow: '0px 12px 32px rgba(11, 58, 99, 0.12)' }]}>
-              {contactForm}
+              {FOUNDERS_PREVIEW ? previewNotice : contactForm}
             </View>
           </View>
         </ScrollView>
@@ -420,7 +428,7 @@ export default function ServiceDetail() {
             )}
           {details}
           {/* Send a note and Call: once, at the end of the page (owner, 2026-11-18: no extra bar at the bottom). */}
-          {contactForm}
+          {FOUNDERS_PREVIEW ? previewNotice : contactForm}
         </ScrollView>
       </View>
     </SafeAreaView>

@@ -29,6 +29,14 @@ Deno.serve(async (req) => {
     const tierId = String(body.tier ?? '');
     if (!TIERS.includes(tierId)) return json({ error: 'Unknown plan' }, 400);
 
+    // Before launch (owner's decision 2026-11-23): the founders website is open to anyone with its link, and payments
+    // are still in CyberSource TEST mode, so only admins may start a payment. Secret PAYMENTS_ADMIN_ONLY = yes until
+    // launch day, then no. Founding businesses get their plan through a personal invite code instead.
+    if ((Deno.env.get('PAYMENTS_ADMIN_ONLY') ?? '').toLowerCase() === 'yes') {
+      const { data: isAdmin } = await db.from('admins').select('user_id').eq('user_id', user.id).maybeSingle();
+      if (!isAdmin) return json({ error: 'Online payment opens on launch day, Thursday 7 January. Founding Businesses: use the code Servly sent you on the Plan screen.' }, 403);
+    }
+
     // Card-testing protection (CyberSource's pre-live checklist, 2026-11-16): at most MAX_TRIES payment attempts
     // per account per hour. Real merchants never need more; fraudsters testing stolen cards do.
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();

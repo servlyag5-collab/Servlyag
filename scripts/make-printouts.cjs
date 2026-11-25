@@ -23,8 +23,8 @@ const SELLER = new Function('return (' + sellerLine.replace(/^export const SELLE
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-const LAUNCH = '15 December 2026 or 7 January 2027';
-const PHONE = 'business number to come';
+const LAUNCH = '7 January 2027';
+const PHONE = SELLER.phone;
 
 const css = `
 @page { size: Letter; margin: 0.75in 0.8in; }
@@ -139,7 +139,7 @@ below. Every paragraph is numbered (for example <b>T4.1</b> = Terms, section 4, 
 <tr><td>Privacy Policy</td><td>P1 - P${PRIVACY.length}</td><td>servlyag.com/privacy and in the app</td></tr>
 <tr><td>Terms of Service</td><td>T1 - T${TERMS.length}</td><td>servlyag.com/terms and in the app (agreed at sign-up)</td></tr>
 <tr><td>Refund and Cancellation Policy</td><td>R1 - R${REFUNDS.length}</td><td>servlyag.com/refunds, the Plan screen and Checkout</td></tr>
-<tr><td>New wording for the bank (ACB)</td><td>N1 - N${NEW_WORDING.length}</td><td>Not on the website yet: Delivery, Exchange and Cancellation, Payment Security, Cards and Currency, Legal and Export Restrictions</td></tr>
+<tr><td>New wording for the bank (ACB)</td><td>N1 - N${NEW_WORDING.length}</td><td>Now on the website as drafts: Delivery, Exchange and Cancellation, Payment Security, Cards and Currency, Legal and Export Restrictions</td></tr>
 </table>
 
 <h2>Questions for the lawyer</h2>
@@ -151,40 +151,39 @@ ${legalSection('Privacy Policy', '/privacy', PRIVACY, 'P')}
 ${legalSection('Terms of Service', '/terms', TERMS, 'T')}
 ${legalSection('Refund and Cancellation Policy', '/refunds', REFUNDS, 'R')}
 ${legalSection('New wording for the bank (ACB)', '', NEW_WORDING.map(([heading, body]) => ({ heading, body })), 'N',
-  'ACB asks for these on the website before it approves online payments. Drafts for your corrections; not published yet.')}
+  'ACB asks for these on the website before it approves online payments. They are on the website now, still as drafts for your corrections.')}
 `);
 
 // ---------- ACB follow-up questions ----------
 const status = (s) => ({ ok: '<span class="ok">Done</span>', part: '<span class="part">Partly</span>', no: '<span class="no">To do</span>' })[s];
 const checklist = [
-  ['Website live (not inactive, parked or forwarded)', 'no', 'servlyag.com goes live when we are ready for your review.'],
-  ['Business name and physical address, country at checkout', 'part', `${SELLER.address}. Being added to the website footer and Checkout.`],
-  ['Support email and telephone', 'part', `${SELLER.email}. Business phone number to come.`],
-  ['Terms and Conditions', 'part', 'Written (draft), with our lawyer for review.'],
-  ['Return / Refund policy', 'part', 'Written (draft), with our lawyer.'],
-  ['Exchange / Cancellation policy', 'part', 'Cancellation written; exchange wording with our lawyer.'],
-  ['Delivery policy', 'part', 'Drafted (digital service, nothing shipped), with our lawyer.'],
-  ['Privacy policy', 'part', 'Written (draft), with our lawyer.'],
-  ['Card brand marks (Visa, Mastercard)', 'no', 'Will add once we have the official logos.'],
-  ['Complete description of services', 'part', 'Public plans and prices page being built.'],
-  ['Transaction currency', 'ok', 'Eastern Caribbean dollars (XCD), shown at Checkout.'],
-  ['Legal and export restrictions', 'part', 'Drafted, with our lawyer.'],
-  ['Security policy for card details', 'part', 'Drafted: card details typed only on CyberSource\'s page; Servly never stores them.'],
+  ['Website live (not inactive, parked or forwarded)', 'part', 'Built and online for testing on a private link. servlyag.com goes live for your review: we can send you the link.'],
+  ['Business name and physical address, country at checkout', 'ok', `${SELLER.address}. In the website footer, on the Contact page and at Checkout.`],
+  ['Support email and telephone', 'ok', `${SELLER.email} and ${SELLER.phone}, on the Contact page and receipts.`],
+  ['Terms and Conditions', 'part', 'On the website (draft), with our lawyer for review.'],
+  ['Return / Refund policy', 'part', 'On the website (draft), with our lawyer.'],
+  ['Exchange / Cancellation policy', 'part', 'On the website in the Refund and Cancellation Policy (draft), with our lawyer.'],
+  ['Delivery policy', 'part', 'On the website: digital service, nothing shipped (draft), with our lawyer.'],
+  ['Privacy policy', 'part', 'On the website (draft), with our lawyer.'],
+  ['Card brand marks (Visa, Mastercard)', 'no', 'Will add as soon as you send the official logos.'],
+  ['Complete description of services', 'ok', 'Public Plans and pricing page: every plan, its price and what it includes.'],
+  ['Transaction currency', 'ok', 'Eastern Caribbean dollars (XCD), shown on the Pricing page and at Checkout.'],
+  ['Legal and export restrictions', 'part', 'On the website: digital service only, no goods sold or shipped (draft), with our lawyer.'],
+  ['Security policy for card details', 'ok', 'On the website (Privacy Policy > Security): cards are typed only on CyberSource\'s page; Servly never sees or stores card numbers.'],
 ];
 
 const acbQs = [
-  ['Can our CyberSource account charge in Eastern Caribbean dollars (XCD)?', 'All our prices are in XCD.'],
-  ['Are monthly automatic charges included?', 'Ask for "Recurring Billing" and "Token Management" (saved cards). Our merchants pay every month.'],
-  ['Which payment page should we use?', 'Ask: "Unified Checkout" or "Secure Acceptance hosted checkout"? Either way, cards are typed on CyberSource\'s page, not ours.'],
-  ['Can CyberSource tell our system automatically when someone pays?', 'Ask for "webhooks" to be switched on for our account, for payments and recurring billing.'],
-  ['Do you give us test (sandbox) logins, or should our developer sign up for one?', 'We want to test with pretend cards before going live.'],
+  ['How do we move from the test account to the live account, and how long does it take?', 'We need live keys for the Secure Acceptance profile and the REST key. Who sets up the live profile?'],
+  ['Please set up XCD on the live account the same way as the test account.', 'On the test account, XCD payments failed until the XCD outlet ID and terminal ID were set up (reason code 150). Please make sure the live account has them from day one.'],
+  ['Please switch on Payment Tokenization (saved cards) and Token Management on the live account.', 'Our monthly automatic charges need them. They work on the test account since 13 November.'],
+  ['Is Mastercard accepted as well as Visa?', ''],
+  ['Can you send the official Visa and Mastercard logos to use?', 'For the website and Checkout.'],
   ['When does the 75 USD monthly fee start?', 'At sign-up, at approval, or from our first payment? Our first merchants will be on free trials.', 2],
-  ['Is there a setup fee, a minimum contract, or a fee to leave?', '', 2],
-  ['What do refunds and disputed payments (chargebacks) cost?', '', 2],
   ['The 75 USD fee: is it taken from an XCD account, and at what exchange rate?', '', 2],
   ['How many days until payments reach our account?', '', 2],
-  ['Can you send the official Visa and Mastercard logos to use?', ''],
-  ['Who reviews our website, and how long does approval take?', `We plan to launch on ${LAUNCH}.`],
+  ['Is there a setup fee, a minimum contract, or a fee to leave?', '', 2],
+  ['How do we give a refund, and what do refunds and disputed payments (chargebacks) cost?', '', 2],
+  ['Who reviews our website, can they review it from a link, and how long does approval take?', `We plan to launch on ${LAUNCH}.`],
   ['Can we have the merchant agreement and the fee list in writing?', ''],
 ];
 
@@ -197,6 +196,9 @@ const acb = doc('Servly AG - follow-up questions for ACB', `
 <b>What we understood from you.</b> Servly AG will take card payments online through ACB, using CyberSource.
 Fees: <b>75 USD per month</b> plus <b>4% of every settlement</b>, taken automatically at the end of each month.
 Your website requirements and the CyberSource developer guides have been passed to our developer.
+<br><br><b>Done since our last meeting.</b> Business registered; registered with Inland Revenue and the Intellectual
+Property office; business phone ${SELLER.phone}. Tested on the CyberSource test account: card payments in XCD,
+saved cards and automatic monthly charges all work; customers type their card only on CyberSource's page.
 <br><br><b>About Servly AG.</b> A marketplace app and website where local businesses list their services and
 customers find them. Customers use it free. Businesses pay Servly a monthly plan: Starter 50 XCD, Growth 100 XCD,
 Business 170 XCD, plus an optional 25 XCD bookings upgrade. Payments are taken on the website.

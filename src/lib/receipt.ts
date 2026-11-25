@@ -4,7 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { colors, flag } from './theme';
 
 // Your business details, printed at the top of every receipt. Fill in what you'd like merchants to see.
-export const SELLER = { name: 'Servly AG', address: 'Old Road Village, St. Mary\'s Parish, Antigua and Barbuda', email: 'servlyag5@gmail.com', website: '' };
+export const SELLER = { name: 'Servly AG', address: 'Old Road Village, St. Mary\'s Parish, Antigua and Barbuda', phone: '+1 (268) 773-7859', email: 'servlyag5@gmail.com', website: '' };
 
 export type Payment = {
   id: string; tier_id: string; amount: number; currency: string; booking_addon: boolean;
@@ -36,7 +36,7 @@ function receiptHtml(p: Payment, business: string, email: string) {
   <div class="ribbon">${ribbon}</div>
   <div class="head">
     <div><div class="tag">RECEIPT</div><h1>${esc(SELLER.name)}</h1>
-      <div class="muted">${[SELLER.address, SELLER.email, SELLER.website].filter(Boolean).map(esc).join('<br>')}</div></div>
+      <div class="muted">${[SELLER.address, SELLER.phone, SELLER.email, SELLER.website].filter(Boolean).map(esc).join('<br>')}</div></div>
     <div class="muted" style="text-align:right">${Number(p.abst ?? 0) > 0 ? 'Tax receipt' : 'Receipt'} no. <b>${receiptNumber(p)}</b><br>Date: ${date}<br>Status: <b>Paid</b>${p.abst_number ? `<br>ABST Reg. no. ${esc(p.abst_number)}` : ''}</div>
   </div>
   <div class="muted" style="margin-top:24px">Billed to<br><b style="color:${colors.ink}">${esc(business || 'Servly merchant')}</b>${email ? `<br>${esc(email)}` : ''}</div>

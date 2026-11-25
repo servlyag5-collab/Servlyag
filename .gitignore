@@ -49,3 +49,6 @@ coming-soon/out/
 
 # Launch builds made ahead of time (rebuild with npm run build:web:launch)
 launch/
+
+# Founders website (link only for founding businesses before launch; rebuild with npm run build:web:founders)
+founders/

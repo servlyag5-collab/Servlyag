@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlagFrame } from '../components/FlagFrame';
 import { KeepListings, type KeepItem } from '../components/KeepListings';
 import { PaymentNotice } from '../components/PaymentNotice';
+import { InviteCode } from '../components/InviteCode';
 import { WideSplit } from '../components/WideSplit';
 import { TopBar } from '../components/Menu';
 import { supabase } from '../lib/supabase';
@@ -91,6 +92,8 @@ export default function Plan() {
         <WideSplit>
         <PaymentNotice status={payment} order={order} onPaid={() => setReload((n) => n + 1)} />
         <Text style={ui.h1}>{next === 'offer' ? 'Choose a plan to start selling' : 'Your plan'}</Text>
+        {/* Founding Business code (v41): only for people with no plan running and no trial yet. */}
+        {!!me && !active && !trialEnd && <InviteCode next={next} onDone={() => setReload((n) => n + 1)} />}
         {next === 'offer' && <Text style={ui.muted}>Your plan decides how many services you can list. You'll create your listing right after checkout.</Text>}
         <Text style={[ui.muted, { fontSize: 14, lineHeight: 20 }]}>
           Plans renew every month until you cancel. No refund once a month has started.{' '}

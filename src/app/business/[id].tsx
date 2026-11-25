@@ -11,6 +11,7 @@ import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, ui } from '../../lib/theme';
 import { PinLoader } from '../../components/PinLoader';
+import { FOUNDERS_PREVIEW, PREVIEW_NOTICE } from '../../lib/preview';
 
 type P = { display_name: string; bio: string; public_phone: string | null };
 type Svc = { id: string; title: string; photos: string[]; photo_focus: unknown; price: number | null; price_from: boolean; city: string; village: string | null; listed_as?: string | null };
@@ -35,7 +36,9 @@ export default function Business() {
           <>
             <Text style={ui.h1}>{p.display_name || 'Servly merchant'}</Text>
             {!!p.bio && <Text style={ui.muted}>{p.bio}</Text>}
-            {!!p.public_phone && (
+            {/* Founders website (preview): no Call yet, a notice instead. */}
+            {FOUNDERS_PREVIEW && <Text style={[ui.muted, { fontWeight: '700' }]}>{PREVIEW_NOTICE}</Text>}
+            {!!p.public_phone && !FOUNDERS_PREVIEW && (
               <Pressable style={[ui.btn, ui.primary]} onPress={() => callBusiness(p.public_phone!, id, null, session?.user.id)}>
                 <Text style={[ui.btnText, { color: '#fff' }]}>Call {p.public_phone}</Text>
               </Pressable>

@@ -48,7 +48,7 @@ export default function Home() {
   const [query, setQuery] = useState(EMPTY); // the search the results belong to (for "Show more")
   const sc = useRef<ScrollViewInstance>(null);
   const resultsY = useRef(0);
-  // First-time guide (phones only, once per device): the parts it points at, and how far Home is scrolled.
+  // First-time guide (once per device, phones AND computers since 2026-11-20): the parts it points at, and how far Home is scrolled.
   const guideRoot = useRef<ViewInstance>(null);
   const searchRef = useRef<ViewInstance>(null);
   const areaRef = useRef<ViewInstance>(null);
@@ -124,19 +124,21 @@ export default function Home() {
   const narrow = screenW < 430; // phones: smaller headline and sun, so they never overlap
   const wide = screenW >= 900;  // computers: full-width hero, one-line search, content from the left edge
 
-  // Show the guide once the opening animation has finished and the listings have loaded. Phones only: the apps,
-  // and the website on a phone-sized screen (computers get a different Home layout, so no guide there).
-  const showGuide = !wide && guideSeen === false && introDone && !!rows?.length;
+  // Show the guide once the opening animation has finished and the listings have loaded. Every screen size: the
+  // phone layout and the computer layout each mark their own search, area, invitation, listings and ☰.
+  const showGuide = guideSeen === false && introDone && !!rows?.length;
   useEffect(() => { if (showGuide) setGuideOpen(true); }, [showGuide]);
   // "How to use Servly" (☰ menu, or the link at the bottom for guests) plays it again.
-  useGuideReplay(useCallback(() => { if (!wide) setGuideOpen(true); }, [wide]));
+  useGuideReplay(useCallback(() => { setGuideOpen(true); }, []));
   const guideSteps: GuideStep[] = [
     { target: searchRef, title: 'Search for any service', text: 'Type what you need, like "photographer" or "plumber". The listings below change as you type.' },
     { target: areaRef, title: 'Pick your area', text: 'Choose a parish or village to see services near you. Leave them empty to see all of Antigua and Barbuda.' },
-    { target: inviteRef, title: 'Run a business?', text: 'Tap here to list your own services on Servly, so customers can find you.' },
-    { target: listRef, title: 'Browse the listings', text: 'Swipe each row left and right to see more. Tap a card for photos, prices, opening hours and reviews, then message or call the business.' },
+    { target: inviteRef, title: 'Run a business?', text: `${wide ? 'Click' : 'Tap'} here to list your own services on Servly, so customers can find you.` },
+    { target: listRef, title: 'Browse the listings', text: wide
+      ? 'Use the ‹ › arrows on each row to see more. Click a card for photos, prices, opening hours and reviews, then message or call the business.'
+      : 'Swipe each row left and right to see more. Tap a card for photos, prices, opening hours and reviews, then message or call the business.' },
     session
-      ? { target: menuRef, title: 'Your menu', text: 'Tap ☰ for your Messages, Account and Bookings. If you run a business, switch to Merchant view here.' }
+      ? { target: menuRef, title: 'Your menu', text: (wide ? 'Click' : 'Tap') + ' ☰ for your Messages, Account and Bookings. If you run a business, switch to Merchant view here.' }
       : { target: menuRef, title: 'Log in or sign up', text: 'Browsing is free and needs no account. Log in to message businesses, leave reviews or list your own services.' },
   ];
 
@@ -167,7 +169,8 @@ export default function Home() {
   const invite = (
     <>
         {/* For businesses: a quiet invitation under the hero. */}
-        <View ref={inviteRef} collapsable={false}>
+        {/* Computers: the box hugs the button, so the guide's gold outline is exactly the button's size. */}
+        <View ref={inviteRef} collapsable={false} style={wide ? { alignSelf: 'flex-start' } : undefined}>
         <Pressable onPress={() => (session ? router.push('/offer') : router.push({ pathname: '/login', params: { mode: 'up' } }))}
           style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 18, backgroundColor: '#EAF3FB' },
             // Computers: ends exactly where the second listing card below ends.
@@ -211,7 +214,9 @@ export default function Home() {
     const column = { width: '100%' as const, paddingHorizontal: 56 };
     return (
       <SafeAreaView style={ui.screen}>
-        <ScrollView ref={sc} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        <View ref={guideRoot} collapsable={false} style={{ flex: 1 }}>
+        <ScrollView ref={sc} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled"
+          onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y; }} scrollEventThrottle={32}>
           <View style={[column, { paddingVertical: 16, gap: 12 }]}>
             {topBar}
             {session && <PlanBanner />}
@@ -233,7 +238,7 @@ export default function Home() {
               {/* One-line search bar: what, city, village, Search. */}
               <View style={{ marginTop: 14, flexDirection: 'row', gap: 10, backgroundColor: '#fff', borderRadius: 20, padding: 8, maxWidth: 1000,
                 boxShadow: '0px 18px 40px rgba(0, 0, 0, 0.25)' }}>
-                <View style={{ flex: 2, minWidth: 0 }}>
+                <View ref={searchRef} collapsable={false} style={{ flex: 2, minWidth: 0 }}>
                   <TextInput style={[ui.field, wideField, { paddingLeft: 46, paddingRight: 44 }]} placeholder="What do you need? e.g. photographer" placeholderTextColor={colors.muted}
                     value={f.q} onChangeText={set('q')} onSubmitEditing={search} returnKeyType="search" autoCorrect={false}
                     onFocus={() => setTyping(true)} onBlur={() => setTimeout(() => setTyping(false), 200)} />
@@ -243,8 +248,10 @@ export default function Home() {
                   {looking && <ActivityIndicator color={colors.blue} pointerEvents="none" style={{ position: 'absolute', right: 16, top: 0, bottom: 0 }} />}
                 </View>
                 {/* Parish and village pick from lists (src/lib/places.ts), or use what they type. */}
-                <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Parish" placeholder="Parish" value={f.city} onChange={set('city')} options={PARISHES} boxStyle={wideField} /></View>
-                <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Village" placeholder="Village" value={f.village} onChange={set('village')} options={VILLAGES} boxStyle={wideField} /></View>
+                <View ref={areaRef} collapsable={false} style={{ flex: 2, minWidth: 0, flexDirection: 'row', gap: 10 }}>
+                  <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Parish" placeholder="Parish" value={f.city} onChange={set('city')} options={PARISHES} boxStyle={wideField} /></View>
+                  <View style={{ flex: 1, minWidth: 0 }}><PlacePicker label="Village" placeholder="Village" value={f.village} onChange={set('village')} options={VILLAGES} boxStyle={wideField} /></View>
+                </View>
                 <Pressable style={[ui.btn, { backgroundColor: colors.gold, height: 56, borderRadius: 14, paddingHorizontal: 28 }]} onPress={search} disabled={busy}>
                   {busy ? <ActivityIndicator color={colors.ink} /> : <Text style={{ fontFamily: fonts.title, fontSize: 18, color: colors.ink }}>Search services</Text>}
                 </Pressable>
@@ -265,9 +272,22 @@ export default function Home() {
           <View style={[column, { paddingTop: 28, gap: 28 }]}>
             {invite}
             {results}
+            {/* Guests have no ☰ menu, so the guide's replay link sits here for them. */}
+            {!session && (
+              <Pressable onPress={replayGuide} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' }}>
+                <Ionicons name="help-circle-outline" size={18} color={colors.blue} />
+                <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 15 }}>How to use Servly</Text>
+              </Pressable>
+            )}
             {legal}
           </View>
         </ScrollView>
+        {guideOpen && (
+          <FirstTimeGuide steps={guideSteps} root={guideRoot}
+            scrollBy={(dy) => sc.current?.scrollTo({ y: Math.max(0, scrollY.current + dy), animated: true })}
+            onClose={() => { setGuideOpen(false); sc.current?.scrollTo({ y: 0, animated: true }); }} />
+        )}
+        </View>
       </SafeAreaView>
     );
   }

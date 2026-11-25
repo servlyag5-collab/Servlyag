@@ -32,6 +32,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [x] All updates up to v30 run (v25 on 2026-11-02; v27-v29 on 2026-11-03; v30 on 2026-11-06; check passes)
 - [x] Run v31 (fair turns in search) (database check shows it installed, 2026-11-07)
 - [x] Run v32 and v33 (card payments, monthly charges) (database check shows both installed, 2026-11-11)
+- [x] Run v39 and v40 (search insights, Listed as) (database check shows both installed, 2026-11-18)
 - [x] You are an admin (`admins` table, OWNER-GUIDE section 1) (owner confirmed 2026-11-02)
 - v21 is replaced by v24/v25 (no need to run it)
 
@@ -40,14 +41,18 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 ## Stage 2: Things only you can decide or set up
 
 - [x] **Business registered** (owner, by 2026-11-06)
-- [ ] **Register with Inland Revenue** (not done yet, owner 2026-11-06). Then ask for the **ABST registration number** and switch ABST on in Admin > Promos > ABST (17% added on top of plans and the bookings upgrade; built 2026-11-14, database v37). Confirm the rate and receipt wording with Inland Revenue or an accountant.
+- [x] **Registered with Inland Revenue** (owner, 2026-11-20). Also registered at the Intellectual Property office.
+- [x] **ABST: not needed.** Inland Revenue told the owner (2026-11-20) Servly does not need to charge the 17% sales tax. The ABST switch (v37) stays OFF, so nothing is added to any price or receipt; the "ABST applies" line was removed from the Pricing page. If sales grow a lot, ask Inland Revenue again whether ABST registration becomes required.
 - [x] **Went to ACB** (2026-11-06). Payments will run through ACB using **CyberSource**. Fees: 75 USD
   (about 202.50 XCD) a month + 4% of every payment. Full list and gaps: `docs/ACB-REQUIREMENTS.md`
 - [ ] **Website ready for ACB's review** (see `docs/ACB-REQUIREMENTS.md`): live servlyag.com, full
-  address, support email + phone, public pricing page, delivery + security + restrictions wording, card logos
+  address, support email + phone, public pricing page, delivery + security + restrictions wording, card logos.
+  Done: address, email, phone (2026-11-20), pricing, delivery/security/restrictions wording. Left: site live
+  on servlyag.com, official Visa/Mastercard logos (ask ACB).
 - [x] Business address: Old Road Village, St. Mary's Parish, Antigua (2026-11-06)
 - [x] Support email: servlyag5@gmail.com (2026-11-06)
-- [ ] **Support phone number**: owner getting a separate business number (not the personal one)
+- [x] **Support phone number**: (268) 773-7859, the business number (2026-11-20). Now on the website's Contact page, the Coming soon page and receipts.
+- [ ] **ACB meeting: next week (week of 23 Nov 2026).**
 - [ ] **Ask ACB the follow-up questions.** Answered by testing: XCD works, monthly charges work, test account works, webhooks not needed. Still to ask: when the 75 USD monthly fee starts, the official Visa/Mastercard logos, whether Mastercard is accepted, and whether they can review the website from a link after the meeting.
 - [x] CyberSource test (sandbox) account created (2026-11-06); Organization ID servlyag_1793983604
 - [x] CyberSource test profile "Servly Test": keys created (Profile ID, Access Key, Secret Key in password manager), return and notification addresses filled in (2026-11-07)
@@ -170,3 +175,7 @@ Short dated notes the brief should know about (decisions, things you are waiting
 - 2026-11-13: Tokenization WORKS (CyberSource enabled Payment Tokenization on the Servly Test profile): test sale,create_payment_token ACCEPT 100, ref c1b6bcd6-dd9c-42b0-85ed-670de6631c0c, card saved; CYBS_SAVE_CARD stays yes. Reply sent to case 002799226; next from them: saved-token recurring billing + webhook tests. Renewal test set up: Jojo (yonniejphotography@gmail.com, Starter) plan end moved to 14 Nov 16:00 UTC, so the 6 AM run on 14 Nov should charge 50 XCD (check renewal_charges; reminder task at 6:15). Built (not live yet): after paying, merchants land on Account (payment-result page); needs `npx supabase functions deploy payment-return`, a new dist upload, an app update, and APP_URL = https://startling-crumble-f0ead8.netlify.app (servlyag.com at launch).
 - 2026-11-16: AUTOMATIC MONTHLY PAYMENTS WORK (sandbox): Jojo charged 75 XCD by payment-renewals, AUTHORIZED, plan moved to 17 Dec. First try failed INVALID_DATA (Servly sent a CyberSource request id as the network transaction id); fixed and deployed. CyberSource (case 002799226) said to go ahead with recurring billing and webhook tests ourselves; webhook subscription still to set up in the test Business Center.
 - 2026-11-16: Card-testing protection (CyberSource pre-live checklist): payment-start allows at most 5 payment attempts per account per hour (429 "Too many payment attempts"), Checkout shows the server message; deployed + app update. Pre-live checklist reviewed: live addresses switch with CYBS_ENV=live; ask CyberSource for Token Management + Payment Tokenization on the LIVE account. Not run yet: v38 (launch list, only with the Coming soon page) and v39 (search insights).
+- 2026-11-18: Daily check shows v39 (search insights) and v40 (Listed as) installed; all required updates OK. The unsaved work from 16-17 Nov is now saved in git (commit 4891d1d). Crash reporting (Sentry) code is in and the key is set, but it only works after the next phone build.
+- 2026-11-20: Registered with Inland Revenue (and the Intellectual Property office). Inland Revenue: Servly does NOT need to charge ABST, so the switch stays off and the Pricing page line about ABST was removed. Business phone (268) 773-7859 added to the Contact page, Coming soon page and receipts (needs a new website upload; receipts change with the next app update). ACB meeting next week.
+- 2026-11-23: DECISION (revised same day): Netlify free plan has no shared password (Private = owner only), so founding businesses use a public, unlisted FOUNDERS site (Pay switched off; payments locked to admins with PAYMENTS_ADMIN_ONLY=yes; free trials only by personal code). Earlier idea: the owner shares the Netlify password with each one (with their personal invite code, if built). Check the Netlify protection is a shared password (not Netlify team login). Personal email-locked invite codes (v41): proposed, waiting for the owner's go-ahead.
+- 2026-11-24: Daily check shows v41 (founding invite codes) installed; all required updates OK. Founders site built 23 Nov (founders/web) and a new app website build (dist) made the same afternoon; not confirmed whether either is uploaded to Netlify yet. Work since 18 Nov is still NOT saved in git (last commit 4891d1d).

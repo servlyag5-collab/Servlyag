@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { AccessibilityInfo, Animated, Pressable, Text, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, fonts } from '../lib/theme';
+import { measureWithin } from '../lib/measure';
 import { resetLogoTip } from './LogoTip';
 import { Spotlight } from './Spotlight';
 
@@ -49,6 +50,8 @@ export function FirstTimeGuide({ steps, root, scrollBy, onClose, storageKey = SE
   storageKey?: string; // where "seen" is saved (the Home guide, or the merchant welcome tour)
 }) {
   const [H, setH] = useState(useWindowDimensions().height); // height of the area the guide covers
+  const W = useWindowDimensions().width;
+  const wide = W >= 900; // computers (website): the card sits beside the lit part instead of across the screen
   const [i, setI] = useState(0);
   const [hole, setHole] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const fade = useRef(new Animated.Value(0)).current;
@@ -59,11 +62,7 @@ export function FirstTimeGuide({ steps, root, scrollBy, onClose, storageKey = SE
     const measure = (then: (r: { x: number; y: number; w: number; h: number }) => void) => {
       const t = steps[i]?.target.current, r = root.current;
       if (!t || !r) return;
-      // Where both sit on the screen right now, then the part's place inside the guide's area.
-      // (measureLayout ignores how far Home is scrolled on Android, so the outline landed too low there.)
-      r.measureInWindow((rx, ry) => {
-        t.measureInWindow((x, y, w, h) => then({ x: x - rx, y: y - ry, w, h }));
-      });
+      measureWithin(t, r, then); // the part's place inside the guide's area (page-zoom safe on the website)
     };
     setHole(null);
     fade.setValue(0);
@@ -72,14 +71,21 @@ export function FirstTimeGuide({ steps, root, scrollBy, onClose, storageKey = SE
       const want = Math.max(70, Math.min(r.y, H - Math.min(r.h, MAX_HOLE) - 280));
       const dy = r.y - want;
       if (Math.abs(dy) > 4) scrollBy(dy);
-      setTimeout(() => {
+      // Wait until the page has stopped gliding (slower phones, or page zoom, can take longer than the usual
+      // scroll time), then draw the outline where the part ended up. Gives up waiting after about 2 seconds.
+      let last: { x: number; y: number; w: number; h: number } | null = null, tries = 0;
+      const settle = () => {
         if (!alive) return;
         measure((m) => {
+          if (!alive) return;
+          const still = last && Math.abs(m.y - last.y) < 1 && Math.abs(m.x - last.x) < 1;
+          if (!still && tries++ < 20) { last = m; setTimeout(settle, 100); return; }
           setHole({ x: m.x - PAD, y: m.y - PAD, w: m.w + PAD * 2, h: Math.min(m.h, MAX_HOLE) + PAD * 2 });
           Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: false }).start();
           AccessibilityInfo.announceForAccessibility?.(`${steps[i].title}. ${steps[i].text}`);
         });
-      }, Math.abs(dy) > 4 ? 420 : 30);
+      };
+      setTimeout(settle, Math.abs(dy) > 4 ? 250 : 30);
     });
     return () => { alive = false; };
   }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -95,6 +101,11 @@ export function FirstTimeGuide({ steps, root, scrollBy, onClose, storageKey = SE
   // The card goes under the lit part, or above it when there's no room underneath.
   const below = !hole || hole.y + hole.h + 230 < H;
   const cardPos = hole ? (below ? { top: hole.y + hole.h + 14 } : { bottom: H - hole.y + 14 }) : { top: H / 3 };
+  // Phones: across the screen (16 from each side). Computers: 440 wide, lined up with the lit part's left edge.
+  const CARD_W = 440;
+  const cardX = wide
+    ? { left: Math.max(16, Math.min(hole ? hole.x : (W - CARD_W) / 2, W - CARD_W - 16)), width: CARD_W }
+    : { left: 16, right: 16, maxWidth: 480, alignSelf: 'center' as const };
 
   return (
     <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} accessibilityViewIsModal onLayout={(e) => setH(e.nativeEvent.layout.height)}>
@@ -110,7 +121,7 @@ export function FirstTimeGuide({ steps, root, scrollBy, onClose, storageKey = SE
         </>
       ) : <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: shade }} />}
 
-      <Animated.View style={[{ position: 'absolute', left: 16, right: 16, maxWidth: 480, alignSelf: 'center', opacity: hole ? fade : 1,
+      <Animated.View style={[{ position: 'absolute', ...cardX, opacity: hole ? fade : 1,
         backgroundColor: colors.card, borderRadius: 20, padding: 18, gap: 8, boxShadow: '0px 16px 40px rgba(0, 0, 0, 0.3)' }, cardPos]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           {steps.map((_, n) => (

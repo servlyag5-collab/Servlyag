@@ -1,0 +1,4 @@
+# Launch day only (owner's decision 2026-11-24): replaces the founders site so old founders links, and sign-up or
+# password emails sent before launch, land on the real site. Keeps the page path and the ?query; browsers keep the
+# #part (password-reset tokens) on their own. 301 = moved for good.
+/*  https://servlyag.com/:splat  301!

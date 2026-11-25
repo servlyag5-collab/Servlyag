@@ -2,6 +2,7 @@ import { useEffect, useState, type RefObject } from 'react';
 import { AccessibilityInfo, Modal, Pressable, Text, View, type ViewInstance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, fonts, WIDE } from '../lib/theme';
+import { measureWithin } from '../lib/measure';
 import { Spotlight } from './Spotlight';
 
 const SEEN = 'servly.logoTip.seen';  // saved once the tip is dismissed
@@ -23,24 +24,25 @@ export function resetLogoTip() { shownThisLaunch = false; AsyncStorage.removeIte
 
 // The first time someone opens a page with the small Servly logo at the top (a listing, a business, Account…),
 // after they've been through the Home guide: the screen dims, the logo is lit up, and a card explains that it
-// always goes back to Home. Once per device. Phones only (the apps, and the website on a phone-sized screen).
+// always goes back to Home. Once per device, on every screen size (computers since 2026-11-20: one guide everywhere).
 export function LogoTip({ logo }: { logo: RefObject<ViewInstance | null> }) {
   const [hole, setHole] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
   useEffect(() => {
-    if (WIDE || shownThisLaunch) return;
+    if (shownThisLaunch) return;
     let alive = true;
     Promise.all([AsyncStorage.getItem(GUIDE), AsyncStorage.getItem(SEEN)]).then(([guide, seen]) => {
       if (guide !== '1' || seen === '1' || shownThisLaunch) return;
       // Give the page a moment to appear, then find the logo on the screen.
       setTimeout(() => {
         if (!alive || shownThisLaunch) return;
-        logo.current?.measureInWindow((x, y, w, h) => {
+        if (!logo.current) return;
+        measureWithin(logo.current, null, ({ x, y, w, h }) => {
           if (!alive || !w) return;
           shownThisLaunch = true;
           setTipOpen(true);
           setHole({ x: x - PAD, y: y - PAD, w: w + PAD * 2, h: h + PAD * 2 });
-          AccessibilityInfo.announceForAccessibility?.('Back to Home any time. Tap the Servly logo at the top of any page to go straight back to Home.');
+          AccessibilityInfo.announceForAccessibility?.(`Back to Home any time. ${WIDE ? 'Click' : 'Tap'} the Servly logo at the top of any page to go straight back to Home.`);
         });
       }, 700);
     }).catch(() => {});
@@ -57,11 +59,13 @@ export function LogoTip({ logo }: { logo: RefObject<ViewInstance | null> }) {
         {/* The dim, with a hole whose corners match the gold ring (no square corners showing). */}
         <Spotlight hole={hole} radius={14} color={shade} />
         <View pointerEvents="none" style={{ position: 'absolute', left: hole.x, top: hole.y, width: hole.w, height: hole.h, borderRadius: 14, borderWidth: 3, borderColor: colors.gold }} />
-        <View style={{ position: 'absolute', top: hole.y + hole.h + 14, left: 16, right: 16, maxWidth: 480, alignSelf: 'center',
+        <View style={{ position: 'absolute', top: hole.y + hole.h + 14,
+          // Phones: across the screen. Computers: 420 wide, under the logo.
+          ...(WIDE ? { left: Math.max(16, hole.x + hole.w / 2 - 210), width: 420 } : { left: 16, right: 16, maxWidth: 480, alignSelf: 'center' as const }),
           backgroundColor: colors.card, borderRadius: 20, padding: 18, gap: 8, boxShadow: '0px 16px 40px rgba(0, 0, 0, 0.3)' }}>
           <Text style={{ fontFamily: fonts.title, fontSize: 20, color: colors.ink }}>Back to Home any time</Text>
           <Text style={{ fontSize: 16, lineHeight: 23, color: colors.ink }}>
-            Tap the Servly logo at the top of any page to go straight back to Home.
+            {WIDE ? 'Click' : 'Tap'} the Servly logo at the top of any page to go straight back to Home.
           </Text>
           <Pressable onPress={done} accessibilityRole="button"
             style={{ alignSelf: 'flex-end', marginTop: 6, height: 44, paddingHorizontal: 20, borderRadius: 12, backgroundColor: colors.blue, justifyContent: 'center' }}>
