@@ -103,8 +103,7 @@ const lawyerQs = [
   ['Do the pages meet Antigua and Barbuda\'s data protection law?', 'Data is stored with Supabase (servers outside Antigua). Emails go through Resend, notifications through Expo, and card payments through ACB and CyberSource. Is the Privacy Policy (P1-P' + PRIVACY.length + ') enough, and do we need a named contact person for data requests?'],
   ['Is "not a party to agreements between customers and merchants" enough protection?', 'Servly only connects customers with independent businesses (see the Terms, "What Servly is" and "Liability"). Should merchants agree to anything more, for example a separate merchant agreement, or confirm they hold licences or insurance?'],
   ['Are automatic monthly renewal and "no refund once a month has started" allowed?', 'Refund Policy R2-R4 and Terms T4. Is anything required by consumer law (notice before renewal, cooling-off period, how cancellation must work)? Does it fit the card rules ACB works under (disputed payments / chargebacks)?'],
-  ['Do the Terms need to cover free trials and launch promo codes?', 'Free trials for Founding Merchants (usually 90 days) and the LAUNCH50 code (50% off the plan for the first 2 months, 25 merchants). These are not in the drafts yet.'],
-  ['Sales tax (ABST) on plan prices', 'Plans are 50 / 100 / 170 XCD per month, plus 25 XCD for the bookings upgrade. Must prices include ABST or show it separately, and on receipts? Registration with Inland Revenue is still to be done.'],
+  ['Do the Terms need to cover free trials and launch promo codes?', 'Founding businesses get a personal invite code (locked to their email) for a free trial until 8 March 2027, about 60 days after launch. There is also the LAUNCH50 code (50% off the plan for the first 2 months, 25 merchants). These are not in the drafts yet.'],
   ['Please check the new wording the bank (ACB) asks for', 'ACB needs a Delivery Policy, Exchange and Cancellation wording, a Payment Security statement, card and currency wording, and Legal and Export Restrictions on the website. Drafts are on the pages marked N1-N' + NEW_WORDING.length + '.'],
   ['Using the Visa and Mastercard logos', 'ACB asks for the card logos on the website. Is there anything legal to watch for beyond following the card brands\' own logo rules?'],
   ['Is a minimum age of 16 right?', 'Privacy P8 and Terms T3.'],
@@ -199,6 +198,7 @@ Your website requirements and the CyberSource developer guides have been passed 
 <br><br><b>Done since our last meeting.</b> Business registered; registered with Inland Revenue and the Intellectual
 Property office; business phone ${SELLER.phone}. Tested on the CyberSource test account: card payments in XCD,
 saved cards and automatic monthly charges all work; customers type their card only on CyberSource's page.
+Founding businesses are now setting up their listings on a private preview website; nobody can pay until launch.
 <br><br><b>About Servly AG.</b> A marketplace app and website where local businesses list their services and
 customers find them. Customers use it free. Businesses pay Servly a monthly plan: Starter 50 XCD, Growth 100 XCD,
 Business 170 XCD, plus an optional 25 XCD bookings upgrade. Payments are taken on the website.

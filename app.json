@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.servlyag.app",
-      "supportsTablet": true
+      "supportsTablet": false
     },
     "android": {
       "package": "com.servlyag.app",
@@ -51,7 +51,8 @@
       ],
       "expo-asset",
       "expo-image",
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

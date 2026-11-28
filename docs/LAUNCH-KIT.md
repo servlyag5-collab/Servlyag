@@ -36,15 +36,17 @@ The store builds are the only things that can't be redone in minutes, so these c
 | How merchants pay inside the phone apps (`docs/STORE-BILLING.md`) | 🟡 owner to decide | Apple/Google may reject a Pay button that only sends merchants to the website. The store builds must have the final behaviour. |
 | Crash reporting (Sentry) | ✅ installed and wired 2026-11-17, OFF until the owner's Sentry DSN is added; needs a new build | Owner: create the free Sentry account + React Native project, send Claude the DSN. |
 | iPhone notification sounds (WAV copies) | ⛔ not made yet (may need ffmpeg: ask first) | Built into the iPhone app. |
-| Expo package updates (16 small ones) | ⛔ not done (ask first) | Best done once, before the final builds, then retest. |
+| Expo package updates | ✅ done 2026-11-27 (18 updated; types, 100 tests and expo-doctor 20/20 pass) | Do again right before the final builds if Expo releases more. |
 | Apple Developer account (US$99/year) | ⛔ owner | No iPhone build can be made without it. |
 | Google Play developer account (US$25 once) | ⛔ owner | Needed to submit (an Android build can be made before). |
-| Store listings: screenshots, descriptions, privacy forms (Search history: not linked to the user) | ⛔ to prepare | Asked for at submission. |
+| Store listings: descriptions, privacy forms | ✅ drafted 2026-11-27 in `docs/STORE-LISTING.md` | Paste at submission. servlyag.com must be online first (the stores open the privacy link). |
+| Store screenshots | owner takes 6 on the phone (list in STORE-LISTING.md) | Claude sizes them for Apple and Google. |
+| iPad support | ✅ phones only (owner 2026-11-28; app.json `supportsTablet` false) | No iPad screenshots needed. Proper iPad support can come in a later update. |
 
 ## 3. The store builds (made when section 2 is done, well before launch)
 | Build | Status | Command (Claude runs it when the owner says) |
 |---|---|---|
-| Android (Google Play, .aab) | ⛔ waits on section 2; a trial build can be made now to catch problems early | `npx eas-cli build --platform android --profile production` |
+| Android (Google Play, .aab) | Trial store build ✅ built OK 2026-11-27 (build de32b3a0, versionCode 2, not uploaded). Final one waits on section 2 | `npx eas-cli build --platform android --profile production` |
 | iPhone (App Store) | ⛔ waits on the Apple account and section 2 | `npx eas-cli build --platform ios --profile production` |
 | Submit to the stores | after the builds and the store listings | `npx eas-cli submit --platform android` / `--platform ios` (review takes days: submit by mid-December) |
 
@@ -63,3 +65,4 @@ The store builds are the only things that can't be redone in minutes, so these c
 - 2026-11-20: Launch website rebuilt (launch/web) with the first-time guide on every screen size and the new listing pages.
 - 2026-11-23: Founding invite codes (v41, run). Launch website rebuilt.
 - 2026-11-24: Founders website online at https://servly-founders.netlify.app. Launch-day redirect built (`founders-redirect/`). First-time guide fixed for phones with the browser's page zoom turned up (outlines landed in the wrong place; `src/lib/measure.ts`); founders, test and launch websites rebuilt.
+- 2026-11-27: Expo packages updated. Trial Android store build (de32b3a0) and a new preview APK (db2b14c2, runtime 654516d9…) both built OK. Store listing text and privacy form answers drafted (docs/STORE-LISTING.md).

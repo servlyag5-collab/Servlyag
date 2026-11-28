@@ -85,7 +85,7 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 ---
 
 ## Launch-day watch (set up in mid-December; agreed 2026-11-16)
-- [ ] **Crash reporting** (e.g. Sentry, free plan): records every app crash/error with the screen, phone and code line so Claude can fix it. Needs an install (ask the owner first) and one new app build, so do it BEFORE the store builds.
+- [x] **Crash reporting** (Sentry: installed 2026-11-17, key set 2026-11-18, in the 2026-11-27 builds; test alert email received): records every app crash/error with the screen, phone and code line so Claude can fix it. Needs an install (ask the owner first) and one new app build, so do it BEFORE the store builds.
 - [ ] **Launch-day check every 30 minutes** (Claude scheduled task): website loads and how fast, search answers and how fast, listings and business pages open, payment functions respond, database health (read-only: slow queries, busy connections). Tells the owner at once what is wrong and where. Runs only while the laptop is on with the Claude app open.
 - [ ] **Practice run** of the check before launch, to fix the checks themselves.
 - [ ] **Free website monitor** (e.g. UptimeRobot): checks servlyag.com every 5 minutes and texts/emails the owner if it is down, even with the laptop off.
@@ -97,8 +97,9 @@ Launch date: **15 December 2026 or 7 January 2027** (not final yet)
 - [x] Supabase keys added to EAS: preview and production (production confirmed 2026-11-16), plus the payment page address for both. Launch builds are tracked in **docs/LAUNCH-KIT.md** (owner: everything ready ahead of time)
 - [x] Android test build installed and checked on a real phone (2026-11-11, push works)
 - [x] Push notifications tested on the real build: Android test push received (2026-11-11; Firebase + FCM V1 set up). iPhone needs the Apple Developer account
-- [ ] Apple Developer account (US$99/year) and Google Play account (US$25 once)
-- [ ] Store listings: screenshots, description, privacy page link, support link. Privacy forms (Apple privacy label, Google Data safety): include **Search history: collected, not linked to the user** (search insights, v39), plus the account, messages, payments, call taps and notification data in the Privacy Policy
+- [ ] Apple Developer account (US$99/year) and Google Play account (US$25 once): owner, expected Tue/Wed 1-2 Dec
+- [x] Trial Android store build OK (2026-11-27, not uploaded) and Expo packages updated
+- [ ] Store listings: description, links and privacy form answers DRAFTED 2026-11-27 in docs/STORE-LISTING.md; screenshots still to take (owner, 6 on the phone); iPad: phones only (2026-11-28). Privacy forms (Apple privacy label, Google Data safety): include **Search history: collected, not linked to the user** (search insights, v39), plus the account, messages, payments, call taps and notification data in the Privacy Policy
 - [ ] Netlify site switched from Private to Public (just before store submission)
 - [ ] Submit Android build · [ ] Submit iPhone build
 
@@ -179,3 +180,5 @@ Short dated notes the brief should know about (decisions, things you are waiting
 - 2026-11-20: Registered with Inland Revenue (and the Intellectual Property office). Inland Revenue: Servly does NOT need to charge ABST, so the switch stays off and the Pricing page line about ABST was removed. Business phone (268) 773-7859 added to the Contact page, Coming soon page and receipts (needs a new website upload; receipts change with the next app update). ACB meeting next week.
 - 2026-11-23: DECISION (revised same day): Netlify free plan has no shared password (Private = owner only), so founding businesses use a public, unlisted FOUNDERS site (Pay switched off; payments locked to admins with PAYMENTS_ADMIN_ONLY=yes; free trials only by personal code). Earlier idea: the owner shares the Netlify password with each one (with their personal invite code, if built). Check the Netlify protection is a shared password (not Netlify team login). Personal email-locked invite codes (v41): proposed, waiting for the owner's go-ahead.
 - 2026-11-24: Daily check shows v41 (founding invite codes) installed; all required updates OK. Founders site built 23 Nov (founders/web) and a new app website build (dist) made the same afternoon; not confirmed whether either is uploaded to Netlify yet. Work since 18 Nov is still NOT saved in git (last commit 4891d1d).
+- 2026-11-25: Work saved in git (commit 3efbe8e, 24 Nov). Founders site online at https://servly-founders.netlify.app (24 Nov). Database check: all required updates OK (v18-v41). ACB meeting outcome not yet known.
+- 2026-11-27: Database check: all required updates OK (v18-v41). No commits since 24 Nov; printouts for the lawyer and ACB made 26 Nov. ACB meeting outcome still not known.

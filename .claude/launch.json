@@ -15,6 +15,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["expo", "start", "--web", "--port", "8090"],
       "port": 8090
+    },
+    {
+      "name": "photo-brand",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:/Users/Jensen Anthony/Documents/Yonnie J's Photo Media Events/brand/tools/serve.js"],
+      "port": 8095
     }
   ]
 }
