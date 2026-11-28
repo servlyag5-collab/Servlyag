@@ -41,7 +41,7 @@ The store builds are the only things that can't be redone in minutes, so these c
 | Google Play developer account (US$25 once) | ⛔ owner | Needed to submit (an Android build can be made before). |
 | Store listings: descriptions, privacy forms | ✅ drafted 2026-11-27 in `docs/STORE-LISTING.md` | Paste at submission. servlyag.com must be online first (the stores open the privacy link). |
 | Store screenshots | owner takes 6 on the phone (list in STORE-LISTING.md) | Claude sizes them for Apple and Google. |
-| iPad support | ✅ phones only (owner 2026-11-28; app.json `supportsTablet` false) | No iPad screenshots needed. Proper iPad support can come in a later update. |
+| iPad support | ✅ decided: phones only (owner 2026-11-28) | Claude sets app.json `supportsTablet` to false RIGHT BEFORE the final store builds (not earlier: it is part of the runtime version, so changing it now would stop over-the-air fixes reaching the 2026-11-27 test build). No iPad screenshots needed. |
 
 ## 3. The store builds (made when section 2 is done, well before launch)
 | Build | Status | Command (Claude runs it when the owner says) |

@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.servlyag.app",
-      "supportsTablet": false
+      "supportsTablet": true
     },
     "android": {
       "package": "com.servlyag.app",
